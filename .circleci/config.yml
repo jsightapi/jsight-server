@@ -1,0 +1,120 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.0.3
+  common: jsight/common-ci@1.2.10
+
+parameters:
+  fire:
+    description: Boolean parameter to control manual workflows. Set it to true when running from gui or api.
+    type: boolean
+    default: false
+  host-env:
+    type: enum
+    default: CRAZY
+    enum: [DEV, STAGE, CRAZY]
+  jschema-branch:
+    type: string
+    default: dev
+  japi-branch:
+    type: string
+    default: dev
+  github-token:
+    type: string
+    default: $GITHUB_TOKEN
+  statistics-enabled:
+    type: boolean
+    default: true
+  cors-enabled:
+    type: boolean
+    default: true
+
+
+workflows:
+  release-tag:
+    when:
+      matches:
+        pattern: "^release-.*"
+        value: << pipeline.git.tag >>
+    jobs:
+      - common/save-version-numbers:
+          filters: &release-tag-filter
+            tags:
+              only: /^release-.*/
+      - docker/publish:
+          filters: *release-tag-filter
+          requires:
+            - common/save-version-numbers
+          executor: common/vm-medium
+          context: &common-context online-editor-development
+          attach-at: /tmp/workspace
+          before_build:
+            - run:
+              name: Read version number tags from workspace
+              command: |
+                echo "Versions read: $(cat /tmp/workspace/full-version) , $(cat /tmp/workspace/major-version)"
+                echo "export FULL_VERSION_TAG=$(cat /tmp/workspace/full-version)" >> $BASH_ENV
+                echo "export MAJOR_VERSION_TAG=$(cat /tmp/workspace/major-version)" >> $BASH_ENV
+          image: jsight/jsight-server
+          tag: '${FULL_VERSION_TAG},${MAJOR_VERSION_TAG},latest'
+          extra_build_args: &docker_build_args '
+            --no-cache
+            --build-arg JSCHEMA_BRANCH=<< pipeline.parameters.jschema-branch >>
+            --build-arg JAPI_BRANCH=<< pipeline.parameters.japi-branch >>
+            --build-arg GITHUB_TOKEN=<< pipeline.parameters.github-token >>
+            --build-arg CORS=<< pipeline.parameters.cors-enabled >>
+            --build-arg STATISTICS=<< pipeline.parameters.statistics-enabled >>'
+      - approve-production-deploy:
+          filters: *release-tag-filter
+          type: approval
+          requires:
+            - docker/publish
+      - common/refresh-container:
+          filters: *release-tag-filter
+          requires:
+            - approve-production-deploy
+          context: *common-context
+          host: ${HOST_PROD}
+          host-port: 8080
+          container-port: 8080
+          container-name: jsight-server
+          image: jsight/jsight-server
+          tag: latest
+      - common/notify-telegram:
+          filters: *release-tag-filter
+          requires:
+            - common/refresh-container
+          context: *common-context
+          message: >
+            Production server updated from tag << pipeline.git.tag >>
+            with jschema branch << pipeline.parameters.jschema-branch >>
+            and japi branch << pipeline.parameters.japi-branch >>
+
+  custom-dev:
+    when:
+      equal: [ true, << pipeline.parameters.fire >> ]
+    jobs:
+      - docker/publish:
+          context: *common-context
+          executor: common/vm-medium
+          image: &dev_image jsight/dev-jsight-server
+          tag: &dev_tag 'schema_<<pipeline.parameters.jschema-branch>>__api_<<pipeline.parameters.japi-branch>>__pipe_<< pipeline.number >>'
+          extra_build_args: *docker_build_args
+      - common/refresh-container:
+          requires:
+            - docker/publish
+          context: *common-context
+          host: ${HOST_<< pipeline.parameters.host-env >>}
+          host-port: 8080
+          container-port: 8080
+          container-name: jsight-server
+          image: *dev_image
+          tag: *dev_tag
+      - common/notify-telegram:
+          requires:
+            - common/refresh-container
+          context: *common-context
+          message: >
+            << pipeline.parameters.host-env >> server updated from branch << pipeline.git.branch >>
+            with jschema branch << pipeline.parameters.jschema-branch >>
+            and japi branch << pipeline.parameters.japi-branch >>

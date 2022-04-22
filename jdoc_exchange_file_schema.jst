@@ -1,0 +1,390 @@
+JSIGHT 0.3
+
+INFO
+  Title "JDoc Exchange File Schema"
+  Version "0.3.0"
+  Description
+  (
+    JDoc Exchange File Schema is described by TYPE @jdocExchange.
+
+    # Requirements to this Schema
+
+    Schema must be:
+
+    - compact (will be transmitted over network),
+    - comfortable for document rendering algorithm,
+    - easy for reading by man (will be used for functional automatical tests).
+
+    # Format size optimization options (for the future)
+    
+    1. Discard fields that are easily calculated, for example, the json Type field is easily calculated from the content.
+    2. Frequent fields should be named with one letter, for example, `t' instead of 'type'.
+    3. Abandon structures that are easily calculated, for example, 'allOf'.
+  )
+
+POST /api
+  Description
+    You should send JSight code in request.
+
+  Request
+    Headers
+        {
+            "X-Browser-UUID": "123e4567-e89b-12d3-a456-426614174000"
+        }
+    Body any # JSight code
+
+  200 @jdocExchange // Successfully parsed response.
+    Headers
+        {
+            "X-Jdoc-Exchange-File-Schema-Version": "0.3.0"
+        }
+
+  409 @error // Any parsing error.
+    
+TYPE @error
+{
+    "Status": "Error", // {const: true}
+    "Message": "Error message",
+    "Line": 10, // {optional: true, min: 0}
+    "Index": 20 // {optional: true, min: 0}
+}
+
+TYPE @jdocExchange
+{
+  "jdocExchangeFileSchemaVersion": "0.3.0",
+  "jsight": "0.3",
+  "info": {                                                   // {optional: true}
+    "title": "Catsbook API.",                                 // {optional: true}
+    "version": "0.1",                                         // {optional: true}
+    "description": "Catsbook social network public REST API." // {optional: true}
+  },
+  "servers": { // {additionalProperties: "@server", optional: true}
+    @serverName: @server // { optional: true }
+  },
+  "tags": { // {additionalProperties: "@tag"}
+    @tagName: @tag // {optional: true}
+  },
+  "resourceMethods": {   // {additionalProperties: "@resourceMethod"}
+    @resourceMethodId : @resourceMethod // { optional: true }
+  },
+  "userTypes": {      // {additionalProperties: "@userType", optional: true}
+    @userTypeName: @userType // {optional: true}
+  },
+  "userEnums": {               // {additionalProperties: "@userRule", optional: true}
+    @userRuleName : @userRule // {optional: true}
+  }
+}
+
+#---------------------------------------------- TAG -----------------------------------------------
+
+TYPE @tagName regex
+  /@[A-Za-z0-1_]/
+
+TYPE @tag
+{
+  "name"           : "@cats",
+  "title"          : "/cats",
+  "annotation"     : "Brief description of the tag",
+  "description"    : "Tag description", // {optional: true}
+  "resourceMethods": { /* {additionalProperties: "@resourceMethodIdList", 
+                             optional: true} */
+    @path     : @resourceMethodIdList // {optional: true} - There can only be an absolute path in resource paths
+  },
+  "children"   : {  // {additionalProperties: "@tagName"}
+    @tagName : @tag // {optional: true}
+  }
+}
+
+#---------------------------------------------- METHOD --------------------------------------------
+
+TYPE @resourceMethodId
+  "GET /cats/{id}" // {regex: "[A-Z]+ .*"}
+
+TYPE @resourceMethodIdList
+[
+  "GET /cats/{id}" // {type: "@resourceMethodId"}
+]
+
+TYPE @httpMethodName
+  "GET" /* {enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]} */
+
+TYPE @resourceMethod
+{
+  "httpMethod"   : "GET",   // {type: "@httpMethodName"}
+  "path"         : "/cats", // {type: "@path"}
+  "pathVariables": {        // {optional: true}
+    "schema": @schema
+  },
+  "tags": [
+    "@cats",       // {type: "@tagName"}
+    "@pets",       // {type: "@tagName"}
+    "@readMethods" // {type: "@tagName"}
+  ],
+  "annotation" : "Retrieve cats' list.",                   // {optional: true}
+  "description": "Allows to retrieve all the cats' list.", // {optional: true}
+  // Request
+  "query"  : @query,        // {optional: true}
+  "request": @httpRequest,  // {optional: true}
+  // Answers
+  "responses": [ /* {optional: true} 
+                  - An array is used because there can be multiple responses with the same code. */
+    @httpResponse
+  ]
+}
+
+#--------------------------------------------- QUERY ---------------------------------------------
+
+TYPE @query
+{
+  "example": "fields=id,name,size&access_token=qwequhpijdfhhwehuuhsdf", // {optional: true}
+  "format" : "htmlFormEncoded", // {type: "@serializeFormat"}
+  "schema" : @schema
+}
+
+#--------------------------------------------- REQUEST -------------------------------------------
+
+TYPE @httpRequest
+{
+    "headers": {         // {optional: true}
+      "schema": @schema
+    },
+    "body": {
+      "format": "json", // {type: "@serializeFormat"}
+      "schema": @schema
+    }
+}
+
+#--------------------------------------------- RESPONSE -------------------------------------------
+
+TYPE @httpResponseCode
+  "200" // {regex: "\\d\\d\\d"}
+
+TYPE @httpResponse
+{
+  "code"      : @httpResponseCode,
+  "annotation": "Description of the successful response.", // {optional: true}
+  "headers": {
+    "schema": @schema
+  },
+  "body": {
+    "format": "json", // {type: "@serializeFormat"}
+    "schema": @schema
+  }
+}
+
+#---------------------------------------------- PATH ----------------------------------------------
+
+TYPE @path
+  "/cats/{id}/friends/{friend:id}"
+
+#---------------------------------------------- USER TYPE -----------------------------------------
+
+TYPE @userTypeName
+  "@cat" // {regex: "@[A-Za-z0-9_]+"}
+
+
+TYPE @userType
+{
+  "annotation" : "A brief description of the type.",     // {optional: true}
+  "description": "A lengthy description of the type.", // {optional: true}
+  "schema"     : @schema,
+  "links"      : [
+    @link,
+    @link
+  ]
+}
+
+#---------------------------------------------- USER RULE -----------------------------------------
+
+TYPE @userRuleName
+  "@cat" // {regex: "@[A-Za-z0-9_]+"}
+
+TYPE @userRule
+{
+  "annotation" : "A brief description of the named rule",
+  "description": "Description of the named rule",
+  "value"      : @rule,
+  "links"      : [
+    @link,
+    @link
+  ]
+}
+
+#---------------------------------------------- LINK ----------------------------------------------
+
+TYPE @link
+{
+  "type": "response.body", // {type: "@linkTypeEnum"}
+  "address": @resourceAddress | @serverAddress
+}
+
+TYPE @resourceAddress
+{
+  "resourceMethod"  : "GET /cats/{id}", // {type: "@resourceMethodId"}
+  "httpResponseCode": "200"             // {type: "@httpResponseCode", optional: true}
+}
+
+TYPE @serverAddress
+{
+  "server": "@TEST_SERVER" // {type: "@serverName"}
+}
+
+TYPE @typeAddress
+{
+  "type": "@cat" // {type: "@userTypeName"}
+}
+
+TYPE @linkTypeEnum // Where can the link lead to
+"resource.response.headers" /* {enum: [
+                                  "server.baseUrl",
+                                  "resource.path",
+                                  "resource.query",
+                                  "resource.request.headers",
+                                  "resource.request.body",
+                                  "resource.response.headers",
+                                  "resource.response.body",
+                                  "type"
+                                ]}*/
+
+#---------------------------------------------- SERVER --------------------------------------------
+
+TYPE @serverName regex
+  /@[A-Za-z0-9_]+/
+
+TYPE @server
+{
+  "annotation": "Test server", // {optional: true}
+  "baseUrl": "https://{env}.catsbook.com/api/{version}/{locale}/",
+  "baseUrlVariables": { // {optional: true}
+    "schema": @schema
+  }
+}
+
+#---------------------------------------------- SCHEMA --------------------------------------------
+
+TYPE @schema
+{
+  "notation": "jsight",                            // {type: "@schemaNotation"}
+  "content" : @jsightSchemaElement | @regexSchema, // {optional: true} - May not be specified for the `any` and `empty` notations.
+  "usedUserTypes": [ // {optional: true}
+    "@cat",          // {type: "@userTypeName"}
+    "@dog"           // {type: "@userTypeName"}
+  ],
+  "usedUserEnums": [ // {optional: true}
+    "@catSizeEnum"   // {type: "@userRuleName"}
+  ],
+  "example": "{\n  \"id\": 123\n}" // {optional: true}
+}
+
+TYPE @jsightSchemaElement
+{
+  # "parentJsonType": "array",      // {enum: [null, "object", "array"]}
+  # "key"           : "cat",        // {optional: true} - Specified only if "parentType": "object".
+  "isKeyShortcut" : true,         // {optional: true, const: true} - Specified if shortcut is located in the key
+  # "index"         : 0,            // {optional: true} - Specified only if "parentType": "array".
+  "jsonType"      : "object",     // {type: "@jsonTypeEnum"}
+  "type"          : "@cat",       // Calculated or explicitly specified element type (for an element card or a tabular
+                                     description of data).
+  "optional"      : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
+  "scalarValue"   : "123",        /* {optional: true} - Specified only if the "jsonType" is specified
+                                                   "string", "number", "boolean", "annotation", "shortcut" or "null". */
+  "inheritedFrom" : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
+                                                            specified if it is inherited through the 'allOf' rule. */
+  "note"          : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
+  "rules": {                      // {additionalProperties: "@rule", optional: true}
+    @ruleName : @rule             // {optional: true}
+  },
+  "properties": {   /* {additionalProperties: "@jsightSchemaElement", optional: true} 
+                      - specified only if jsonType: "object". */
+    "catSize": @jsightSchemaElement // {optional: true}
+  },
+  "items": [        // {optional: true} - specified only if jsonType: "array".
+    @jsightSchemaElement
+  ]
+}
+
+TYPE @ruleName
+  "minLength" /* {enum: [
+                    "type",
+                    "optional",
+                    "nullable",
+                    "min",
+                    "max",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "precision",
+                    "minLength",
+                    "maxLength",
+                    "regexp",
+                    "minItems",
+                    "maxItems",
+                    "or",
+                    "additionalProperties",
+                    "const",
+                    "serializeFormat",
+                    "serializedType",
+                    "enum",
+                    "allOf"
+                  ]} */
+
+TYPE @rule
+{
+  "jsonType"   : "object",   // {type: "@jsonTypeEnum"}
+  "scalarValue": "@cat",     // {optional: true} - Specified only if "jsonType" specifies "string", "number", "boolean",
+                                                   "annotation" or "null".
+  "note"       : "Note to the \n rule.", // May contain line breaks.
+  "properties" : {           /* {additionalProperties: "@ruleNameEnum", optional: true} 
+                                 - Specified only if "jsonType": "object" */
+    @ruleNameEnum : @rule
+  },
+  "items" : [             // {optional: true} - Specified only if "jsonType": "array".
+    @rule
+  ]
+}
+
+TYPE @ruleNameEnum
+  "minLength" /* {enum: [
+                    "type",
+                    "optional",
+                    "nullable",
+                    "min",
+                    "max",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "precision",
+                    "minLength",
+                    "maxLength",
+                    "regexp",
+                    "minItems",
+                    "maxItems",
+                    "or",
+                    "additionalProperties",
+                    "const",
+                    "serializeFormat",
+                    "serializedType",
+                    "enum",
+                    "allOf"
+                  ]} */
+
+TYPE @jsonTypeEnum # TODO: think of another name
+"object" /* [
+            "object", 
+            "array", 
+            "string", 
+            "number", 
+            "boolean", 
+            "null",
+            "annotation", // Yes, that's so interesting! This means an interline annotation.
+            "shortcut" // It is also unusual, it is used when a shortcut is inserted into the example, for example,
+                          a type name instead of a value
+          ]
+          */
+
+TYPE @schemaNotation
+  "jsight" // {enum: ["jsight", "regex", "any", "empty"]}
+
+TYPE @serializeFormat
+  "json" // {enum: ["json", "plainString", "binary", "htmlFormEncoded", "noFormat"]}
+
+TYPE @regexSchema
+  "/Hello, World!/" // {regex: "/.*/"}
