@@ -98,8 +98,14 @@ workflows:
           context: *common-context
           executor: common/vm-medium
           image: &dev_image jsight/dev-jsight-server
-          tag: &dev_tag 'schema_<<pipeline.parameters.jschema-branch>>__api_<<pipeline.parameters.japi-branch>>__pipe_<< pipeline.number >>'
+          tag: &dev_tag 'schema_${JSCHEMA_BRANCH/\//_}__api_${JAPI_BRANCH/\//_}__pipe_<< pipeline.number >>'
           extra_build_args: *docker_build_args
+          pre-steps: &dev-branches-pre-steps
+            - run:
+                name: Set dep branches envs
+                command: |
+                  echo "export JSCHEMA_BRANCH=<< pipeline.parameters.jschema-branch >>" >> $BASH_ENV
+                  echo "export JAPI_BRANCH=<< pipeline.parameters.japi-branch >>" >> $BASH_ENV
       - common/refresh-container:
           requires:
             - docker/publish
@@ -110,6 +116,7 @@ workflows:
           container-name: jsight-server
           image: *dev_image
           tag: *dev_tag
+          pre-steps: *dev-branches-pre-steps
       - common/notify-telegram:
           requires:
             - common/refresh-container
