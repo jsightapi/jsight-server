@@ -44,7 +44,7 @@ workflows:
           executor: common/vm-medium
           context: &common-context online-editor-development
           image: jsight/jsight-server
-          tag: '${FULL_VERSION_TAG},${MAJOR_VERSION_TAG},latest' # values available thx to before_build
+          tag: '${FULL_VERSION},${MAJOR_VERSION},latest' # values available thx to before_build
           before_build:
             - common/parse-versions
           extra_build_args: &docker_build_args '
