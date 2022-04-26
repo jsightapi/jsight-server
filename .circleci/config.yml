@@ -33,9 +33,11 @@ parameters:
 workflows:
   release-tag:
     when:
-      matches:
-        pattern: "^release-.*"
-        value: << pipeline.git.tag >>
+      and:
+        - matches:
+            pattern: "^release-.*"
+            value: << pipeline.git.tag >>
+        - equal: [ true, << pipeline.parameters.fire >> ]
     jobs:
       - docker/publish:
           filters: &release-tag-filter
