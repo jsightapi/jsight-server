@@ -9,6 +9,10 @@ fmt:
 lint:
 	golangci-lint run
 
+.PHONY: test
+test:
+	go test -cover ./...
+
 .PHONY: build
 build:
 	go build -o jsight-server .

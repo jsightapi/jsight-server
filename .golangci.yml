@@ -36,7 +36,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/golangci/golangci-lint
+    local-prefixes: github.com/jsightapi/jsight-server
   gomnd:
     # List of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
     checks:
@@ -98,7 +98,7 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-#    - goimports
+    - goimports
     - gomnd
     - goprintffuncname
     - gosec
