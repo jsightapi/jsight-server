@@ -12,7 +12,7 @@ parameters:
   host-env:
     type: enum
     default: CRAZY
-    enum: [DEV, STAGE, CRAZY]
+    enum: [DEV, STAGE, CRAZY, PROD]
   jschema-branch:
     type: string
     default: dev
