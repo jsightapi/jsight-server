@@ -1,0 +1,46 @@
+# github.com/davecgh/go-spew v1.1.0
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220427155423-7c489a57b5aa
+## explicit; go 1.17
+github.com/jsightapi/jsight-api-go-library/catalog
+github.com/jsightapi/jsight-api-go-library/core
+github.com/jsightapi/jsight-api-go-library/directive
+github.com/jsightapi/jsight-api-go-library/jerr
+github.com/jsightapi/jsight-api-go-library/kit
+github.com/jsightapi/jsight-api-go-library/notation
+github.com/jsightapi/jsight-api-go-library/scanner
+# github.com/jsightapi/jsight-schema-go-library v0.0.0-20220426180928-6a830af498a5
+## explicit; go 1.17
+github.com/jsightapi/jsight-schema-go-library
+github.com/jsightapi/jsight-schema-go-library/bytes
+github.com/jsightapi/jsight-schema-go-library/errors
+github.com/jsightapi/jsight-schema-go-library/formats/json
+github.com/jsightapi/jsight-schema-go-library/fs
+github.com/jsightapi/jsight-schema-go-library/internal/json
+github.com/jsightapi/jsight-schema-go-library/internal/lexeme
+github.com/jsightapi/jsight-schema-go-library/internal/scanner
+github.com/jsightapi/jsight-schema-go-library/kit
+github.com/jsightapi/jsight-schema-go-library/notations/internal
+github.com/jsightapi/jsight-schema-go-library/notations/jschema
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/checker
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/loader
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/scanner
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint
+github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/validator
+github.com/jsightapi/jsight-schema-go-library/notations/regex
+github.com/jsightapi/jsight-schema-go-library/reader
+# github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb
+## explicit
+github.com/lucasjones/reggen
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/stretchr/testify v1.7.0
+## explicit; go 1.13
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+## explicit
+gopkg.in/yaml.v3

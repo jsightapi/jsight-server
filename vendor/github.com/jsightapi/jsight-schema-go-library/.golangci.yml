@@ -1,0 +1,470 @@
+run:
+  timeout: 2m
+  issues-exit-code: 1
+  tests: true
+  skip-dirs-use-default: true
+  skip-dirs: [] # todo remove it
+  modules-download-mode: vendor
+  allow-parallel-runners: true
+
+output:
+  format: tab
+  print-issued-lines: true
+  print-linter-name: true
+  # Print all issue on single line.
+  # We should set to false 'cause if one single line has issues from different
+  # linters we will see only one of them.
+  uniq-by-line: false
+  sort-results: true
+
+linters-settings:
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    check-type-assertions: true
+    # Report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    check-blank: true
+    # List of functions to exclude from checking, where each entry is a single
+    # function to exclude.
+    # see https://github.com/kisielk/errcheck#excluding-functions for details.
+    # Works in golangci-lint >= v1.42.1
+#    exclude-functions: todo remove it
+#      - (*io.PipeWriter).CloseWithError
+
+  errorlint:
+    # Report non-wrapping error creation using fmt.Errorf, for instance:
+    #
+    # ```
+    # if _, err := := strconv.Atoi(numStr); err != nil {
+    #   return fmt.Errorf("failed to convert: %s", err) <-- Will trigger an error at this line.
+    # }
+    # ```
+    errorf: true
+
+  exhaustive:
+    check-generated: true
+    default-signifies-exhaustive: true
+
+#  todo uncomment after finding a minimal supported golang version
+#  forbidigo:
+#    forbid:
+#      # https://golang.org/doc/go1.16#ioutil
+#
+#      # Can be safely replaced with `io.Discard` 'cause `ioutil.Discard` just an
+#      # alias to `io.Discard` since 1.16.
+#      - ioutil.Discard
+#
+#      # Can be safely replaced with `io.NopCloser` 'cause `ioutil.NopCloser` just
+#      # call `io.NopCloser` since 1.16.
+#      - ioutil.NopCloser
+#
+#      # Can be safely replaced with `io.ReadAll` 'cause `ioutil.ReadAll` just call
+#      # `io.ReadAll` since 1.16.
+#      - ioutil.ReadAll
+#
+#      # Should use `os.ReadDir` instead but it have a little bit different behavior.
+#      # Returns a slice of `os.DirEntry` rather than a slice of `fs.FileInfo`.
+#      - ioutil.ReadDir
+#
+#      # Can be safely replaced with `os.ReadFile` 'cause `ioutil.ReadFile` just
+#      # call `os.ReadFile` since 1.16.
+#      - ioutil.ReadFile
+#
+#      # Should use `os.MkdirTemp` instead but it had different code so it may have
+#      # different behavior.
+#      - ioutil.TempDir
+#
+#      # Should use `os.CreateTemp` instead but it had different code so maybe it
+#      # may have different behavior.
+#      - ioutil.TempFile
+#
+#      # Can be safely replaced with `os.WriteFile` 'cause `ioutil.WriteFile` just
+#      # call `os.WriteFile` since 1.16.
+#      - ioutil.WriteFile
+
+  goconst:
+    # Minimal length of string constant.
+    min-len: 3
+    # Minimal occurrences count to trigger.
+    min-occurrences: 3
+
+  gocyclo:
+    min-complexity: 10
+
+# todo too many issues
+#  godot:
+#    check-all: true
+
+  gofmt:
+    simplify: false
+
+  goimports:
+    local-prefixes: github.com/jsightapi/jsight-schema-go-library
+
+  gosimple:
+    go: "1.17"
+    checks:
+      - "all"
+
+  govet:
+    # We have many false-positive match for `err`.
+    check-shadowing: false # todo check
+    enable:
+      - assign
+      - atomic
+      - bools
+      - buildtag
+      - cgocall
+      - copylocks
+      - errorsas
+      - fieldalignment
+      - httpresponse
+      - ifaceassert
+      - loopclosure
+      - lostcancel
+      - nilfunc
+      - printf
+      - shift
+      - stdmethods
+      - stringintconv
+      - structtag
+      - testinggoroutine
+      - tests
+      - unmarshal
+      - unreachable
+      - unsafeptr
+      - unusedresult
+    enable-all: false
+    disable-all: false
+
+  lll:
+    # Max line length, lines longer will be reported.
+    # '\t' is counted as 1 character by default, and can be changed with the
+    # `tab-width` option.
+    line-length: 120
+    # In our code, tab is 4 space long.
+    tab-width: 4
+
+  misspell:
+    locale: US
+
+  nakedret:
+    max-func-lines: 5
+
+# todo too many issues
+#  nestif:
+#    min-complexity: 5
+
+  revive:
+    # https://github.com/mgechev/revive#available-rules
+    rules:
+      # Make sure `context.Context` is the first argument of a function.
+      - name: context-as-argument
+
+      # Warns on some defer gotchas.
+      # https://blog.learngoprogramming.com/5-gotchas-of-defer-in-go-golang-part-iii-36a1ab3d6ef1
+      - name: defer
+
+      # Forbids . imports.
+      - name: dot-imports
+
+      # Looks for packages that are imported two or more times.
+      - name: duplicated-imports
+
+      # Spots if-then-else statements that can be refactored to simplify code reading.
+      - name: early-return
+
+      # Make sure error return parameter is the last.
+      - name: error-return
+
+      # Warns on getters that do not yield any result.
+      - name: get-return
+
+      # Warns on if-then-else statements with identical then and else branches.
+      - name: identical-branches
+
+      # Warns on redundant `if` when returning an error.
+      - name: if-return
+
+      # Warns on `i += 1` and `i -= 1`.
+      - name: increment-decrement
+
+      # Warns on assignments to value-passed method receivers.
+      - name: modifies-value-receiver
+
+      # Warns on redundant variables when iterating over a collection.
+      - name: range
+
+      # Warns on function calls that will lead to (direct) infinite recursion.
+      - name: unconditional-recursion
+
+      # Warns when a public return is from unexported type.
+      - name: unexported-return
+
+      # Warns on unnecessary statements.
+      - name: unnecessary-stmt
+
+      # Warns on unused method receivers.
+      - name: unused-receiver
+
+  staticcheck:
+    enable: true
+
+  nolintlint:
+    # Require machine-readable nolint directives (i.e. with no leading space)
+    allow-leading-space: false
+    # Report any unused nolint directives.
+    allow-unused: false
+    # Require an explanation for nolint directives.
+    require-explanation: true
+    # Exclude following linters from requiring an explanation.
+    allow-no-explanation:
+      - lll
+    # Require nolint directives to be specific about which linter is being skipped.
+    require-specific: true
+
+  unused:
+    check-exported: true
+
+linters:
+  # https://golangci-lint.run/usage/linters/
+  enable:
+    - asciicheck
+
+    # Finds unused code.
+    - deadcode
+
+    # Checks if package imports are in a list of acceptable packages.
+    - depguard
+
+    # Checks assignments with too many blank identifiers (e.g. `x, _, _, _, := f()`).
+    - dogsled
+
+    # Code clone detection.
+    - dupl
+
+    # Check for two durations multiplied together.
+    #
+    # ```
+    # func do(d time.Duration) {
+    #   ...
+    #    time.Sleep(d * time.Second) <-- will trigger an error at this line.
+    #   ...
+    # }
+    # ```
+    - durationcheck
+
+    # Searches for unchecked errors.
+    - errcheck
+
+    # Checks that sentinel errors are prefixed with the `Err` and error types are
+    # suffixed with the `Error`.
+    - errname
+
+    # Find code that will cause problems with the error wrapping scheme introduced
+    # in Go 1.13.
+    - errorlint
+
+    # Checks exhaustiveness of enum switch statements.
+    - exhaustive
+
+    # Checks for pointers to enclosing loop variables.
+    - exportloopref
+
+    # Forbids identifiers.
+#  todo uncomment after finding a minimal supported golang version
+#    - forbidigo
+
+    # Checks that no init functions are present in Go code.
+    - gochecknoinits
+
+    # Finds repeated strings that could be replaced by a constant.
+    - goconst
+
+    # Provides many diagnostics that check for bugs, performance and style issues.
+    # https://go-critic.github.io/overview
+    - gocritic
+
+    # Computes and checks the cyclomatic complexity of functions.
+    - gocyclo
+
+    # Check if comments end in a period.
+# todo too many issues
+#    - godot
+
+    # Checks whether code was gofmt-ed.
+    - gofmt
+
+    # Checks is file header matches to pattern.
+    - goheader
+
+    - goimports
+
+    # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
+    - gomoddirectives
+
+    # Linter that specializes in simplifying a code.
+    - gosimple
+
+    # Inspects source code for security problems.
+    - gosec
+
+    - govet
+
+    # Checks that your code uses short syntax for if-statements whenever possible.
+    #
+    # Bad:
+    # ```
+    # _, err := := strconv.Atoi(numStr) <-- Will trigger an error at this line.
+    # if err != nil {
+    #   return fmt.Errorf("failed to convert: %w", err)
+    # }
+    # ```
+    #
+    # Good:
+    # ```
+    # if _, err := := strconv.Atoi(numStr); err != nil {
+    #   return fmt.Errorf("failed to convert: %w", err)
+    # }
+    # ```
+# some false positive
+#    - ifshort
+
+    # Detects when assignments to existing variables are not used.
+    - ineffassign
+
+    # Reports long lines.
+# todo too many issues
+#    - lll
+
+    # Finds commonly misspelled words in comments.
+    - misspell
+
+    # Finds naked returns in functions greater than a specified function length.
+    - nakedret
+
+    # Reports deeply nested if statements.
+# todo too many issues
+#    - nestif
+
+    # Finds the code that returns nil even if it checks that the error is not nil.
+    - nilerr
+
+    # Reports ill-formed or insufficient nolint directives.
+    - nolintlint
+
+    # Find code that shadows one of Go's predeclared identifiers.
+    - predeclared
+
+    - revive
+
+    # Applying a ton of static analysis checks.
+    - staticcheck
+
+    # Finds unused struct fields.
+    - structcheck
+
+    # Is a replacement for golint.
+    - stylecheck
+
+    # Like the front-end of a Go compiler, parses and type-checks Go code.
+    - typecheck
+
+    # Finds unnecessary type conversions.
+    - unconvert
+
+    # Reports unused function parameters.
+    - unparam
+
+    # Checks Go code for unused constants, variables, functions and types.
+    - unused
+
+    # Finds unused global variables and constants.
+    - varcheck
+
+    # Finds wasted assignment statements.
+    #
+    # ```
+    # func f() int {
+    #   a := 0
+    #   b := 0
+    #   fmt.Print(a)
+    #   fmt.Print(b)
+    #   a = 1  // This reassignment is wasted, because never used afterwards. Wastedassign find this.
+    #
+    #   b = 1  // This reassignment is wasted, because reassigned without use this value. Wastedassign find this.
+    #   b = 2
+    #   fmt.Print(b)
+    #
+    #   return 1 + 2
+    # }
+    # ```
+    - wastedassign
+
+    # Finds leading and trailing whitespace.
+    - whitespace
+  disbale:
+    - megacheck
+
+issues:
+  # Maximum count of issues with the same text. Set to 0 to disable.
+  max-same-issues: 0
+# todo remove
+#  exclude:
+#    # In many cases it's normal to have 0644 permissions on file.
+#    - "G306: Expect WriteFile permissions to be 0600 or less"
+
+  include:
+    # ```
+    # switch ... {
+    #    case ...:
+    #       break <-- Will trigger an error at this line.
+    # }
+    # ```
+    - "ineffective break statement. Did you mean to break out of the outer loop"
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+        - errcheck
+        - goconst
+        - gocritic
+        - gocyclo
+        - gosec
+        - ifshort
+        - lll
+        - unparam
+
+    # Ignore long lines in comments.
+    - source: "^[ \t]*// "
+      linters:
+        - lll
+
+    # Ignore lll in lines with `nolint` (but without `lll` in ignored)
+    - source: "//nolint:[[:graph:]]*[^l]{3}[[:graph:]]*"
+      linters:
+        - lll
+
+    # Ignore to-do comments.
+    - source: "//[ \t]*todo"
+      linters:
+        - lll
+
+    # We already have bunch of code with that name convention, so it's okay for now
+    # to skip this check.
+    - source: "(Json|Uuid|Uri|jApi)"
+      linters:
+        - stylecheck
+
+    # Skip for now, should refactor in the future
+    - text: "string `(: true|: false|null)` has \\d+ occurrences, make it a constant"
+      linters:
+        - goconst
+
+    # Skip for now, should refactor in the future
+    - text: "fieldalignment: struct with"
+      path: (_test\.go|internal/cmd|test/)
+
+severity:
+  default-severity: error
+  case-sensitive: false

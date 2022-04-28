@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"j/japi/catalog"
 	"log"
 	"net/http"
+
+	"github.com/jsightapi/jsight-api-go-library/catalog"
 )
 
 func httpResponse200(w http.ResponseWriter, b []byte) {

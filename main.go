@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"io"
-	"j/japi/kit"
 	"log"
 	"net/http"
+
+	"github.com/jsightapi/jsight-api-go-library/kit"
 )
 
 func main() {
@@ -26,9 +27,9 @@ func jdocExchangeFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
-	case "OPTIONS":
-		return
-	case "POST":
+	case http.MethodOptions:
+
+	case http.MethodPost:
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			httpResponse409(w, err)
