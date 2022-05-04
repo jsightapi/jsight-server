@@ -1,9 +1,9 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220427155423-7c489a57b5aa h1:2ax1u08xXQS0ku4j5M7ilC9FDmGrYD4He25dTHMQ9lo=
-github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220427155423-7c489a57b5aa/go.mod h1:X152Brrp/EcXkz2HNkGTHwVrwkZLuA6T02nTvfZJNQw=
-github.com/jsightapi/jsight-schema-go-library v0.0.0-20220426180928-6a830af498a5 h1:wILPGWoEgYRmA+Dbnq++iL0qbR26XEQ3UufaKapgprc=
-github.com/jsightapi/jsight-schema-go-library v0.0.0-20220426180928-6a830af498a5/go.mod h1:DhVaDHosRwijwgTxEAw8u3fw1zN6U1W/2bak371mSv8=
+github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220504135109-f2b74cac137a h1:6zXF8WXs+9N0bZVqDF7LYgic+3IqrEbgGwCx8nkgY+I=
+github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220504135109-f2b74cac137a/go.mod h1:0vcgcBuAKiTJRyvk5U8LwAMlGqoTqWTq6vm3QFPDbPw=
+github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220504105936-2fa7a1c7e47d h1:ssR6ghtJgoal6beZGQ8axPmBoy3rvJ6j/UzYVNZm+PU=
+github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220504105936-2fa7a1c7e47d/go.mod h1:DhVaDHosRwijwgTxEAw8u3fw1zN6U1W/2bak371mSv8=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb/go.mod h1:5ELEyG+X8f+meRWHuqUOewBOhvHkl7M76pdGEansxW4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

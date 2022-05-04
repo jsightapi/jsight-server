@@ -18,6 +18,8 @@ type allOfConstraintCompiler struct {
 	// compiledTypes a list of compiled schemas, or schemas that do not need to
 	// be compiled (within which the "all Of" rule is not used).
 	compiledTypes map[string]struct{}
+
+	foundTypes map[string]schema.Type
 }
 
 // CompileAllOf compile "allOf" rules in root schema, and in all types.
@@ -27,6 +29,7 @@ func CompileAllOf(rootSchema *schema.Schema) {
 		rootSchema:      rootSchema,
 		processingTypes: make(map[string]struct{}),
 		compiledTypes:   make(map[string]struct{}),
+		foundTypes:      make(map[string]schema.Type),
 	}
 
 	c.processSchema(rootSchema)
@@ -34,6 +37,10 @@ func CompileAllOf(rootSchema *schema.Schema) {
 	// In case allow is used only in types (not in the root schema).
 	for name := range rootSchema.TypesList() {
 		c.processType(name)
+	}
+
+	for n, t := range c.foundTypes {
+		rootSchema.AddType(n, t)
 	}
 }
 
@@ -78,6 +85,10 @@ func (c *allOfConstraintCompiler) extendWith(node schema.Node, name string) {
 		lex.File().Name(),
 	)
 	schem := c.processType(name)
+
+	for n, t := range schem.TypesList() {
+		c.foundTypes[n] = t
+	}
 
 	fromObject, ok := schem.RootNode().(*schema.ObjectNode)
 	if !ok {

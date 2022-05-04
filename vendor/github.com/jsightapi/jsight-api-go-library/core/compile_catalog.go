@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	jschema "github.com/jsightapi/jsight-schema-go-library"
+
 	"github.com/jsightapi/jsight-api-go-library/catalog"
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 	"github.com/jsightapi/jsight-api-go-library/notation"
@@ -30,7 +32,7 @@ func (core *JApiCore) ExpandRawPathVariableShortcuts() *jerr.JAPIError {
 	for i := 0; i < len(core.rawPathVariables); i++ {
 		r := &core.rawPathVariables[i]
 
-		for r.schema.ContentJSight.JsonType == shortcutStr {
+		for r.schema.ContentJSight.JsonType == jschema.JSONTypeShortcut {
 			typeName := r.schema.ContentJSight.Type
 			if typeName == "mixed" {
 				return r.pathDirective.KeywordError("The root schema object cannot have an OR rule")
@@ -62,7 +64,7 @@ func (core *JApiCore) CheckRawPathVariableSchemas() *jerr.JAPIError {
 }
 
 func checkPathSchema(s catalog.Schema) error {
-	if s.ContentJSight.JsonType != objectStr {
+	if s.ContentJSight.JsonType != jschema.JSONTypeObject {
 		return errors.New("the body of the Path DIRECTIVE must be an object")
 	}
 
@@ -83,7 +85,7 @@ func checkPathSchema(s catalog.Schema) error {
 	}
 
 	kv, ok := s.ContentJSight.Properties.Find(func(_ string, v *catalog.SchemaContentJSight) bool {
-		return v.JsonType == objectStr || v.JsonType == arrayStr
+		return v.JsonType == jschema.JSONTypeObject || v.JsonType == jschema.JSONTypeArray
 	})
 	if ok {
 		return fmt.Errorf("the multi-level property %q is not allowed in the Path directive", kv.Key)
@@ -317,7 +319,7 @@ func (core *JApiCore) processResponseAllOf() *jerr.JAPIError {
 }
 
 func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJSight, uut *catalog.StringSet) error {
-	if sc.JsonType != objectStr {
+	if sc.JsonType != jschema.JSONTypeObject {
 		return nil
 	}
 
@@ -330,13 +332,14 @@ func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJ
 
 	if rule, ok := sc.Rules.Get("allOf"); ok {
 		switch rule.JsonType {
-		case arrayStr:
-			for _, r := range rule.Items {
+		case jschema.JSONTypeArray:
+			for i := len(rule.Items) - 1; i >= 0; i-- {
+				r := rule.Items[i]
 				if err := core.inheritPropertiesFromUserType(sc, uut, r.ScalarValue); err != nil {
 					return err
 				}
 			}
-		case stringStr:
+		case jschema.JSONTypeString:
 			if err := core.inheritPropertiesFromUserType(sc, uut, rule.ScalarValue); err != nil {
 				return err
 			}
@@ -348,11 +351,11 @@ func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJ
 func (core *JApiCore) inheritPropertiesFromUserType(sc *catalog.SchemaContentJSight, uut *catalog.StringSet, userTypeName string) error {
 	ut, ok := core.catalog.UserTypes.Get(userTypeName)
 	if !ok {
-		return fmt.Errorf(`the user type "%s" not found`, userTypeName)
+		return fmt.Errorf(`the user type %q not found`, userTypeName)
 	}
 
-	if ut.Schema.ContentJSight.JsonType != objectStr {
-		return fmt.Errorf(`the user type "%s" is not an object`, userTypeName)
+	if ut.Schema.ContentJSight.JsonType != jschema.JSONTypeObject {
+		return fmt.Errorf(`the user type %q is not an object`, userTypeName)
 	}
 
 	if sc.Properties == nil {

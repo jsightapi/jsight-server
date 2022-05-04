@@ -1437,15 +1437,34 @@ func stateInAnnotationObjectKeyFirstLetter(s *Scanner, c byte) state {
 }
 
 func stateInAnnotationObjectKey(s *Scanner, c byte) state {
-	if s.boundary == 0 && (c == ':' || c == '\n' || c == '\r' || c == '\\') { //nolint:gocritic // todo rewrite this logic to switch
+	switch {
+	case s.boundary == 0 && c == ':':
 		return stateEndValue(s, c)
-	} else if c == s.boundary {
+
+	case c == s.boundary:
 		s.step = stateEndValue
-		return scanContinue
-	} else if c < 0x20 || c == '"' {
+
+	case c == ' ':
+		s.step = stateInAnnotationObjectKeyAfter
+
+	case c < 0x20 || (c == '"' || c == '\n' || c == '\r'):
 		panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
 	}
 	return scanContinue
+}
+
+func stateInAnnotationObjectKeyAfter(s *Scanner, c byte) state {
+	switch {
+	case s.boundary == 0 && c == ':':
+		return stateEndValue(s, c)
+
+	case c == s.boundary:
+		s.step = stateEndValue
+
+	case c == ' ':
+		return scanContinue
+	}
+	panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
 }
 
 func stateMultiLineAnnotationText(s *Scanner, c byte) state {

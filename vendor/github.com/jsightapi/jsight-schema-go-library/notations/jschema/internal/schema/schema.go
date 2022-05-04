@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
@@ -45,6 +45,13 @@ func (s *Schema) AddNamedType(name string, typ *Schema, rootFile *fs.File, begin
 	s.addType(name, typ, rootFile, begin)
 }
 
+// AddUnnamedType Adds an unnamed TYPE to the SCHEMA. Returns a unique name for the added TYPE.
+func (s *Schema) AddUnnamedType(typ *Schema, rootFile *fs.File, begin bytes.Index) string {
+	name := fmt.Sprintf("#%p", typ)
+	s.addType(name, typ, rootFile, begin)
+	return name
+}
+
 func (s *Schema) addType(name string, schema *Schema, rootFile *fs.File, begin bytes.Index) {
 	if _, ok := s.types[name]; ok {
 		panic(errors.Format(errors.ErrDuplicationOfNameOfTypes, name))
@@ -52,11 +59,8 @@ func (s *Schema) addType(name string, schema *Schema, rootFile *fs.File, begin b
 	s.types[name] = Type{schema, rootFile, begin}
 }
 
-// AddUnnamedType Adds an unnamed TYPE to the SCHEMA. Returns a unique name for the added TYPE.
-func (s *Schema) AddUnnamedType(typ *Schema, rootFile *fs.File, begin bytes.Index) string {
-	name := "#" + strconv.Itoa(len(s.types))
-	s.addType(name, typ, rootFile, begin)
-	return name
+func (s *Schema) AddType(n string, t Type) {
+	s.types[n] = t
 }
 
 func (s *Schema) SetRootNode(node Node) {
