@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	jschema "github.com/jsightapi/jsight-schema-go-library"
+
 	"github.com/jsightapi/jsight-api-go-library/catalog"
 	"github.com/jsightapi/jsight-api-go-library/directive"
 	"github.com/jsightapi/jsight-api-go-library/jerr"
@@ -19,8 +21,8 @@ func (core *JApiCore) newPathVariables(properties map[string]prop) (*catalog.Pat
 	s := catalog.NewSchema(notation.SchemaNotationJSight)
 	s.ContentJSight = &catalog.SchemaContentJSight{
 		IsKeyShortcut: false,
-		JsonType:      objectStr,
-		Type:          objectStr,
+		JsonType:      jschema.JSONTypeObject,
+		Type:          jschema.JSONTypeObject,
 		Optional:      false,
 		Properties:    &catalog.Properties{},
 	}
@@ -37,7 +39,7 @@ func (core *JApiCore) newPathVariables(properties map[string]prop) (*catalog.Pat
 }
 
 func (core *JApiCore) collectUsedUserTypes(sc *catalog.SchemaContentJSight, usedUserTypes *catalog.StringSet) error {
-	if sc.JsonType == shortcutStr {
+	if sc.JsonType == jschema.JSONTypeShortcut {
 		// We have two different cases under "shortcut" type:
 		// 1. Single type like "@foo"
 		// 2. A list of types like "@foo | @bar"

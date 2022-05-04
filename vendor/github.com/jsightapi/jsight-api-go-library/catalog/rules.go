@@ -11,3 +11,10 @@ type Rules struct {
 	order []string
 	mx    sync.RWMutex
 }
+
+func NewRules(data map[string]Rule, order []string) *Rules {
+	return &Rules{
+		data:  data,
+		order: order,
+	}
+}
