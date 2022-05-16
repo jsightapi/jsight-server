@@ -28,40 +28,24 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
-    settings:
-      hugeParam:
-        # Size in bytes that makes the warning trigger.
-        # Default: 80
-        sizeThreshold: 255
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/jsightapi/jsight-server
+    local-prefixes: github.com/golangci/golangci-lint
   gomnd:
-    # List of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
+    # don't include the "operation" and "assign"
     checks:
       - argument
       - case
       - condition
-      - operation
       - return
-      - assign
-    # List of numbers to exclude from analysis.
-    # The numbers should be written as string.
-    # Values always ignored: "1", "1.0", "0" and "0.0"
     ignored-numbers:
-      - '0666'
-      - '0755'
-      - '42'
-    # List of file patterns to exclude from analysis.
-    # Values always ignored: `.+_test.go`
-    ignored-files:
-      - 'magic1_.*.go'
-    # List of function patterns to exclude from analysis.
-    # Values always ignored: `time.Time`
+      - '0'
+      - '1'
+      - '2'
+      - '3'
     ignored-functions:
-      - 'math.*'
-      - 'http.StatusText'
+      - strings.SplitN
 
   govet:
     check-shadowing: true
@@ -152,6 +136,7 @@ issues:
 
 run:
   timeout: 5m
+  go: '1.17' # TODO(ldez): we force to use an old version of Go for the CI and the tests.
   skip-dirs:
     - test/testdata_etc
     - internal/cache
