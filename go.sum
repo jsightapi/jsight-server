@@ -1,5 +1,7 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/jsightapi/datagram v0.0.0-20220517140453-60455ab91577 h1:OxdNkVTSu8oCCy0zA0eAxAPsxYd6LmNgrng/DDH3BXQ=
+github.com/jsightapi/datagram v0.0.0-20220517140453-60455ab91577/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
 github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220516153925-3ff55a4a18e3 h1:sBfKQNvOzWYHne1jNmwztT6qhSl7BRThkagcpm+4P9I=
 github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220516153925-3ff55a4a18e3/go.mod h1:MFMJzyzr+aGLnTAEBt3XUMKVJI5Kfqpc8su6uGgONqw=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220516153619-eafb74c2b7d1 h1:1PzC/ZmqpwpIJ8t7gseyHQbco6xAWGn78XL9y7+jTpw=

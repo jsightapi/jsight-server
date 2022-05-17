@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
+	"github.com/jsightapi/datagram"
+	"github.com/jsightapi/jsight-api-go-library/kit"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/jsightapi/jsight-api-go-library/kit"
+	"strconv"
 )
 
 func main() {
@@ -40,15 +41,19 @@ func jdocExchangeFile(w http.ResponseWriter, r *http.Request) {
 		je := j.ValidateJAPI()
 
 		if getBoolEnv("JSIGHT_SERVER_STATISTICS") {
-			e := event{
-				ClientIPv4:      getIP(r),
-				SourceType:      "Editor",
-				SourceID:        r.Header.Get("X-Browser-UUID"),
-				ProjectTitle:    j.Title(),
-				ProjectSize:     uint32(len(b)),
-				ProjectHasError: je != nil,
+			d := datagram.New()
+			d.Append("cid", r.Header.Get("X-Browser-UUID")) // Client ID
+			d.Append("cip", getIP(r))                       // Client IP
+			d.Append("at", "1")                             // Application Type
+			d.AppendTruncatable("pt", j.Title())            // Project title
+			d.Append("ps", strconv.Itoa(len(b)))            // Project size
+			if je != nil {
+				d.AppendTruncatable("pem", je.Error())                      // Project error message
+				d.Append("pel", strconv.FormatUint(uint64(je.Line()), 10))  // Project error line
+				d.Append("pei", strconv.FormatUint(uint64(je.Index()), 10)) // Project error index
 			}
-			err = sendToStatisticServer(e)
+
+			err = sendToStatisticServer(d.Pack())
 			if err != nil {
 				log.Print("... " + err.Error())
 			}

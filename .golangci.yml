@@ -46,6 +46,7 @@ linters-settings:
       - '3'
     ignored-functions:
       - strings.SplitN
+      - strconv.FormatUint
 
   govet:
     check-shadowing: true
@@ -82,7 +83,7 @@ linters:
     - gocritic
     - gocyclo
     - gofmt
-    - goimports
+#    - goimports
     - gomnd
     - goprintffuncname
     - gosec

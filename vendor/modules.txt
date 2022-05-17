@@ -1,6 +1,9 @@
 # github.com/davecgh/go-spew v1.1.0
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/jsightapi/datagram v0.0.0-20220517140453-60455ab91577
+## explicit; go 1.18
+github.com/jsightapi/datagram
 # github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220516153925-3ff55a4a18e3
 ## explicit; go 1.18
 github.com/jsightapi/jsight-api-go-library/catalog
