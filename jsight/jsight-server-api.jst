@@ -2,7 +2,7 @@ JSIGHT 0.3
 
 INFO
   Title "JSight Server API"
-  Version "0.4.0"
+  Version "2.0.0"
   Description
   (
     # Introduction
@@ -38,7 +38,7 @@ POST /parse-jsight
   200 @jdocExchange // Successfully parsed response.
     Headers
         {
-            "X-Jdoc-Exchange-Version": "0.4.0"
+            "X-Jdoc-Exchange-Version": "2.0.0"
         }
 
   409 @error // Any parsing error.
@@ -53,8 +53,8 @@ TYPE @error
 
 TYPE @jdocExchange
 {
-  "jdocExchangeVersion": "0.4.0",
-  "jsight": "0.3",
+  "jdocExchangeVersion": "2.0.0",                             // {const: true}
+  "jsight": "0.3",                                            // {const: true}
   "info": {                                                   // {optional: true}
     "title": "Catsbook API.",                                 // {optional: true}
     "version": "0.1",                                         // {optional: true}
