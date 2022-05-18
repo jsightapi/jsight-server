@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
-	"github.com/jsightapi/datagram"
-	"github.com/jsightapi/jsight-api-go-library/kit"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/jsightapi/datagram"
+	"github.com/jsightapi/jsight-api-go-library/kit"
 )
 
 func main() {

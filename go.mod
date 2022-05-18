@@ -3,9 +3,9 @@ module github.com/jsightapi/jsight-server
 go 1.18
 
 require (
-	github.com/jsightapi/datagram v0.0.0-20220517140453-60455ab91577
-	github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220516153925-3ff55a4a18e3
-	github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220516153619-eafb74c2b7d1
+	github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914
+	github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220518141617-220187ddfc06
+	github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220518141303-90f81f34b796
 	github.com/stretchr/testify v1.7.0
 )
 

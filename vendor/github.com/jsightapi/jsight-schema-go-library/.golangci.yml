@@ -1,6 +1,6 @@
 run:
-  go: '1.17' # TODO remove later https://github.com/golangci/golangci-lint/issues/2649
   timeout: 2m
+  go: '1.17' # TODO: we force to use an old version of Go for the CI and the tests.
   issues-exit-code: 1
   tests: true
   skip-dirs-use-default: true
