@@ -56,7 +56,7 @@ TYPE @cat
 			},
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
-				assert.Equal(t, `{"userTypes":{"@cat":{"schema":{"content":{"properties":{"id":{"jsonType":"number","type":"integer","scalarValue":"1","optional":false}},"jsonType":"object","type":"object","optional":false},"notation":"jsight"}}},"resourceMethods":{},"tags":{},"jdocExchangeFileSchemaVersion":"0.3.0","jsight":"0.3"}`, r.Body.String()) //nolint:lll
+				assert.Equal(t, `{"userTypes":{"@cat":{"schema":{"content":{"properties":{"id":{"jsonType":"number","type":"integer","scalarValue":"1","optional":false}},"jsonType":"object","type":"object","optional":false},"notation":"jsight"}}},"resourceMethods":{},"tags":{},"jdocExchangeFileSchemaVersion":"1.0.0","jsight":"0.3"}`, r.Body.String()) //nolint:lll
 			},
 		},
 

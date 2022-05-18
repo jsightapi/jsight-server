@@ -2,8 +2,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914 h1:KTR7IMQRFjObHteQQOnRUpBX9vfmdhTfgbTrDwgCqhs=
 github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
-github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220518141617-220187ddfc06 h1:8c9VufpsZtuSz2LsEL3eBoTCaXYQB8tKdg6vzP4QVIk=
-github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220518141617-220187ddfc06/go.mod h1:LrLy9Y9Ndd7RSebzdVfJ0VDtnmPAHHs1op98R8XyF1E=
+github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220518151514-b13543d9118c h1:AW7gWElsC4vTvtJt4a/F2Uql3N6k8HGQ4qwp5Qmn2/Q=
+github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220518151514-b13543d9118c/go.mod h1:LrLy9Y9Ndd7RSebzdVfJ0VDtnmPAHHs1op98R8XyF1E=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220518141303-90f81f34b796 h1:w7DcC0xJFlot4sCOs5im9PXXVPVmk+liAtp8J/f4Z1U=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220518141303-90f81f34b796/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=

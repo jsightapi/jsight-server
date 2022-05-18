@@ -8,7 +8,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/directive"
 )
 
-const JDocExchangeFileSchemaVersion = "0.3.0"
+const JDocExchangeFileSchemaVersion = "1.0.0"
 
 // Catalog is the main result of processing .jst file, represents all accumulated Api data more closely to API terms.
 // Has no direct connection to Directives but operates with models with similar structure, but in API terms.
