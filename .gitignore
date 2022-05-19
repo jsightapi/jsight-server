@@ -1,5 +1,4 @@
 .idea/
-vendor/
 *.iml
 .env
 /jsight-server
