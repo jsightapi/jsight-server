@@ -34,24 +34,20 @@ workflows:
           type: approval
           requires:
             - docker/publish
-      - common/refresh-container:
+      - common/trigger-deployment:
           filters: *release-tag-filter
           requires:
             - approve-production-deploy
           context: *common-context
-          host: ${HOST_PROD}
-          host-port: 8080
-          container-port: 8080
-          container-name: jsight-server
-          image: jsight/jsight-server
-          tag: latest
-      - common/notify-telegram:
-          filters: *release-tag-filter
-          requires:
-            - common/refresh-container
-          context: *common-context
-          message: >
-            Production Server updated from tag << pipeline.git.tag >>
+          project: &project-name jsight-server
+          env: prod
+          image: jsight/jsight-server:latest
+          notification-message: Production Jsight-Server updated from tag << pipeline.git.tag >>
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: production
+                environment: Production
 
   rc-branch:
     when:
@@ -62,26 +58,24 @@ workflows:
       - docker/publish: &dev-publish
           executor: common/vm-medium
           context: *common-context
-          image: &dev-image jsight/dev-jsight-server
+          image: jsight/dev-jsight-server
           tag: '<< pipeline.parameters.image-tag >>,stage_latest'
           extra_build_args: &docker_build_args '
              --build-arg CORS=true
              --build-arg STATISTICS=true'
-      - common/refresh-container: &dev-refresh
+      - common/trigger-deployment: &dev-trigger
           requires:
             - docker/publish
           context: *common-context
-          host: ${HOST_STAGE}
-          host-port: 8080
-          container-port: 8080
-          container-name: jsight-server
-          image: *dev-image
-          tag: << pipeline.parameters.image-tag >>
-      - common/notify-telegram: &dev-notify
-          requires:
-            - common/refresh-container
-          context: *common-context
-          message: Stage Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          project: *project-name
+          env: stage
+          image: jsight/dev-jsight-server:<< pipeline.parameters.image-tag >>
+          notification-message: Stage Jsight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: staging
+                environment: Staging
 
   dev-branch:
     when:
@@ -90,9 +84,12 @@ workflows:
       - docker/publish:
           <<: *dev-publish
           tag: '<< pipeline.parameters.image-tag >>,dev_latest'
-      - common/refresh-container:
-          <<: *dev-refresh
-          host: ${HOST_DEV}
-      - common/notify-telegram:
-          <<: *dev-notify
-          message: Dev Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+      - common/trigger-deployment:
+          <<: *dev-trigger
+          env: dev
+          notification-message: Dev JSight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: testing
+                environment: Test
