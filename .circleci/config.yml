@@ -2,42 +2,19 @@ version: 2.1
 
 orbs:
   docker: circleci/docker@2.0.3
-  common: jsight/common-ci@1.3.0
+  common: jsight/common-ci@1.3.2
 
 parameters:
-  fire:
-    description: Boolean parameter to control manual workflows. Set it to true when running from gui or api.
-    type: boolean
-    default: false
-  host-env:
-    type: enum
-    default: CRAZY
-    enum: [DEV, STAGE, CRAZY]
-  jschema-branch:
+  image-tag:
     type: string
-    default: dev
-  japi-branch:
-    type: string
-    default: dev
-  github-token:
-    type: string
-    default: $GITHUB_TOKEN
-  statistics-enabled:
-    type: boolean
-    default: true
-  cors-enabled:
-    type: boolean
-    default: true
-
+    default: ${CIRCLE_BRANCH/\//_}_${CIRCLE_SHA1}
 
 workflows:
   release-tag:
     when:
-      and:
-        - matches:
-            pattern: "^release-.*"
-            value: << pipeline.git.tag >>
-        - equal: [ true, << pipeline.parameters.fire >> ]
+      matches:
+        pattern: "^release-.*"
+        value: << pipeline.git.tag >>
     jobs:
       - docker/publish:
           filters: &release-tag-filter
@@ -50,12 +27,8 @@ workflows:
           before_build:
             - common/parse-versions
           extra_build_args: &docker_build_args '
-            --no-cache
-            --build-arg JSCHEMA_BRANCH=<< pipeline.parameters.jschema-branch >>
-            --build-arg JAPI_BRANCH=<< pipeline.parameters.japi-branch >>
-            --build-arg GITHUB_TOKEN=<< pipeline.parameters.github-token >>
-            --build-arg CORS=<< pipeline.parameters.cors-enabled >>
-            --build-arg STATISTICS=<< pipeline.parameters.statistics-enabled >>'
+            --build-arg CORS=false
+            --build-arg STATISTICS=true'
       - approve-production-deploy:
           filters: *release-tag-filter
           type: approval
@@ -78,39 +51,48 @@ workflows:
             - common/refresh-container
           context: *common-context
           message: >
-            Production server updated from tag << pipeline.git.tag >>
-            with jschema branch << pipeline.parameters.jschema-branch >>
-            and japi branch << pipeline.parameters.japi-branch >>
+            Production Server updated from tag << pipeline.git.tag >>
 
-  custom-dev:
+  rc-branch:
     when:
-      equal: [ true, << pipeline.parameters.fire >> ]
+      matches:
+        pattern: "^rc/.*"
+        value: << pipeline.git.branch >>
     jobs:
-      - docker/publish:
-          context: *common-context
+      - docker/publish: &dev-publish
           executor: common/vm-medium
-          image: &dev_image jsight/dev-jsight-server
-          tag: &dev_tag ${DOCKER_TAG} # value available thx to pre-steps
-          extra_build_args: *docker_build_args
-          pre-steps: &dev-branches-pre-steps
-            - common/convert-to-valid-git-tag:
-                input: schema_<< pipeline.parameters.jschema-branch >>__api_<< pipeline.parameters.japi-branch >>__pipe_<< pipeline.number >>
-      - common/refresh-container:
+          context: *common-context
+          image: &dev-image jsight/dev-jsight-server
+          tag: '<< pipeline.parameters.image-tag >>,stage_latest'
+          extra_build_args: &docker_build_args '
+             --build-arg CORS=true
+             --build-arg STATISTICS=true'
+      - common/refresh-container: &dev-refresh
           requires:
             - docker/publish
           context: *common-context
-          host: ${HOST_<< pipeline.parameters.host-env >>}
+          host: ${HOST_STAGE}
           host-port: 8080
           container-port: 8080
           container-name: jsight-server
-          image: *dev_image
-          tag: *dev_tag
-          pre-steps: *dev-branches-pre-steps
-      - common/notify-telegram:
+          image: *dev-image
+          tag: << pipeline.parameters.image-tag >>
+      - common/notify-telegram: &dev-notify
           requires:
             - common/refresh-container
           context: *common-context
-          message: >
-            << pipeline.parameters.host-env >> server updated from branch << pipeline.git.branch >>
-            with jschema branch << pipeline.parameters.jschema-branch >>
-            and japi branch << pipeline.parameters.japi-branch >>
+          message: Stage Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+
+  dev-branch:
+    when:
+      equal: [ dev, << pipeline.git.branch >> ]
+    jobs:
+      - docker/publish:
+          <<: *dev-publish
+          tag: '<< pipeline.parameters.image-tag >>,dev_latest'
+      - common/refresh-container:
+          <<: *dev-refresh
+          host: ${HOST_DEV}
+      - common/notify-telegram:
+          <<: *dev-notify
+          message: Dev Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
