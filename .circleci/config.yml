@@ -17,7 +17,7 @@ workflows:
       - docker/publish: &base-publish
           executor: common/vm-medium
           context: &common-context online-editor-development
-          image: jsight/jsight-server
+          image: jsight/dev-jsight-server
           tag: '<< pipeline.parameters.image-tag >>,dev_latest'
           extra_build_args: &docker_build_args '
             --build-arg CORS=false
