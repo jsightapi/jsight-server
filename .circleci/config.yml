@@ -10,6 +10,51 @@ parameters:
     default: ${CIRCLE_BRANCH/\//_}_${CIRCLE_SHA1}
 
 workflows:
+  dev-branch:
+    when:
+      equal: [ dev, << pipeline.git.branch >> ]
+    jobs:
+      - docker/publish: &base-publish
+          executor: common/vm-medium
+          context: &common-context online-editor-development
+          image: jsight/jsight-server
+          tag: '<< pipeline.parameters.image-tag >>,dev_latest'
+          extra_build_args: &docker_build_args '
+            --build-arg CORS=false
+            --build-arg STATISTICS=true'
+      - common/trigger-deployment: &base-trigger
+          requires:
+            - docker/publish
+          context: *common-context
+          project: jsight-server
+          env: dev
+          image: jsight/dev-jsight-server:<< pipeline.parameters.image-tag >>
+          notification-message: Dev JSight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: testing
+                environment: Test
+
+  rc-branch:
+    when:
+      matches:
+        pattern: "^rc/.*"
+        value: << pipeline.git.branch >>
+    jobs:
+      - docker/publish:
+          <<: *base-publish
+          tag: '<< pipeline.parameters.image-tag >>,stage_latest'
+      - common/trigger-deployment:
+          <<: *base-trigger
+          env: stage
+          notification-message: Stage Jsight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: staging
+                environment: Staging
+
   release-tag:
     when:
       matches:
@@ -17,11 +62,10 @@ workflows:
         value: << pipeline.git.tag >>
     jobs:
       - docker/publish:
+          <<: *base-publish
           filters: &release-tag-filter
             tags:
               only: /^release-.*/
-          executor: common/vm-medium
-          context: &common-context online-editor-development
           image: jsight/jsight-server
           tag: '${FULL_VERSION},${MAJOR_VERSION},latest' # values available thx to before_build
           before_build:
@@ -35,11 +79,10 @@ workflows:
           requires:
             - docker/publish
       - common/trigger-deployment:
+          <<: *base-trigger
           filters: *release-tag-filter
           requires:
             - approve-production-deploy
-          context: *common-context
-          project: &project-name jsight-server
           env: prod
           image: jsight/jsight-server:latest
           notification-message: Production Jsight-Server updated from tag << pipeline.git.tag >>
@@ -48,48 +91,3 @@ workflows:
                 job_type: deployment
                 environment_type: production
                 environment: Production
-
-  rc-branch:
-    when:
-      matches:
-        pattern: "^rc/.*"
-        value: << pipeline.git.branch >>
-    jobs:
-      - docker/publish: &dev-publish
-          executor: common/vm-medium
-          context: *common-context
-          image: jsight/dev-jsight-server
-          tag: '<< pipeline.parameters.image-tag >>,stage_latest'
-          extra_build_args: &docker_build_args '
-             --build-arg CORS=true
-             --build-arg STATISTICS=true'
-      - common/trigger-deployment: &dev-trigger
-          requires:
-            - docker/publish
-          context: *common-context
-          project: *project-name
-          env: stage
-          image: jsight/dev-jsight-server:<< pipeline.parameters.image-tag >>
-          notification-message: Stage Jsight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
-          post-steps:
-            - jira/notify:
-                job_type: deployment
-                environment_type: staging
-                environment: Staging
-
-  dev-branch:
-    when:
-      equal: [ dev, << pipeline.git.branch >> ]
-    jobs:
-      - docker/publish:
-          <<: *dev-publish
-          tag: '<< pipeline.parameters.image-tag >>,dev_latest'
-      - common/trigger-deployment:
-          <<: *dev-trigger
-          env: dev
-          notification-message: Dev JSight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
-          post-steps:
-            - jira/notify:
-                job_type: deployment
-                environment_type: testing
-                environment: Test
