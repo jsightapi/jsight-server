@@ -20,7 +20,7 @@ workflows:
           context: &common-context online-editor-development
           image: jsight/dev-jsight-server
           tag: '<< pipeline.parameters.image-tag >>,dev_latest'
-          extra_build_args: &docker_build_args '
+          extra_build_args: '
             --build-arg CORS=false
             --build-arg STATISTICS=true'
       - common/trigger-deployment: &base-trigger
@@ -71,7 +71,7 @@ workflows:
           tag: '${FULL_VERSION},${MAJOR_VERSION},latest' # values available thx to before_build
           before_build:
             - common/parse-versions
-          extra_build_args: &docker_build_args '
+          extra_build_args: '
             --build-arg CORS=false
             --build-arg STATISTICS=true'
       - approve-production-deploy:
@@ -92,3 +92,15 @@ workflows:
                 job_type: deployment
                 environment_type: production
                 environment: Production
+
+  ci_test:
+    when:
+      equal: [ ci_separate_deploy, << pipeline.git.branch >> ]
+    jobs:
+      - docker/publish:
+          <<: *base-publish
+          tag: '<< pipeline.parameters.image-tag >>,ci_latest'
+      - common/trigger-deployment:
+          <<: *base-trigger
+          env: crazy
+          notification-message: Testing server deploy to crazy from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
