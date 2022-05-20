@@ -93,6 +93,7 @@ workflows:
                 environment_type: production
                 environment: Production
 
+
   ci_test:
     when:
       equal: [ ci_separate_deploy, << pipeline.git.branch >> ]
