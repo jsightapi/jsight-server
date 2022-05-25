@@ -21,7 +21,7 @@ workflows:
           image: jsight/dev-jsight-server
           tag: '<< pipeline.parameters.image-tag >>,dev_latest'
           extra_build_args: '
-            --build-arg CORS=false
+            --build-arg CORS=true
             --build-arg STATISTICS=true'
       - common/trigger-deployment: &base-trigger
           requires:
