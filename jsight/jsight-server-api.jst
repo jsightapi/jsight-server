@@ -66,8 +66,8 @@ TYPE @jdocExchange
   "tags": { // {additionalProperties: "@tag"}
     @tagName: @tag // {optional: true}
   },
-  "resources": {   // {additionalProperties: "@resource"}
-    @resourceId : @resource // { optional: true }
+  "interactions": {   // {additionalProperties: "@interaction"}
+    @interactionId : @interaction // { optional: true }
   },
   "userTypes": {      // {additionalProperties: "@userType", optional: true}
     @userTypeName: @userType // {optional: true}
@@ -77,16 +77,16 @@ TYPE @jdocExchange
   }
 }
 
-TYPE @resource
-  @httpResource | @jsonRpcResource
+TYPE @interaction
+  @httpInteraction | @jsonRpcInteraction
 
-TYPE @resourceId
-  @httpResourceId | @jsonRpcResourceId
+TYPE @interactionId
+  @httpInteractionId | @jsonRpcInteractionId
 
-TYPE @httpResourceId
+TYPE @httpInteractionId
   "http GET /cats/{id}" // {regex: "^http (?:GET|POST|PUT|PATCH|DELETE) \/.*"}
 
-TYPE @jsonRpcResourceId
+TYPE @jsonRpcInteractionId
   "json-rpc-2.0 /cats foo" // {regex: "^json-rpc-2.0 \/.* .+"}
 
 #---------------------------------------------- TAG -----------------------------------------------
@@ -100,41 +100,41 @@ TYPE @tag
   "title"          : "/cats",
   "annotation"     : "Brief description of the tag",
   "description"    : "Tag description", // {optional: true}
-  "resourceGroups" : [
-    @tagResourceGroup,
-    @tagResourceGroup
+  "interactionGroups" : [
+    @tagInteractionGroup,
+    @tagInteractionGroup
   ],
   "children" : {  // {additionalProperties: "@tagName"}
     @tagName : @tag // {optional: true}
   }
 }
 
-TYPE @tagResourceGroup
-  @tagHttpResourceGroup | @tagJsonRpcResourceGroup
+TYPE @tagInteractionGroup
+  @tagHttpInteractionGroup | @tagJsonRpcInteractionGroup
 
-TYPE @tagJsonRpcResourceGroup
+TYPE @tagJsonRpcInteractionGroup
 {
   "protocol": "json-rpc-2.0", // {const: true}
-  "resources": [
-    @jsonRpcResourceId,
-    @jsonRpcResourceId
+  "interactions": [
+    @jsonRpcInteractionId,
+    @jsonRpcInteractionId
   ]
 }
 
-TYPE @tagHttpResourceGroup
+TYPE @tagHttpInteractionGroup
 {
   "protocol": "http", // {const: true}
-  "resources": [
-    @httpResourceId,
-    @httpResourceId
+  "interactions": [
+    @httpInteractionId,
+    @httpInteractionId
   ]
 }
 
 #--------------------------------------------- JSON RPC -------------------------------------------
   
-TYPE @jsonRpcResource
+TYPE @jsonRpcInteraction
 {
-  "id"           : "json-rpc-2.0 /cats foo", // {type: "@jsonRpcResourceId"}
+  "id"           : "json-rpc-2.0 /cats foo", // {type: "@jsonRpcInteractionId"}
   "protocol"     : "json-rpc-2.0",           // {const: true}
   "path"         : "/cats",                  // {type: "@path"}
   "method"       : "foo",
@@ -156,9 +156,9 @@ TYPE @jsonRpcResource
 TYPE @httpMethodName
   "GET" // {enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]}
 
-TYPE @httpResource
+TYPE @httpInteraction
 {
-  "id"           : "http GET /cats", // {type: "@httpResourceId"}
+  "id"           : "http GET /cats", // {type: "@httpInteractionId"}
   "protocol"     : "http",           // {const: true}
   "httpMethod"   : "GET",            // {type: "@httpMethodName"}
   "path"         : "/cats",          // {type: "@path"}
@@ -265,36 +265,8 @@ TYPE @userRule
 #TYPE @link
 #{
 #  "type": "response.body", // {type: "@linkTypeEnum"}
-#  "address": @resourceAddress | @serverAddress
+#  "address": @interactionAddress | @serverAddress
 #}
-
-#TYPE @resourceAddress
-#{
-#  "resourceMethod"  : "GET /cats/{id}", // {type: "@resourceMethodId"}
-#  "httpResponseCode": "200"             // {type: "@httpResponseCode", optional: true}
-#}
-
-#TYPE @serverAddress
-#{
-#  "server": "@TEST_SERVER" // {type: "@serverName"}
-#}
-
-#TYPE @typeAddress
-#{
-#  "type": "@cat" // {type: "@userTypeName"}
-#}
-
-#TYPE @linkTypeEnum // Where can the link lead to
-#"resource.response.headers" /* {enum: [
-#                                  "server.baseUrl",
-#                                  "resource.path",
-#                                  "resource.query",
-#                                  "resource.request.headers",
-#                                  "resource.request.body",
-#                                  "resource.response.headers",
-#                                  "resource.response.body",
-#                                  "type"
-#                                ]}*/
 
 #---------------------------------------------- SERVER --------------------------------------------
 
