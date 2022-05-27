@@ -300,19 +300,19 @@ TYPE @schema
 
 TYPE @jsightSchemaElement
 {
-  # "parentJsonType": "array",      // {enum: [null, "object", "array"]}
-  "key"           : "cat",        // {optional: true, type: "string"} - Specified only if parent tokenType: "object".
-  "isKeyShortcut" : true,         // {optional: true, const: true} - Specified if reference is located in the key
-  # "index"         : 0,            // {optional: true} - Specified only if "parentType": "array".
-  "tokenType"     : "object",     // {type: "@tokenTypeEnum"}
-  "type"          : "@cat",       /* Calculated or explicitly specified element type (for an element card or a tabular
+#   "parentJsonType"  : "array",      // {enum: [null, "object", "array"]}
+  "key"              : "cat",        // {optional: true, type: "string"} - Specified only if parent tokenType: "object".
+  "isKeyUserTypeRef" : true,         // {optional: true, const: true} - Specified if reference is located in the key.
+#   "index"           : 0,            // {optional: true} - Specified only if "parentType": "array".
+  "tokenType"        : "object",     // {type: "@tokenTypeEnum"}
+  "type"             : "@cat",       /* Calculated or explicitly specified element type (for an element card or a tabular
                                      description of data). */
-  "optional"      : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
-  "scalarValue"   : "123",        /* {optional: true, type: "string"} - Specified only if the "tokenType" is specified
+  "optional"         : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
+  "scalarValue"      : "123",        /* {optional: true, type: "string"} - Specified only if the "tokenType" is specified
                                                   "string", "number", "boolean", "annotation", "reference" or "null". */
-  "inheritedFrom" : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
+  "inheritedFrom"    : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
                                                             specified if it is inherited through the 'allOf' rule. */
-  "note"          : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
+  "note"             : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
   "rules": {                      // {additionalProperties: "@rule", optional: true}
     @ruleName : @rule             // {optional: true}
   },
