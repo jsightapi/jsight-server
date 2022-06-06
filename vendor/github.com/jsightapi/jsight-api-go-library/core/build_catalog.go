@@ -53,23 +53,24 @@ func (core *JApiCore) buildUserTypes() *jerr.JAPIError {
 		}
 	})
 
-	err := core.userTypes.Each(func(k string, v jschemaLib.Schema) error {
-		if _, ok := core.processedUserTypes[k]; ok {
+	err := core.userTypes.Each(func(name string, currUT jschemaLib.Schema) error {
+		if _, ok := core.processedUserTypes[name]; ok {
 			// This user type already built, skip.
 			return nil
 		}
+		core.processedUserTypes[name] = struct{}{}
 
 		dd := core.catalog.GetRawUserTypes()
 
-		tt, err := core.getUsedUserTypes(v)
+		tt, err := core.getUsedUserTypes(currUT)
 		if err != nil {
-			return jschemaToJAPIError(err, dd.GetValue(k))
+			return jschemaToJAPIError(err, dd.GetValue(name))
 		}
 
 		alreadyAddedTypes := map[string]struct{}{}
 
 		for _, n := range tt {
-			if n != k {
+			if n != name {
 				if err := core.buildUserType(n); err != nil {
 					return err
 				}
@@ -81,15 +82,26 @@ func (core *JApiCore) buildUserTypes() *jerr.JAPIError {
 			}
 
 			if _, ok := alreadyAddedTypes[n]; !ok {
-				if err := safeAddType(v, n, ut); err != nil {
+				if n != name {
+					if err := ut.Check(); err != nil {
+						return jschemaToJAPIError(err, dd.GetValue(n))
+					}
+				}
+
+				if err := safeAddType(currUT, n, ut); err != nil {
 					return jschemaToJAPIError(err, dd.GetValue(n))
 				}
 				alreadyAddedTypes[n] = struct{}{}
 			}
 		}
 
-		core.processedUserTypes[k] = struct{}{}
-		core.userTypes.Set(k, v)
+		// Check user type is correct.
+		// We should do it here 'cause it will simplify further processing.
+		if err := currUT.Check(); err != nil {
+			return jschemaToJAPIError(err, dd.GetValue(name))
+		}
+
+		core.userTypes.Set(name, currUT)
 
 		return nil
 	})
@@ -142,6 +154,12 @@ func (core *JApiCore) buildUserType(name string) *jerr.JAPIError {
 		}
 
 		if _, ok := alreadyAddedTypes[n]; !ok {
+			if n != name {
+				if err := core.checkUserTypeDuringBuild(n, ut); err != nil {
+					return jschemaToJAPIError(err, dd.GetValue(n))
+				}
+			}
+
 			if err := safeAddType(currUT, n, ut); err != nil {
 				return jschemaToJAPIError(err, dd.GetValue(n))
 			}
@@ -149,9 +167,24 @@ func (core *JApiCore) buildUserType(name string) *jerr.JAPIError {
 		}
 	}
 
+	// Check user type is correct.
+	// We should do it here 'cause it will simplify further processing.
+	if err := currUT.Check(); err != nil {
+		return jschemaToJAPIError(err, dd.GetValue(name))
+	}
+
 	core.userTypes.Set(name, currUT)
 
 	return nil
+}
+
+func (core *JApiCore) checkUserTypeDuringBuild(name string, ut jschemaLib.Schema) error {
+	// In order to prevent errors in type recursion.
+	if _, ok := core.processedUserTypes[name]; ok {
+		return nil
+	}
+
+	return ut.Check()
 }
 
 func safeAddType(curr jschemaLib.Schema, n string, ut jschemaLib.Schema) error {
