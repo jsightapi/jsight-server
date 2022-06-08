@@ -29,15 +29,15 @@ func CheckRootSchema(rootSchema *schema.Schema) {
 	}
 
 	if rootSchema.RootNode() != nil { // the root schema may contain no nodes
-		c.checkNode(rootSchema.RootNode(), nil)
+		c.checkNode(rootSchema.RootNode(), rootSchema.TypesList())
 	}
 
 	for name, typ := range rootSchema.TypesList() {
-		c.checkType(name, typ)
+		c.checkType(name, typ, rootSchema.TypesList())
 	}
 }
 
-func (c *checkSchema) checkType(name string, typ schema.Type) {
+func (c *checkSchema) checkType(name string, typ schema.Type, ss map[string]schema.Type) {
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -54,7 +54,20 @@ func (c *checkSchema) checkType(name string, typ schema.Type) {
 		panic(r)
 	}()
 
-	c.checkNode(typ.Schema().RootNode(), typ.Schema().TypesList())
+	c.checkNode(typ.Schema().RootNode(), mergeTypes(ss, typ.Schema().TypesList()))
+}
+
+func mergeTypes(tt1, tt2 map[string]schema.Type) map[string]schema.Type {
+	if len(tt1) == 0 {
+		return tt2
+	}
+	if len(tt2) == 0 {
+		return tt1
+	}
+	for k, v := range tt1 {
+		tt2[k] = v
+	}
+	return tt2
 }
 
 func (c *checkSchema) checkerList(node schema.Node, ss map[string]schema.Type) []nodeChecker {
