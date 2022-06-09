@@ -59,7 +59,7 @@ func longestWhitespacePrefix(bb [][]byte) []byte {
 }
 
 func splitLines(b []byte) [][]byte {
-	b = bytes.ReplaceAll(b, []byte{'\n', '\r'}, []byte{'\n'}) // Windows
+	b = bytes.ReplaceAll(b, []byte{'\r', '\n'}, []byte{'\n'}) // Windows
 	b = bytes.ReplaceAll(b, []byte{'\r'}, []byte{'\n'})       // Macintosh (old)
 	return bytes.Split(b, []byte{'\n'})
 }
