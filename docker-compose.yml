@@ -7,5 +7,5 @@ services:
       - JSIGHT_SERVER_CORS
       - JSIGHT_SERVER_STATISTICS
     ports:
-      - '${DOCKER_COMPOSE_HOST_PORT}:8080'
+      - '${HOST_PORT}:8080'
       
