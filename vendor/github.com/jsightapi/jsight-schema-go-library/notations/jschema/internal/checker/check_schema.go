@@ -54,20 +54,7 @@ func (c *checkSchema) checkType(name string, typ schema.Type, ss map[string]sche
 		panic(r)
 	}()
 
-	c.checkNode(typ.Schema().RootNode(), mergeTypes(ss, typ.Schema().TypesList()))
-}
-
-func mergeTypes(tt1, tt2 map[string]schema.Type) map[string]schema.Type {
-	if len(tt1) == 0 {
-		return tt2
-	}
-	if len(tt2) == 0 {
-		return tt1
-	}
-	for k, v := range tt1 {
-		tt2[k] = v
-	}
-	return tt2
+	c.checkNode(typ.Schema().RootNode(), ss)
 }
 
 func (c *checkSchema) checkerList(node schema.Node, ss map[string]schema.Type) []nodeChecker {
