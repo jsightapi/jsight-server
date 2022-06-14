@@ -2,7 +2,8 @@ package main
 
 import (
 	"errors"
-	"j/japi/jerr"
+
+	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
 type errorInfo struct {

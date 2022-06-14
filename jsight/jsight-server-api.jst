@@ -2,7 +2,7 @@ JSIGHT 0.3
 
 INFO
   Title "JDoc Exchange File Schema"
-  Version "0.3.0"
+  Version "1.0.0"
   Description
   (
     JDoc Exchange File Schema is described by TYPE @jdocExchange.
@@ -36,7 +36,7 @@ POST /api
   200 @jdocExchange // Successfully parsed response.
     Headers
         {
-            "X-Jdoc-Exchange-File-Schema-Version": "0.3.0"
+            "X-Jdoc-Exchange-File-Schema-Version": "1.0.0"
         }
 
   409 @error // Any parsing error.
@@ -51,8 +51,8 @@ TYPE @error
 
 TYPE @jdocExchange
 {
-  "jdocExchangeFileSchemaVersion": "0.3.0",
-  "jsight": "0.3",
+  "jdocExchangeFileSchemaVersion": "1.0.0",                   // {const: true}
+  "jsight": "0.3",                                            // {const: true}
   "info": {                                                   // {optional: true}
     "title": "Catsbook API.",                                 // {optional: true}
     "version": "0.1",                                         // {optional: true}
@@ -214,7 +214,7 @@ TYPE @userRule
 
 TYPE @link
 {
-  "type": "response.body", // {type: "@linkTypeEnum"}
+  "type": "resource.response.body", // {type: "@linkTypeEnum"}
   "address": @resourceAddress | @serverAddress
 }
 
@@ -283,8 +283,8 @@ TYPE @jsightSchemaElement
   "isKeyShortcut" : true,         // {optional: true, const: true} - Specified if shortcut is located in the key
   # "index"         : 0,            // {optional: true} - Specified only if "parentType": "array".
   "jsonType"      : "object",     // {type: "@jsonTypeEnum"}
-  "type"          : "@cat",       // Calculated or explicitly specified element type (for an element card or a tabular
-                                     description of data).
+  "type"          : "@cat",       /* Calculated or explicitly specified element type (for an element card or a tabular
+                                     description of data). */
   "optional"      : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
   "scalarValue"   : "123",        /* {optional: true} - Specified only if the "jsonType" is specified
                                                    "string", "number", "boolean", "annotation", "shortcut" or "null". */
@@ -330,8 +330,8 @@ TYPE @ruleName
 TYPE @rule
 {
   "jsonType"   : "object",   // {type: "@jsonTypeEnum"}
-  "scalarValue": "@cat",     // {optional: true} - Specified only if "jsonType" specifies "string", "number", "boolean",
-                                                   "annotation" or "null".
+  "scalarValue": "@cat",     /* {optional: true} - Specified only if "jsonType" specifies "string", "number", "boolean",
+                                                   "annotation" or "null". */
   "note"       : "Note to the \n rule.", // May contain line breaks.
   "properties" : {           /* {additionalProperties: "@ruleNameEnum", optional: true} 
                                  - Specified only if "jsonType": "object" */
