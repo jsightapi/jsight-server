@@ -1,0 +1,6 @@
+.env
+.env.example
+.gitignore
+.golangci.yml
+Dockerfile
+docker-compose.yml
