@@ -20,6 +20,7 @@ github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220608142925-ffc7adb01d
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220608142925-ffc7adb01d28/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220610155950-d0680a0b271b h1:9b0+ksbP39Zp7lN8Mv/MKrzB4NwyuzrecfEhsZmV4+o=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220610155950-d0680a0b271b/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
+github.com/jsightapi/jsight-schema-go-library v1.0.0 h1:LgvwT61R3oqJ4TGyz7+AApvFIJaMeMFrBbLKsPNuPPw=
 github.com/jsightapi/jsight-schema-go-library v1.0.0/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb/go.mod h1:5ELEyG+X8f+meRWHuqUOewBOhvHkl7M76pdGEansxW4=
