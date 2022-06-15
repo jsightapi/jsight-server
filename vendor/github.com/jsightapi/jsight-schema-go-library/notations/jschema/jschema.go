@@ -411,6 +411,7 @@ func (s *Schema) compile() error {
 			return
 		}
 		loader.CompileAllOf(s.inner)
+		loader.AddUnnamedTypes(s.inner)
 		checker.CheckRootSchema(s.inner)
 	})
 	return s.compileErr
