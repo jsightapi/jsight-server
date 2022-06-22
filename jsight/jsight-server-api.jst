@@ -72,7 +72,7 @@ TYPE @jdocExchange
   "userTypes": { // {additionalProperties: "@userType", optional: true}
     @userTypeName: @userType // {optional: true}
   },
-  "userRules": { // {additionalProperties: "@userRule", optional: true}
+  "userEnums": { // {additionalProperties: "@userRule", optional: true}
     @userRuleName : @userRule // {optional: true}
   }
 }
@@ -313,37 +313,13 @@ TYPE @jsightSchemaElement
   "inheritedFrom"    : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
                                                             specified if it is inherited through the 'allOf' rule. */
   "note"             : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
-  "rules": {                      // {additionalProperties: "@rule", optional: true}
-    @ruleName : @rule             // {optional: true}
-  },
+  "rules": [                      // {optional: true}
+    @rule
+  ],
   "children": [                   // {optional: true} - specified only if tokenType: "array" or "object".
     @jsightSchemaElement
   ]
 }
-
-TYPE @ruleName
-  "minLength" /* {enum: [
-                    "type",
-                    "optional",
-                    "nullable",
-                    "min",
-                    "max",
-                    "exclusiveMinimum",
-                    "exclusiveMaximum",
-                    "precision",
-                    "minLength",
-                    "maxLength",
-                    "regexp",
-                    "minItems",
-                    "maxItems",
-                    "or",
-                    "additionalProperties",
-                    "const",
-                    "serializeFormat",
-                    "serializedType",
-                    "enum",
-                    "allOf"
-                  ]} */
 
 TYPE @rule
 {
