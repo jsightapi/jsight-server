@@ -1,7 +1,7 @@
 package directive
 
 import (
-	by "bytes"
+	stdBytes "bytes"
 	"fmt"
 
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
@@ -13,8 +13,8 @@ import (
 func unescapeParameter(b bytes.Bytes) bytes.Bytes {
 	c := b.Unquote()
 	if len(c) != 0 && len(c) != len(b) {
-		c = by.ReplaceAll(c, []byte(`\"`), []byte(`"`))
-		c = by.ReplaceAll(c, []byte(`\\`), []byte(`\`))
+		c = stdBytes.ReplaceAll(c, []byte(`\"`), []byte(`"`))
+		c = stdBytes.ReplaceAll(c, []byte(`\\`), []byte(`\`))
 	}
 	return c
 }
@@ -31,67 +31,66 @@ func IsArrayOfTypes(b bytes.Bytes) bool {
 }
 
 func (d *Directive) AppendParameter(b bytes.Bytes) error {
-	var err error
-
 	b = unescapeParameter(b)
 	s := b.String()
 
-	switch d.Type() {
+	switch d.Type() { //nolint:exhaustive // We catch all uncovered enumeration.
 	case Url, Get, Post, Put, Patch, Delete:
-		err = d.SetParameter("Path", s)
+		return d.SetParameter("Path", s)
 
 	case Request, HTTPResponseCode, Body:
-		if _, e := notation.NewSchemaNotation(s); e == nil { //nolint:gocritic // ifElseChain: rewrite if-else to switch statement
-			err = d.SetParameter("SchemaNotation", s)
-		} else if IsArrayOfTypes(b) {
-			err = d.SetParameter("Type", b.String())
-		} else if b.IsUserTypeName() {
-			err = d.SetParameter("Type", s)
-		} else {
-			err = fmt.Errorf("%s %q", jerr.IncorrectParameter, s)
+		switch {
+		case isSchemaNotation(s):
+			return d.SetParameter("SchemaNotation", s)
+		case IsArrayOfTypes(b):
+			return d.SetParameter("Type", s)
+		case b.IsUserTypeName():
+			return d.SetParameter("Type", s)
 		}
 
 	case Type:
-		if _, e := notation.NewSchemaNotation(s); e == nil { //nolint:gocritic // ifElseChain: rewrite if-else to switch statement
-			err = d.SetParameter("SchemaNotation", s)
-		} else if IsArrayOfTypes(b) {
-			err = d.SetParameter("Name", b.String())
-		} else if b.IsUserTypeName() {
-			err = d.SetParameter("Name", s)
-		} else {
-			err = fmt.Errorf("%s %q", jerr.IncorrectParameter, s)
+		switch {
+		case isSchemaNotation(s):
+			return d.SetParameter("SchemaNotation", s)
+		case IsArrayOfTypes(b):
+			return d.SetParameter("Name", s)
+		case b.IsUserTypeName():
+			return d.SetParameter("Name", s)
 		}
 
 	case Query:
 		switch s {
 		case "htmlFormEncoded", "noFormat":
-			err = d.SetParameter("Format", s)
+			return d.SetParameter("Format", s)
 		default:
-			err = d.SetParameter("QueryExample", s)
+			return d.SetParameter("QueryExample", s)
 		}
 
-	case Jsight:
-		err = d.SetParameter("Version", s)
+	case Jsight, Version:
+		return d.SetParameter("Version", s)
 
 	case Title:
-		err = d.SetParameter("Title", s)
-
-	case Version:
-		err = d.SetParameter("Version", s)
+		return d.SetParameter("Title", s)
 
 	case BaseUrl:
-		err = d.SetParameter("Path", s)
+		return d.SetParameter("Path", s)
 
 	case Server, Enum, Macro, Paste:
 		if b.IsUserTypeName() {
-			err = d.SetParameter("Name", s)
-		} else {
-			err = fmt.Errorf("%s %q", jerr.IncorrectParameter, s)
+			return d.SetParameter("Name", s)
 		}
 
-	default:
-		err = fmt.Errorf("%s %q", jerr.IncorrectParameter, s)
+	case Protocol:
+		return d.SetParameter("Protocol", s)
+
+	case Method:
+		return d.SetParameter("Method", s)
 	}
 
-	return err
+	return fmt.Errorf("%s %q", jerr.IncorrectParameter, s)
+}
+
+func isSchemaNotation(s string) bool {
+	_, e := notation.NewSchemaNotation(s)
+	return e == nil
 }

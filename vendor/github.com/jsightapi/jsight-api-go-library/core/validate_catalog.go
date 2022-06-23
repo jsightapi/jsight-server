@@ -8,34 +8,34 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/notation"
 )
 
-func (core *JApiCore) validateCatalog() *jerr.JAPIError {
-	if err := core.validateInfo(); err != nil {
-		return err
+func (core *JApiCore) validateCatalog() *jerr.JApiError {
+	if je := core.validateInfo(); je != nil {
+		return je
 	}
 
-	if err := core.validateRequestBody(); err != nil {
-		return err
+	if je := core.validateRequestBody(); je != nil {
+		return je
 	}
 
-	if err := core.validateResponseBody(); err != nil {
-		return err
+	if je := core.validateResponseBody(); je != nil {
+		return je
 	}
 
-	if err := core.validateHeaders(); err != nil {
-		return err
+	if je := core.validateHeaders(); je != nil {
+		return je
 	}
 
 	return core.validateUsedUserTypes()
 }
 
-func (core *JApiCore) validateInfo() *jerr.JAPIError {
+func (core *JApiCore) validateInfo() *jerr.JApiError {
 	if core.catalog.Info != nil && core.catalog.Info.Title == "" && core.catalog.Info.Version == "" && core.catalog.Info.Description == nil {
 		return core.catalog.Info.Directive.KeywordError("empty info")
 	}
 	return nil
 }
 
-func (core *JApiCore) validateUsedUserTypes() *jerr.JAPIError {
+func (core *JApiCore) validateUsedUserTypes() *jerr.JApiError {
 	err := core.catalog.UserTypes.Each(func(k string, v *catalog.UserType) error {
 		if err := core.findUserTypes(v.Schema.UsedUserTypes); err != nil {
 			return v.Directive.BodyError(err.Error())
@@ -59,7 +59,7 @@ func (core *JApiCore) validateUsedUserTypes() *jerr.JAPIError {
 		return adoptError(err)
 	}
 
-	return adoptError(core.catalog.ResourceMethods.Each(func(k catalog.ResourceMethodId, v *catalog.ResourceMethod) error {
+	return adoptError(core.catalog.HttpInteractions.Each(func(k catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
 		if v.Query != nil && v.Query.Schema != nil {
 			if err := core.findUserTypes(v.Query.Schema.UsedUserTypes); err != nil {
 				return v.Query.Directive.BodyError(err.Error())
@@ -107,8 +107,8 @@ func (core *JApiCore) findUserTypes(uu *catalog.StringSet) error {
 	return nil
 }
 
-func (core *JApiCore) validateRequestBody() *jerr.JAPIError {
-	return adoptError(core.catalog.ResourceMethods.Each(func(k catalog.ResourceMethodId, v *catalog.ResourceMethod) error {
+func (core *JApiCore) validateRequestBody() *jerr.JApiError {
+	return adoptError(core.catalog.HttpInteractions.Each(func(k catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
 		r := v.Request
 		if r != nil && r.HTTPRequestBody == nil {
 			return r.Directive.KeywordError(fmt.Sprintf(`undefined request body for resource "%s"`, k.String()))
@@ -117,8 +117,8 @@ func (core *JApiCore) validateRequestBody() *jerr.JAPIError {
 	}))
 }
 
-func (core *JApiCore) validateResponseBody() *jerr.JAPIError {
-	return adoptError(core.catalog.ResourceMethods.Each(func(k catalog.ResourceMethodId, v *catalog.ResourceMethod) error {
+func (core *JApiCore) validateResponseBody() *jerr.JApiError {
+	return adoptError(core.catalog.HttpInteractions.Each(func(k catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
 		for _, response := range v.Responses {
 			if response.Body == nil {
 				return response.Directive.KeywordError(fmt.Sprintf(`undefined response body for resource "%s", HTTP-code "%s"`, k.String(), response.Code))
@@ -130,10 +130,10 @@ func (core *JApiCore) validateResponseBody() *jerr.JAPIError {
 
 func (core *JApiCore) isJsightCastToObject(schema *catalog.Schema) bool {
 	if schema != nil && schema.ContentJSight != nil && schema.Notation == notation.SchemaNotationJSight {
-		switch schema.ContentJSight.JsonType {
+		switch schema.ContentJSight.TokenType {
 		case "object":
 			return true
-		case "shortcut":
+		case "reference":
 			if userType, ok := core.catalog.UserTypes.Get(schema.ContentJSight.ScalarValue); ok {
 				return core.isJsightCastToObject(&userType.Schema)
 			}
@@ -142,8 +142,8 @@ func (core *JApiCore) isJsightCastToObject(schema *catalog.Schema) bool {
 	return false
 }
 
-func (core *JApiCore) validateHeaders() *jerr.JAPIError {
-	return adoptError(core.catalog.ResourceMethods.Each(func(_ catalog.ResourceMethodId, v *catalog.ResourceMethod) error {
+func (core *JApiCore) validateHeaders() *jerr.JApiError {
+	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
 		request := v.Request
 		if request != nil && request.HTTPRequestHeaders != nil && !core.isJsightCastToObject(request.HTTPRequestHeaders.Schema) {
 			return v.Request.HTTPRequestHeaders.Directive.BodyError(jerr.BodyMustBeObject)

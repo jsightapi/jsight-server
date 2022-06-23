@@ -1,9 +1,15 @@
 package loader
 
 import (
+	stdErrors "errors"
+	"fmt"
+	"strings"
+
+	jschemaLib "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
+	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/rules"
 )
 
 // Loader for "enum" rule value (array of literals). Ex: [123, 45.67, "abc", true, null]
@@ -15,17 +21,26 @@ type enumValueLoader struct {
 	// state machine).
 	stateFunc func(lexeme.LexEvent)
 
+	// rules a set of all available rules.
+	// Will be used for creating enum from one of rule.
+	rules map[string]jschemaLib.Rule
+
 	lastIdx int
 
 	// inProgress true - if loading in progress, false - if loading finisher.
 	inProgress bool
 }
 
-func newEnumValueLoader(enumConstraint *constraint.Enum) embeddedLoader {
-	l := new(enumValueLoader)
-	l.enumConstraint = enumConstraint
+func newEnumValueLoader(
+	enumConstraint *constraint.Enum,
+	rules map[string]jschemaLib.Rule,
+) embeddedLoader {
+	l := &enumValueLoader{
+		enumConstraint: enumConstraint,
+		inProgress:     true,
+		rules:          rules,
+	}
 	l.stateFunc = l.begin
-	l.inProgress = true
 	return l
 }
 
@@ -36,13 +51,15 @@ func (l *enumValueLoader) load(lex lexeme.LexEvent) bool {
 	return l.inProgress
 }
 
-// begin of array "["
+// begin of array "[", or "@"
 func (l *enumValueLoader) begin(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ArrayBegin:
 		l.stateFunc = l.arrayItemBeginOrArrayEnd
+	case lexeme.MixedValueBegin:
+		l.stateFunc = l.ruleNameBegin
 	default:
-		panic(errors.ErrArrayWasExpectedInEnumRule)
+		panic(errors.ErrInvalidValueInEnumRule)
 	}
 }
 
@@ -55,12 +72,6 @@ func (l *enumValueLoader) arrayItemBeginOrArrayEnd(lex lexeme.LexEvent) {
 	case lexeme.ArrayItemBegin:
 		l.stateFunc = l.literal
 	case lexeme.ArrayEnd:
-		// switch l.nodeTypesListConstraint().Len() {
-		// case 0:
-		// 	panic(common.ErrEmptyArrayInOrRule)
-		// case 1:
-		// 	panic(common.ErrOneElementInArrayInOrRule)
-		// }
 		l.stateFunc = l.endOfLoading
 		l.inProgress = false
 	case lexeme.InlineAnnotationBegin:
@@ -108,15 +119,62 @@ func (l *enumValueLoader) literal(lex lexeme.LexEvent) {
 
 // array item end
 func (l *enumValueLoader) arrayItemEnd(lex lexeme.LexEvent) {
-	switch lex.Type() {
-	case lexeme.ArrayItemEnd:
-		l.stateFunc = l.arrayItemBeginOrArrayEnd
-	default:
+	if lex.Type() != lexeme.ArrayItemEnd {
 		panic(errors.ErrLoader)
 	}
+	l.stateFunc = l.arrayItemBeginOrArrayEnd
 }
 
-// The method should not be called during normal operation. Ensures that the loader will not continue to work after the load is complete.
+// shortcutBeginOrArrayEnd process expected rule name.
+// ex: @ <--
+func (l *enumValueLoader) ruleNameBegin(lex lexeme.LexEvent) {
+	if lex.Type() != lexeme.TypesShortcutBegin {
+		panic(errors.ErrLoader)
+	}
+	l.stateFunc = l.ruleName
+}
+
+// ruleName process rule name
+func (l *enumValueLoader) ruleName(lex lexeme.LexEvent) {
+	if lex.Type() != lexeme.TypesShortcutEnd {
+		panic(errors.ErrLoader)
+	}
+
+	v := strings.TrimSpace(string(lex.Value()))
+
+	r, ok := l.rules[v]
+	if !ok {
+		panic(errors.Format(errors.ErrEnumRuleNotFound, v))
+	}
+
+	e, ok := r.(*rules.Enum)
+	if !ok {
+		panic(errors.Format(errors.ErrNotAnEnumRule, v))
+	}
+
+	vv, err := e.Values()
+	if err != nil {
+		panic(fmt.Errorf("Invalid enum %q: %s", v, getDetailsFromEnumError(err))) //nolint:stylecheck // It's expected.
+	}
+
+	l.enumConstraint.SetRuleName(v)
+	for _, v := range vv {
+		l.enumConstraint.Append(v)
+	}
+	l.stateFunc = l.endOfLoading
+	l.inProgress = false
+}
+
+func getDetailsFromEnumError(err error) string {
+	var de interface{ Message() string }
+	if stdErrors.As(err, &de) {
+		return de.Message()
+	}
+	return err.Error()
+}
+
+// The endOfLoading method should not be called during normal operation. Ensures
+// that the loader will not continue to work after the load is complete.
 func (*enumValueLoader) endOfLoading(lexeme.LexEvent) {
 	panic(errors.ErrLoader)
 }

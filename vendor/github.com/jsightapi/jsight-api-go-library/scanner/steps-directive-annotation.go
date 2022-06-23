@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateAnnotationSign2(s *Scanner, c byte) *jerr.JAPIError {
+func stateAnnotationSign2(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case AnnotationDelimiterPart:
 		s.step = stateAnnotationTextStart
@@ -17,13 +17,13 @@ func stateAnnotationSign2(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateAnnotationTextStart(s *Scanner, c byte) *jerr.JAPIError {
+func stateAnnotationTextStart(s *Scanner, c byte) *jerr.JApiError {
 	s.found(AnnotationBegin)
 	s.step = stateAnnotation
 	return stateAnnotation(s, c)
 }
 
-func stateAnnotation(s *Scanner, c byte) *jerr.JAPIError {
+func stateAnnotation(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case CommentSign:
 		s.foundAt(s.curIndex-1, AnnotationEnd)
@@ -37,13 +37,13 @@ func stateAnnotation(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateMultilineAnnotationTextStart(s *Scanner, c byte) *jerr.JAPIError {
+func stateMultilineAnnotationTextStart(s *Scanner, c byte) *jerr.JApiError {
 	s.foundAt(s.curIndex, AnnotationBegin)
 	s.step = stateMultilineAnnotation
 	return stateMultilineAnnotation(s, c)
 }
 
-func stateMultilineAnnotation(s *Scanner, c byte) *jerr.JAPIError {
+func stateMultilineAnnotation(s *Scanner, c byte) *jerr.JApiError {
 	if c == AnnotationDelimiterPart && s.data[s.curIndex-1] == '*' {
 		s.foundAt(s.curIndex-2, AnnotationEnd)
 		s.step = s.stepStack.Pop()

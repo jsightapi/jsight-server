@@ -3,6 +3,7 @@ package catalog
 import (
 	"errors"
 
+	jschemaLib "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/kit"
 
@@ -24,7 +25,8 @@ func NewHTTPResponseBody(
 	sn notation.SchemaNotation,
 	d directive.Directive,
 	tt *UserSchemas,
-) (HTTPResponseBody, *jerr.JAPIError) {
+	rr map[string]jschemaLib.Rule,
+) (HTTPResponseBody, *jerr.JApiError) {
 	body := HTTPResponseBody{
 		Format:    f,
 		Schema:    nil,
@@ -35,7 +37,7 @@ func NewHTTPResponseBody(
 	switch f {
 	case SerializeFormatJSON:
 		var err error
-		s, err = UnmarshalSchema(name, b, tt)
+		s, err = UnmarshalSchema(name, b, tt, rr)
 		if err != nil {
 			var e kit.Error
 			if errors.As(err, &e) {

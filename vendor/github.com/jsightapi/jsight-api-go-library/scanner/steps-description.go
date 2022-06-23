@@ -5,7 +5,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateDe(s *Scanner, c byte) *jerr.JAPIError {
+func stateDe(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 's':
 		s.step = stateDes
@@ -15,7 +15,7 @@ func stateDe(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDes(s *Scanner, c byte) *jerr.JAPIError {
+func stateDes(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'c':
 		s.step = stateDesc
@@ -25,7 +25,7 @@ func stateDes(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDesc(s *Scanner, c byte) *jerr.JAPIError {
+func stateDesc(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'r':
 		s.step = stateDescr
@@ -35,7 +35,7 @@ func stateDesc(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescr(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescr(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'i':
 		s.step = stateDescri
@@ -45,7 +45,7 @@ func stateDescr(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescri(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescri(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'p':
 		s.step = stateDescrip
@@ -55,7 +55,7 @@ func stateDescri(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescrip(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescrip(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 't':
 		s.step = stateDescript
@@ -65,7 +65,7 @@ func stateDescrip(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescript(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescript(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'i':
 		s.step = stateDescripti
@@ -75,7 +75,7 @@ func stateDescript(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescripti(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescripti(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'o':
 		s.step = stateDescriptio
@@ -85,7 +85,7 @@ func stateDescripti(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescriptio(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptio(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'n':
 		s.found(KeywordEnd)
@@ -97,13 +97,13 @@ func stateDescriptio(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescriptionTextBeginStarter(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionTextBeginStarter(s *Scanner, c byte) *jerr.JApiError {
 	s.found(TextBegin)
 	s.step = stateDescriptionTextBegin
 	return stateDescriptionTextBegin(s, c)
 }
 
-func stateDescriptionTextBegin(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionTextBegin(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseNewLine(c), caseWhitespace(c):
 		return nil
@@ -119,14 +119,14 @@ func stateDescriptionTextBegin(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescriptionTextBracketsInner(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionTextBracketsInner(s *Scanner, c byte) *jerr.JApiError {
 	if isNewLine(c) {
 		s.step = stateDescriptionTextBracketsInnerNewLine
 	}
 	return nil
 }
 
-func stateDescriptionTextBracketsInnerNewLine(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionTextBracketsInnerNewLine(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c), caseNewLine(c):
 		return nil
@@ -140,7 +140,7 @@ func stateDescriptionTextBracketsInnerNewLine(s *Scanner, c byte) *jerr.JAPIErro
 	}
 }
 
-func stateDescriptionText(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionText(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseNewLine(c):
 		s.step = stateDescriptionTextNewline
@@ -153,7 +153,7 @@ func stateDescriptionText(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDescriptionTextNewline(s *Scanner, c byte) *jerr.JAPIError {
+func stateDescriptionTextNewline(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c), caseNewLine(c):
 		return nil

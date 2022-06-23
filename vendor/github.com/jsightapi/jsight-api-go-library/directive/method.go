@@ -7,11 +7,11 @@ import (
 )
 
 func (d Directive) Method() (Enumeration, error) {
-	if d.Type().IsHTTPRequestMethod() { //nolint:gocritic
+	if d.Type().IsHTTPRequestMethod() {
 		return d.Type(), nil
 	} else if d.Parent != nil {
 		return d.Parent.Method()
-	} else {
-		return Get, errors.New(jerr.MethodNotFound)
 	}
+
+	return Get, errors.New(jerr.MethodNotFound)
 }

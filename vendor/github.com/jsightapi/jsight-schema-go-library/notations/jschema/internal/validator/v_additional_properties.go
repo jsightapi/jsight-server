@@ -1,8 +1,6 @@
 package validator
 
 import (
-	"fmt"
-
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
@@ -141,8 +139,4 @@ func (*additionalPropertiesValidator) feedNotAllowed(lex lexeme.LexEvent) ([]val
 		lex,
 		errors.Format(errors.ErrSchemaDoesNotSupportKey, lex.Value().Unquote().String())),
 	)
-}
-
-func (v additionalPropertiesValidator) log() string {
-	return fmt.Sprintf("%s [%p]", v.node_.Type().String(), v.node_)
 }

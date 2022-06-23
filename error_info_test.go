@@ -24,7 +24,7 @@ func Test_newErrorInfo(t *testing.T) {
 			},
 
 			"JAPI error": {
-				jerr.NewJAPIError("fake error", fs.NewFile("foo", []byte("123")), 2),
+				jerr.NewJApiError("fake error", fs.NewFile("foo", []byte("123")), 2),
 				errorInfo{
 					Status:  "Error",
 					Message: "fake error",

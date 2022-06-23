@@ -36,7 +36,10 @@ type DocumentError struct {
 	nl byte
 }
 
-var _ Error = DocumentError{}
+var (
+	_ Error = DocumentError{}
+	_ error = DocumentError{}
+)
 
 func NewDocumentError(file *fs.File, err Err) DocumentError {
 	return DocumentError{
@@ -96,30 +99,29 @@ func (e *DocumentError) SetMessage(message string) {
 
 // The method performs preparatory calculations, the results of which are used in other methods.
 func (e *DocumentError) preparation() {
-	if !e.prepared {
-		if e.file == nil {
-			panic("The file is not specified")
-		}
-		e.length = bytes.Index(len(e.file.Content()))
-		e.detectNewLineSymbol()
-		e.prepared = true
+	if e.prepared {
+		return
 	}
+
+	if e.file == nil {
+		panic("The file is not specified")
+	}
+	e.length = bytes.Index(len(e.file.Content()))
+	e.detectNewLineSymbol()
+	e.prepared = true
 }
 
 func (e *DocumentError) detectNewLineSymbol() {
 	content := e.file.Content()
 	e.nl = '\n' // default new line
 	var found bool
-	var i bytes.Index = 0
-	for i < e.length {
-		c := content[i]
+	for _, c := range content {
 		if c == '\n' || c == '\r' {
 			e.nl = c
 			found = true
 		} else if found { // first symbol after new line
 			break
 		}
-		i++
 	}
 }
 

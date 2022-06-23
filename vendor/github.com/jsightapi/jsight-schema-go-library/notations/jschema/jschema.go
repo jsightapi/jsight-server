@@ -14,6 +14,7 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/internal"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/checker"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/loader"
+	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/panics"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/scanner"
 	internalSchema "github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
@@ -24,6 +25,8 @@ import (
 type Schema struct {
 	file  *fs.File
 	inner *internalSchema.Schema
+
+	rules map[string]jschema.Rule
 
 	loadErr    error
 	compileErr error
@@ -38,8 +41,7 @@ type Schema struct {
 	loadOnce    sync.Once
 	compileOnce sync.Once
 
-	allowTrailingNonSpaceCharacters bool
-	areKeysOptionalByDefault        bool
+	areKeysOptionalByDefault bool
 }
 
 var _ jschema.Schema = &Schema{}
@@ -52,7 +54,8 @@ func New(name string, content []byte, oo ...Option) *Schema {
 // FromFile creates a Jsight schema from file.
 func FromFile(f *fs.File, oo ...Option) *Schema {
 	s := &Schema{
-		file: f,
+		file:  f,
+		rules: map[string]jschema.Rule{},
 	}
 
 	for _, o := range oo {
@@ -63,12 +66,6 @@ func FromFile(f *fs.File, oo ...Option) *Schema {
 }
 
 type Option func(s *Schema)
-
-func AllowTrailingNonSpaceCharacters() Option {
-	return func(s *Schema) {
-		s.allowTrailingNonSpaceCharacters = true
-	}
-}
 
 func KeysAreOptionalByDefault() Option {
 	return func(s *Schema) {
@@ -88,15 +85,15 @@ func (s *Schema) computeLen() (length uint, err error) {
 	// Iterate through all lexemes until we reach the end
 	// We should rewind here in case we call NextLexeme method.
 	defer func() {
-		err = handlePanic(recover(), err)
+		err = panics.Handle(recover(), err)
 	}()
 
-	return scanner.NewSchemaScanner(s.file, true).Length(), err
+	return scanner.New(s.file, scanner.ComputeLength).Length(), err
 }
 
 func (s *Schema) Example() (b []byte, err error) {
 	defer func() {
-		err = handlePanic(recover(), err)
+		err = panics.Handle(recover(), err)
 	}()
 
 	if err := s.load(); err != nil {
@@ -126,7 +123,7 @@ func buildExample(node internalSchema.Node) []byte {
 		for i, childNode := range children {
 			key := objectNode.Key(i)
 			b = append(b, '"')
-			b = append(b, []byte(key.Name)...)
+			b = append(b, []byte(key.Key)...)
 			b = append(b, '"', ':')
 			b = append(b, buildExample(childNode)...)
 			if i+1 != length {
@@ -160,7 +157,7 @@ func buildExample(node internalSchema.Node) []byte {
 
 func (s *Schema) AddType(name string, sc jschema.Schema) (err error) {
 	defer func() {
-		err = handlePanic(recover(), err)
+		err = panics.Handle(recover(), err)
 	}()
 
 	if err := s.load(); err != nil {
@@ -199,20 +196,32 @@ func (s *Schema) AddType(name string, sc jschema.Schema) (err error) {
 	return nil
 }
 
-func (*Schema) AddRule(string, jschema.Rule) error {
-	return stdErrors.New("not supported yet")
+func (s *Schema) AddRule(n string, r jschema.Rule) error {
+	if s.inner != nil {
+		return stdErrors.New("schema is already compiled")
+	}
+
+	if r == nil {
+		return stdErrors.New("rule is nil")
+	}
+
+	if err := r.Check(); err != nil {
+		return err
+	}
+	s.rules[n] = r
+	return nil
 }
 
 func (s *Schema) Check() (err error) {
 	defer func() {
-		err = handlePanic(recover(), err)
+		err = panics.Handle(recover(), err)
 	}()
 	return s.compile()
 }
 
 func (s *Schema) Validate(document jschema.Document) (err error) {
 	defer func() {
-		err = handlePanic(recover(), err)
+		err = panics.Handle(recover(), err)
 	}()
 	if err := s.compile(); err != nil {
 		return err
@@ -282,11 +291,12 @@ func (s *Schema) UsedUserTypes() ([]string, error) {
 func (s *Schema) load() error {
 	s.loadOnce.Do(func() {
 		defer func() {
-			s.loadErr = handlePanic(recover(), s.loadErr)
+			s.loadErr = panics.Handle(recover(), s.loadErr)
 		}()
 		sc := loader.LoadSchemaWithoutCompile(
-			scanner.NewSchemaScanner(s.file, s.allowTrailingNonSpaceCharacters),
+			scanner.New(s.file),
 			nil,
+			s.rules,
 		)
 		s.inner = &sc
 		s.astNode = s.buildASTNode()
@@ -370,7 +380,9 @@ func collectUserTypesFromAllOfConstraint(node internalSchema.Node, uu map[string
 }
 
 func collectUserTypesObjectNode(node *internalSchema.ObjectNode, uu map[string]struct{}) {
-	node.Keys().EachSafe(func(k string, v internalSchema.InnerObjectNodeKey) {
+	for _, v := range node.Keys().Data {
+		k := v.Key
+
 		if v.IsShortcut {
 			if k[0] == '@' {
 				uu[k] = struct{}{}
@@ -381,7 +393,7 @@ func collectUserTypesObjectNode(node *internalSchema.ObjectNode, uu map[string]s
 		if ok {
 			collectUserTypes(c, uu)
 		}
-	})
+	}
 }
 
 func (s *Schema) buildASTNode() jschema.ASTNode {
@@ -389,8 +401,7 @@ func (s *Schema) buildASTNode() jschema.ASTNode {
 	if root == nil {
 		// This case will be handled in loader.CompileBasic.
 		return jschema.ASTNode{
-			Properties: &jschema.ASTNodes{},
-			Rules:      &jschema.RuleASTNodes{},
+			Rules: &jschema.RuleASTNodes{},
 		}
 	}
 
@@ -404,7 +415,7 @@ func (s *Schema) buildASTNode() jschema.ASTNode {
 func (s *Schema) compile() error {
 	s.compileOnce.Do(func() {
 		defer func() {
-			s.compileErr = handlePanic(recover(), s.compileErr)
+			s.compileErr = panics.Handle(recover(), s.compileErr)
 		}()
 		if err := s.load(); err != nil {
 			s.compileErr = err
@@ -415,20 +426,4 @@ func (s *Schema) compile() error {
 		checker.CheckRootSchema(s.inner)
 	})
 	return s.compileErr
-}
-
-func handlePanic(r interface{}, originErr error) error {
-	if originErr != nil {
-		return originErr
-	}
-
-	if r == nil {
-		return nil
-	}
-
-	rErr, ok := r.(error)
-	if !ok {
-		panic(r)
-	}
-	return rErr
 }

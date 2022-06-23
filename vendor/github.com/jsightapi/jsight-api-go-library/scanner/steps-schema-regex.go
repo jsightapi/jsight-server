@@ -6,7 +6,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateRegex(s *Scanner, c byte) *jerr.JAPIError {
+func stateRegex(s *Scanner, c byte) *jerr.JApiError {
 	if c != RegexDelimiter {
 		return s.japiErrorUnexpectedChar("in the regular expression", fmt.Sprintf("%q character", RegexDelimiter))
 	}
@@ -16,7 +16,7 @@ func stateRegex(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateRegexFirstChar(s *Scanner, c byte) *jerr.JAPIError {
+func stateRegexFirstChar(s *Scanner, c byte) *jerr.JApiError {
 	if c == RegexDelimiter {
 		return s.japiErrorUnexpectedChar("empty regex", "")
 	}
@@ -25,7 +25,7 @@ func stateRegexFirstChar(s *Scanner, c byte) *jerr.JAPIError {
 	return s.step(s, c)
 }
 
-func stateRegexBody(s *Scanner, c byte) *jerr.JAPIError {
+func stateRegexBody(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case RegexDelimiter:
 		s.foundAt(s.curIndex, TextEnd)
@@ -38,7 +38,7 @@ func stateRegexBody(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateRegexBodyAfterSlash(s *Scanner, _ byte) *jerr.JAPIError {
+func stateRegexBodyAfterSlash(s *Scanner, _ byte) *jerr.JApiError {
 	s.step = stateRegexBody
 	return nil
 }

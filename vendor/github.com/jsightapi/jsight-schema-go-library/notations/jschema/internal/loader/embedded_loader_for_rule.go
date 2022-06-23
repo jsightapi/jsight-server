@@ -18,6 +18,9 @@ type ruleLoader struct {
 	// rootSchema a scheme into which types can be added from the "or" rule.
 	rootSchema *schema.Schema
 
+	// rules all available rules.
+	rules map[string]jschema.Rule
+
 	// stateFunc a function for running a state machine (the current state of the
 	// state machine) to parse RULE that occur in the schema.
 	stateFunc func(lexeme.LexEvent)
@@ -34,11 +37,18 @@ type ruleLoader struct {
 	nodesPerCurrentLineCount uint
 }
 
-func newRuleLoader(node schema.Node, nodesPerCurrentLineCount uint, rootSchema *schema.Schema) *ruleLoader {
-	rl := new(ruleLoader)
-	rl.node = node
-	rl.rootSchema = rootSchema
-	rl.nodesPerCurrentLineCount = nodesPerCurrentLineCount
+func newRuleLoader(
+	node schema.Node,
+	nodesPerCurrentLineCount uint,
+	rootSchema *schema.Schema,
+	rules map[string]jschema.Rule,
+) *ruleLoader {
+	rl := &ruleLoader{
+		node:                     node,
+		rootSchema:               rootSchema,
+		nodesPerCurrentLineCount: nodesPerCurrentLineCount,
+		rules:                    rules,
+	}
 	rl.stateFunc = rl.begin
 	return rl
 }
@@ -91,7 +101,19 @@ func (rl *ruleLoader) commentTextEnd(lex lexeme.LexEvent) {
 func (rl *ruleLoader) ruleKeyOrObjectEnd(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ObjectKeyBegin, lexeme.NewLine:
-		return
+	case lexeme.ObjectKeyEnd:
+		rl.ruleNameLex = lex
+		rl.stateFunc = rl.ruleValueBegin
+	case lexeme.ObjectEnd:
+		rl.stateFunc = rl.commentTextBegin
+	default:
+		panic(errors.ErrLoader)
+	}
+}
+
+func (rl *ruleLoader) objectEndAfterRuleName(lex lexeme.LexEvent) {
+	switch lex.Type() {
+	case lexeme.ObjectKeyBegin, lexeme.ObjectValueEnd, lexeme.NewLine:
 	case lexeme.ObjectKeyEnd:
 		rl.ruleNameLex = lex
 		rl.stateFunc = rl.ruleValueBegin
@@ -130,7 +152,7 @@ func (rl *ruleLoader) ruleValue(lex lexeme.LexEvent) {
 	} else if ruleName == "enum" {
 		enumConstraint := constraint.NewEnum()
 		rl.node.AddConstraint(enumConstraint)
-		rl.embeddedValueLoader = newEnumValueLoader(enumConstraint)
+		rl.embeddedValueLoader = newEnumValueLoader(enumConstraint, rl.rules)
 		rl.stateFunc = rl.loadEmbeddedValue
 		rl.stateFunc(lex)
 		return
@@ -175,6 +197,8 @@ func (rl *ruleLoader) ruleValueEnd(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ObjectValueEnd:
 		rl.stateFunc = rl.ruleKeyOrObjectEnd
+	case lexeme.MixedValueEnd:
+		rl.stateFunc = rl.objectEndAfterRuleName
 	default:
 		panic(errors.ErrLoader)
 	}

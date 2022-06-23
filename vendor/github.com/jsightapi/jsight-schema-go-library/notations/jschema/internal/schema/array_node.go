@@ -113,7 +113,7 @@ func (n *ArrayNode) ASTNode() (jschema.ASTNode, error) {
 	l := len(n.children)
 
 	if l > 0 {
-		an.Items = make([]jschema.ASTNode, 0, l)
+		an.Children = make([]jschema.ASTNode, 0, l)
 	}
 
 	for _, c := range n.children {
@@ -121,7 +121,7 @@ func (n *ArrayNode) ASTNode() (jschema.ASTNode, error) {
 		if err != nil {
 			return jschema.ASTNode{}, err
 		}
-		an.Items = append(an.Items, cn)
+		an.Children = append(an.Children, cn)
 	}
 
 	return an, nil

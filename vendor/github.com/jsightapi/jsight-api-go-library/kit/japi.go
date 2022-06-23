@@ -3,12 +3,12 @@ package kit
 import (
 	"fmt"
 
+	"github.com/jsightapi/jsight-api-go-library/core"
+	"github.com/jsightapi/jsight-api-go-library/jerr"
+
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/reader"
-
-	"github.com/jsightapi/jsight-api-go-library/core"
-	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
 // JApi is an interface-level wrapper for JApiCore
@@ -18,12 +18,14 @@ type JApi struct {
 
 // NewJapi returns interface-level wrapper for JApiCore
 // Does not include .jst file validation. File validation should be called explicitly.
-func NewJapi(filepath string) (JApi, error) {
+func NewJapi(filepath string, oo ...core.Option) (JApi, error) {
 	f, err := readPanicFree(filepath)
 	if err != nil {
 		return JApi{}, err
 	}
-	return JApi{core.NewJApiCore(f)}, nil
+	return JApi{
+		core.NewJApiCore(f, oo...),
+	}, nil
 }
 
 func readPanicFree(filename string) (f *fs.File, err error) {
@@ -36,14 +38,14 @@ func readPanicFree(filename string) (f *fs.File, err error) {
 	return f, err
 }
 
-func NewJapiFromBytes(b bytes.Bytes) JApi {
+func NewJapiFromBytes(b bytes.Bytes, oo ...core.Option) JApi {
 	return JApi{
-		core.NewJApiCore(fs.NewFile("root", b)),
+		core.NewJApiCore(fs.NewFile("root", b), oo...),
 	}
 }
 
 // ValidateJAPI validates .jst file
-func (j *JApi) ValidateJAPI() *jerr.JAPIError {
+func (j *JApi) ValidateJAPI() *jerr.JApiError {
 	return j.core.ValidateJAPI()
 }
 

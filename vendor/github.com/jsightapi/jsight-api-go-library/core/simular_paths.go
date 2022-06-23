@@ -8,16 +8,16 @@ import (
 )
 
 func (core *JApiCore) checkSimilarPaths(pp []PathParameter) error {
-	for i := 0; i < len(pp); i++ {
-		path := removeLastSegment(pp[i].path)
+	for _, p := range pp {
+		path := removeLastSegment(p.path)
 
 		if v, ok := core.similarPaths[path]; ok {
-			if v != pp[i].parameter {
-				return fmt.Errorf("disallow the use of \"similar\" paths: \"/%s/{%s}\", \"/%s\"", path, v, pp[i].path)
+			if v != p.parameter {
+				return fmt.Errorf("disallow the use of \"similar\" paths: \"/%s/{%s}\", \"/%s\"", path, v, p.path)
 			}
 		}
 
-		core.similarPaths[path] = pp[i].parameter
+		core.similarPaths[path] = p.parameter
 	}
 	return nil
 }

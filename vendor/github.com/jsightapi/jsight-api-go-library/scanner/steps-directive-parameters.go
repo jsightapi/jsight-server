@@ -5,7 +5,7 @@ import (
 )
 
 // stateParameterOrAnnotation scans the parameters of directives, and its annotation
-func stateParameterOrAnnotation(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterOrAnnotation(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c):
 		s.step = stateParameterOrAnnotationAfterFirstSpace
@@ -23,7 +23,7 @@ func stateParameterOrAnnotation(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateParameterOrAnnotationAfterFirstSpace(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterOrAnnotationAfterFirstSpace(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c):
 		return nil
@@ -41,7 +41,7 @@ func stateParameterOrAnnotationAfterFirstSpace(s *Scanner, c byte) *jerr.JAPIErr
 	}
 }
 
-func stateParameterStart(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterStart(s *Scanner, c byte) *jerr.JApiError {
 	s.found(ParameterBegin)
 
 	switch c {
@@ -56,7 +56,7 @@ func stateParameterStart(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateParameterInQuoted(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterInQuoted(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseNewLine(c), EOF:
 		return s.japiErrorUnexpectedChar("in directive parameter", "closing quotation mark")
@@ -69,7 +69,7 @@ func stateParameterInQuoted(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateParameterInQuotedSlash(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterInQuotedSlash(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case '\\':
 		s.step = stateParameterInQuoted
@@ -81,7 +81,7 @@ func stateParameterInQuotedSlash(s *Scanner, c byte) *jerr.JAPIError {
 	return nil
 }
 
-func stateParameterWoQuoted(s *Scanner, c byte) *jerr.JAPIError {
+func stateParameterWoQuoted(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c), caseNewLine(c), CommentSign, EOF:
 		s.foundAt(s.curIndex-1, ParameterEnd)

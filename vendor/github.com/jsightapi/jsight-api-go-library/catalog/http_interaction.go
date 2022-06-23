@@ -1,6 +1,6 @@
 package catalog
 
-type ResourceMethod struct {
+type HttpInteraction struct {
 	Path          Path           `json:"path"`
 	Tags          []TagName      `json:"tags"`
 	PathVariables *PathVariables `json:"pathVariables,omitempty"`
@@ -12,8 +12,11 @@ type ResourceMethod struct {
 	HttpMethod    Method         `json:"httpMethod"`
 }
 
-func initResourceMethod(path Path, method Method, annotation string, tn TagName) ResourceMethod {
-	return ResourceMethod{
+func (hi HttpInteraction) path() Path {
+	return hi.Path
+}
+func initHttpInteraction(path Path, method Method, annotation string, tn TagName) HttpInteraction {
+	return HttpInteraction{
 		HttpMethod:    method,
 		Path:          path,
 		Tags:          []TagName{tn},

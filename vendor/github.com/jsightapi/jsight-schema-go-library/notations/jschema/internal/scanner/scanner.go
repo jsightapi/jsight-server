@@ -138,9 +138,9 @@ type Scanner struct {
 	// unfinishedLiteral a sign that a literal has been started but not completed.
 	unfinishedLiteral bool
 
-	// allowNonSpaceByteAfterTopLevelValue used when a file contains data after
-	// the schema (for example, in jApi).
-	allowNonSpaceByteAfterTopLevelValue bool
+	// lengthComputing used when a file contains data after the schema (for example,
+	// in jApi).
+	lengthComputing bool
 
 	// boundary the character of the bounding lines.
 	boundary byte
@@ -171,10 +171,10 @@ const (
 	contextTypeShortcut
 )
 
-func newScanner(file *fs.File) *Scanner {
+func New(file *fs.File, oo ...Option) *Scanner {
 	content := file.Content()
 
-	return &Scanner{
+	s := &Scanner{
 		step:            stateFoundRootValue,
 		file:            file,
 		data:            content,
@@ -185,16 +185,24 @@ func newScanner(file *fs.File) *Scanner {
 		context:         newContext(contextTypeInitial),
 		allowAnnotation: true,
 	}
-}
 
-func NewSchemaScanner(file *fs.File, allowNonSpaceByteAfterTopLevelValue bool) *Scanner {
-	s := newScanner(file)
-	s.allowNonSpaceByteAfterTopLevelValue = allowNonSpaceByteAfterTopLevelValue
+	for _, o := range oo {
+		o(s)
+	}
+
 	return s
 }
 
+type Option func(*Scanner)
+
+// ComputeLength switch scanner in length computing mode.
+// Scanner in this mode shouldn't be used for parsing.
+func ComputeLength(s *Scanner) {
+	s.lengthComputing = true
+}
+
 func (s *Scanner) Length() uint {
-	if !s.allowNonSpaceByteAfterTopLevelValue {
+	if !s.lengthComputing {
 		panic("Method not allowed")
 	}
 	var length uint
@@ -218,7 +226,7 @@ func (s *Scanner) Length() uint {
 	}
 	for ; length > 0; length-- {
 		c := s.data[length-1]
-		if !s.isSpace(c) {
+		if !bytes.IsSpace(c) {
 			break
 		}
 	}
@@ -291,20 +299,32 @@ func (s *Scanner) Next() (lexeme.LexEvent, bool) {
 
 func (s *Scanner) isFoundLastObjectEndOnAnnotation() (bool, lexeme.LexEventType) { //nolint:gocyclo // todo try to make this more readable
 	length := s.stack.Len()
-	if length >= 4 && //nolint:gocritic // todo rewrite this logic to switch
+
+	switch {
+	case length >= 5 &&
+		s.stack.Get(length-1).Type() == lexeme.TypesShortcutBegin &&
+		s.stack.Get(length-2).Type() == lexeme.MixedValueBegin &&
+		s.stack.Get(length-3).Type() == lexeme.ObjectValueBegin &&
+		s.stack.Get(length-4).Type() == lexeme.ObjectBegin &&
+		(s.stack.Get(length-5).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-5).Type() == lexeme.MultiLineAnnotationBegin):
+		return true, s.stack.Get(length - 5).Type()
+
+	case length >= 4 &&
 		s.stack.Get(length-1).Type() == lexeme.LiteralBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-3).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin) {
+		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin):
 		return true, s.stack.Get(length - 4).Type()
-	} else if length >= 3 &&
+
+	case length >= 3 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin) {
+		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin):
 		return true, s.stack.Get(length - 3).Type()
-	} else if length >= 2 &&
+
+	case length >= 2 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin) {
+		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin):
 		return true, s.stack.Get(length - 2).Type()
 	}
 	return false, lexeme.InlineAnnotationBegin
@@ -372,10 +392,6 @@ func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 		}
 	}
 	panic("Incorrect ending of the lexical event")
-}
-
-func (*Scanner) isSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
 func (s *Scanner) isNewLine(c byte) bool {
@@ -458,7 +474,7 @@ func stateFoundObjectKeyBeginOrEmpty(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -491,7 +507,7 @@ func stateFoundObjectKeyBegin(s *Scanner, c byte) state {
 		s.step = stateFoundObjectKeyBeginAfterNewLine
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -522,7 +538,7 @@ func stateFoundObjectKeyBeginAfterNewLine(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isCommentStart(c) {
@@ -647,7 +663,7 @@ func stateBeginValue(s *Scanner, c byte) state { //nolint:gocyclo // It's okay.
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -685,9 +701,6 @@ func stateBeginValue(s *Scanner, c byte) state { //nolint:gocyclo // It's okay.
 		s.unfinishedLiteral = true
 		return scanBeginLiteral
 	case '@': // beginning of OR shortcut
-		if s.annotation != annotationNone {
-			panic(s.newDocumentErrorAtCharacter("shortcut not allowed in annotation"))
-		}
 		s.step = stateTypesShortcutBeginOfSchemaName
 		s.unfinishedLiteral = true
 		return scanBeginTypesShortcut
@@ -731,7 +744,7 @@ func stateBeginString(s *Scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("looking for beginning of string"))
 }
 
-func stateEndValue(s *Scanner, c byte) state {
+func stateEndValue(s *Scanner, c byte) state { //nolint:gocyclo // Pretty readable though.
 	length := s.stack.Len()
 
 	if length == 0 { // json ex `{} `
@@ -773,6 +786,12 @@ func stateEndValue(s *Scanner, c byte) state {
 		finishShortcut(s)
 		return s.step(s, c)
 	}
+	if s.lengthComputing && t == lexeme.InlineAnnotationBegin {
+		s.annotation = annotationNone
+		_ = s.stack.Pop()
+		s.step = s.returnToStep.Pop()
+		return s.step(s, c)
+	}
 	panic(s.newDocumentErrorAtCharacter("at the end of value"))
 }
 
@@ -803,7 +822,7 @@ func stateAfterObjectKey(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -823,7 +842,7 @@ func stateAfterObjectValue(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -849,7 +868,7 @@ func stateAfterArrayItem(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -920,8 +939,8 @@ func stateEndTop(s *Scanner, c byte) state {
 		s.switchToComment()
 		return scanContinue
 
-	case !s.isSpace(c):
-		if s.allowNonSpaceByteAfterTopLevelValue {
+	case !bytes.IsSpace(c):
+		if s.lengthComputing {
 			if s.stack.Len() > 0 {
 				// Looks like we have invalid schema, and we should keep scanning.
 				s.hasTrailingCharacters = true
@@ -1270,7 +1289,7 @@ func stateMultiLineAnnotation(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
 	if c == '{' {
@@ -1286,7 +1305,7 @@ func stateMultiLineAnnotationEndAfterObject(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if s.isSpace(c) {
+	if bytes.IsSpace(c) {
 		return scanContinue
 	}
 	if c == '*' {

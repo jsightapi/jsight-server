@@ -199,12 +199,12 @@ func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) {
 		panic(lexeme.NewLexEventError(lex, err))
 	}()
 
-	node.Keys().EachSafe(func(k string, v schema.InnerObjectNodeKey) {
+	for _, v := range node.Keys().Data {
 		if v.IsShortcut {
 			lex = v.Lex
-			c.rootSchema.Type(k) // can panic
+			c.rootSchema.Type(v.Key) // can panic
 		}
-	})
+	}
 }
 
 func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]schema.Type) {

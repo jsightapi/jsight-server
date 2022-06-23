@@ -75,7 +75,7 @@ const (
 	ErrIncorrectRuleWithoutExample      ErrorCode = 803
 	ErrIncorrectRuleForSeveralNode      ErrorCode = 804
 	ErrLiteralValueExpected             ErrorCode = 805
-	ErrArrayWasExpectedInEnumRule       ErrorCode = 806
+	ErrInvalidValueInEnumRule           ErrorCode = 806
 	ErrIncorrectArrayItemTypeInEnumRule ErrorCode = 807
 	ErrUnacceptableValueInAllOfRule     ErrorCode = 808
 	ErrTypeNameNotFoundInAllOfRule      ErrorCode = 809
@@ -124,6 +124,12 @@ const (
 	// regex
 	ErrRegexUnexpectedStart ErrorCode = 1500
 	ErrRegexUnexpectedEnd   ErrorCode = 1501
+
+	// enum
+	ErrEnumArrayExpected  ErrorCode = 1600
+	ErrEnumIsHoldRuleName ErrorCode = 1601
+	ErrEnumRuleNotFound   ErrorCode = 1602
+	ErrNotAnEnumRule      ErrorCode = 1603
 )
 
 var errorFormat = map[ErrorCode]string{
@@ -196,7 +202,7 @@ var errorFormat = map[ErrorCode]string{
 	ErrIncorrectRuleWithoutExample:      "You cannot place a RULE on line without EXAMPLE",
 	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.",
 	ErrLiteralValueExpected:             "Literal value expected",
-	ErrArrayWasExpectedInEnumRule:       `An array was expected as a value for the "enum"`,
+	ErrInvalidValueInEnumRule:           `An array or rule name was expected as a value for the "enum"`,
 	ErrIncorrectArrayItemTypeInEnumRule: `Incorrect array item type in "enum". Only literals are allowed.`,
 	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`,
 	ErrTypeNameNotFoundInAllOfRule:      `Type name not found in "allOf" rule`,
@@ -243,6 +249,12 @@ var errorFormat = map[ErrorCode]string{
 	ErrUnnecessaryLexemeAfterTheEndOfEnum: `An unnecessary non-space character after the end of the enum`,
 	ErrRegexUnexpectedStart:               "Regex should starts with '/' character, but found %s",
 	ErrRegexUnexpectedEnd:                 "Regex should ends with '/' character, but found %s",
+
+	// enum
+	ErrEnumArrayExpected:  `An array was expected as a value for the "enum"`,
+	ErrEnumIsHoldRuleName: "Can't append specific value to enum initialized with rule name",
+	ErrEnumRuleNotFound:   "Enum rule %q not found",
+	ErrNotAnEnumRule:      "Rule %q not an Enum",
 }
 
 func (c ErrorCode) Code() ErrorCode {

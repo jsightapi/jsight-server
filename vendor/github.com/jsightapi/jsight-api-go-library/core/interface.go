@@ -6,8 +6,8 @@ import (
 )
 
 // ValidateJAPI should be used to check if .jst file is valid according to specification
-func (core *JApiCore) ValidateJAPI() *jerr.JAPIError {
-	return core.processJapiProject()
+func (core *JApiCore) ValidateJAPI() *jerr.JApiError {
+	return core.processJApiProject()
 }
 
 func (core *JApiCore) Catalog() *catalog.Catalog {

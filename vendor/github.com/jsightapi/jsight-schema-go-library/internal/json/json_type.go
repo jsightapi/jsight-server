@@ -84,7 +84,7 @@ func (t Type) IsLiteralType() bool {
 	return false
 }
 
-func (t Type) ToJSONType() string {
+func (t Type) ToTokenType() string {
 	switch t { //nolint:exhaustive // We return an empty string.
 	case TypeObject:
 		return "object"
@@ -99,7 +99,7 @@ func (t Type) ToJSONType() string {
 	case TypeNull:
 		return "null"
 	case TypeMixed:
-		return "shortcut"
+		return "reference"
 	}
 	return ""
 }

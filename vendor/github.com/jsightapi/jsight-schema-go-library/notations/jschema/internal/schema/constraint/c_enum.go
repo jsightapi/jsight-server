@@ -12,6 +12,7 @@ import (
 
 type Enum struct {
 	uniqueIdx map[string]struct{}
+	ruleName  string
 	items     []enumItem
 }
 
@@ -66,6 +67,14 @@ func (c *Enum) SetComment(idx int, comment string) {
 	c.items[idx].comment = comment
 }
 
+func (c *Enum) SetRuleName(s string) {
+	c.ruleName = s
+}
+
+func (c *Enum) RuleName() string {
+	return c.ruleName
+}
+
 func (c Enum) Validate(a jbytes.Bytes) {
 	for _, b := range c.items {
 		if bytes.Equal(a, b.value) {
@@ -78,12 +87,16 @@ func (c Enum) Validate(a jbytes.Bytes) {
 func (c Enum) ASTNode() jschema.RuleASTNode {
 	const source = jschema.RuleASTNodeSourceManual
 
+	if c.ruleName != "" {
+		return newRuleASTNode(jschema.JSONTypeShortcut, c.ruleName, source)
+	}
+
 	n := newRuleASTNode(jschema.JSONTypeArray, "", source)
 	n.Items = make([]jschema.RuleASTNode, 0, len(c.items))
 
 	for _, b := range c.items {
 		an := newRuleASTNode(
-			json.Guess(b.value).JsonType().ToJSONType(),
+			json.Guess(b.value).JsonType().ToTokenType(),
 			b.value.Unquote().String(),
 			source,
 		)

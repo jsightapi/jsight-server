@@ -5,15 +5,16 @@ import (
 )
 
 func IsHTTPResponseCode(s string) bool {
-	if code, err := strconv.Atoi(s); err == nil {
-		if s[0] == '0' {
-			return false
-		}
-		if isHTTPResponseCode(code) {
-			return true
-		}
+	code, err := strconv.Atoi(s)
+	if err != nil {
+		return false
 	}
-	return false
+
+	if s[0] == '0' {
+		return false
+	}
+
+	return isHTTPResponseCode(code)
 }
 
 func isHTTPResponseCode(code int) bool {

@@ -1,16 +1,15 @@
 package scanner
 
 import (
-	"encoding/json"
-
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/kit"
+	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/rules"
 
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateE(s *Scanner, c byte) *jerr.JAPIError {
+func stateE(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'N':
 		s.step = stateEN
@@ -20,7 +19,7 @@ func stateE(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateEN(s *Scanner, c byte) *jerr.JAPIError {
+func stateEN(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'U':
 		s.step = stateENU
@@ -30,7 +29,7 @@ func stateEN(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateENU(s *Scanner, c byte) *jerr.JAPIError {
+func stateENU(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'M':
 		s.found(KeywordEnd)
@@ -42,47 +41,74 @@ func stateENU(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateEnumBody(s *Scanner, c byte) *jerr.JAPIError {
+func stateEnumBody(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
+	case ContextOpenSign:
+		s.found(ContextOpen)
+		return nil
 	case caseWhitespace(c), caseNewLine(c):
 		return nil
 	case CommentSign:
 		return s.startComment()
 	case ArrayOpen:
-		return s.scanJsonArray(c)
+		return s.scanEnumBody(c)
 	default:
 		return s.japiErrorUnexpectedChar("after Enum directive", "")
 	}
 }
 
-// pass rest of the file to jsc scanner to find out where array ends
-func (s *Scanner) scanJsonArray(_ byte) *jerr.JAPIError {
-	s.found(JsonArrayBegin)
-	arrLength, je := s.readArrayWithJsc()
+func (s *Scanner) scanEnumBody(_ byte) *jerr.JApiError {
+	s.found(EnumBegin)
+	enumLength, je := s.readEnumWithJsc()
 	if je != nil {
 		return je
 	}
-	s.curIndex += bytes.Index(arrLength - 1)
-	s.step = stateJsonArrayClosed
+	if enumLength > 0 {
+		s.curIndex += bytes.Index(enumLength - 1)
+	}
+	s.step = stateEnumBodyClose
 	return nil
 }
 
-func (s *Scanner) readArrayWithJsc() (uint, *jerr.JAPIError) {
-	b := s.file.Content()
-	bb := b.Slice(s.curIndex, bytes.Index(b.Len()-1))
-	f := fs.NewFile("", bb)
-	jsonLength, err := kit.LengthOfJson(f)
+func stateEnumBodyClose(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case caseWhitespace(c):
+		s.foundAt(s.curIndex-1, EnumEnd)
+		s.step = stateEnumBodyEnded
+		return nil
+	case caseNewLine(c), EOF:
+		s.foundAt(s.curIndex-1, EnumEnd)
+		s.step = stateExpectKeyword
+		return nil
+	default:
+		return s.japiErrorUnexpectedChar("after enum", "")
+	}
+}
+
+// stateEnumBodyEnded any directive's body, not the "Body" directive
+// this state allows comments, because body was properly ended at least with whitespace
+func stateEnumBodyEnded(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case caseWhitespace(c):
+		return nil
+	case caseNewLine(c), EOF:
+		s.step = stateExpectKeyword
+		return nil
+	case CommentSign:
+		return s.startComment()
+	default:
+		return s.japiErrorUnexpectedChar("after enum body", "")
+	}
+}
+
+func (s *Scanner) readEnumWithJsc() (uint, *jerr.JApiError) {
+	fc := s.file.Content()
+	file := fs.NewFile("", fc.Slice(s.curIndex, bytes.Index(fc.Len()-1)))
+
+	l, err := rules.EnumFromFile(file).Len()
 	if err != nil {
+		err := kit.ConvertError(file, err)
 		return 0, s.japiError(err.Message(), s.curIndex+bytes.Index(err.Position()))
 	}
-
-	// validate that it is indeed array, not json (though that will never happen in current logic)
-	arr := bb[:jsonLength]
-	model := make([]interface{}, 0)
-	marshalErr := json.Unmarshal(arr, &model)
-	if marshalErr != nil {
-		return 0, s.japiError("ENUM body is not a json array", s.curIndex)
-	}
-
-	return jsonLength, nil
+	return l, nil
 }

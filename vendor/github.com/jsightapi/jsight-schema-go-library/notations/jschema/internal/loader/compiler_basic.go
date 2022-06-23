@@ -373,13 +373,13 @@ func (compile schemaCompiler) optionalConstraints(node schema.Node, indexOfNode 
 	if optional == nil {
 		if objectNode, ok := parentNode.(*schema.ObjectNode); ok {
 			if !compile.areKeysOptionalByDefault {
-				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Name)
+				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Key)
 			}
 		}
 	} else {
 		if objectNode, ok := parentNode.(*schema.ObjectNode); ok {
 			if !optional.(constraint.BoolKeeper).Bool() {
-				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Name)
+				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Key)
 			}
 			node.DeleteConstraint(constraint.OptionalConstraintType)
 		} else {

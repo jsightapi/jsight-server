@@ -10,5 +10,5 @@ import (
 // Does not compile allOf, in order that before there was a possibility to add
 // additional TYPES.
 func NewSchemaForSdk(file *fs.File, areKeysOptionalByDefault bool) *schema.Schema {
-	return LoadSchema(scanner.NewSchemaScanner(file, false), nil, areKeysOptionalByDefault)
+	return LoadSchema(scanner.New(file), nil, areKeysOptionalByDefault, nil)
 }

@@ -7,21 +7,21 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (core *JApiCore) collectMacro() *jerr.JAPIError {
+func (core *JApiCore) collectMacro() *jerr.JApiError {
 	for i := 0; i != len(core.directives); i++ {
 		if core.directives[i].Type() == directive.Macro {
 			if je := core.addMacro(core.directives[i]); je != nil {
 				return je
 			}
 
-			core.directives = removeDirectiveFromSlice(core.directives, i)
+			core.directives = append(core.directives[:i], core.directives[i+1:]...)
 			i--
 		}
 	}
 	return nil
 }
 
-func (core *JApiCore) addMacro(d *directive.Directive) *jerr.JAPIError {
+func (core *JApiCore) addMacro(d *directive.Directive) *jerr.JApiError {
 	if d.Annotation != "" {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}

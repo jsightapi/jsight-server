@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -129,10 +128,6 @@ func (v objectValidator) requiredKeysString() string {
 		keys = append(keys, k)
 	}
 	return strings.Join(keys, ", ")
-}
-
-func (v objectValidator) log() string {
-	return fmt.Sprintf("object [%p]", v.node_)
 }
 
 // validate with rules

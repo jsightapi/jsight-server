@@ -6,22 +6,22 @@ import (
 )
 
 type Tag struct {
-	ResourceMethods *TagResourceMethods
-	Children        *Tags
-	Name            TagName
-	Title           string
-	Description     string
+	InteractionGroups map[Protocol]TagInteractionGroup
+	Children          *Tags
+	Name              TagName
+	Title             string
+	Description       string
 }
 
 var _ json.Marshaler = &Tags{}
 
-func newEmptyTag(r ResourceMethodId) *Tag {
-	title := tagTitle(r.path.String())
+func newEmptyTag(r InteractionId) *Tag {
+	title := tagTitle(r.Path().String())
 	return &Tag{
-		ResourceMethods: &TagResourceMethods{},
-		Children:        &Tags{},
-		Title:           title,
-		Name:            tagName(title),
+		InteractionGroups: make(map[Protocol]TagInteractionGroup),
+		Children:          &Tags{},
+		Title:             title,
+		Name:              tagName(title),
 	}
 }
 
@@ -39,28 +39,31 @@ func tagTitle(path string) string {
 	return "/" + p[0]
 }
 
-func (t *Tag) appendResourceMethodId(r ResourceMethodId) {
-	list, ok := t.ResourceMethods.Get(r.path)
+func (t *Tag) appendInteractionId(k InteractionId) {
+	list, ok := t.InteractionGroups[k.Protocol()]
 	if !ok {
-		list = newResourceMethodIdList()
-		t.ResourceMethods.Set(r.path, list)
+		list = newTagInteractionGroup(k.Protocol())
+		t.InteractionGroups[k.Protocol()] = list
 	}
-	list.append(r)
+	list.append(k)
 }
 
 func (t *Tag) MarshalJSON() ([]byte, error) {
 	var data struct {
-		ResourceMethods *TagResourceMethods `json:"resourceMethods"`
-		Children        *Tags               `json:"children,omitempty"`
-		Name            TagName             `json:"name"`
-		Title           string              `json:"title"`
-		Description     string              `json:"description,omitempty"`
+		Children          *Tags                 `json:"children,omitempty"`
+		Name              TagName               `json:"name"`
+		Title             string                `json:"title"`
+		Description       string                `json:"description,omitempty"`
+		InteractionGroups []TagInteractionGroup `json:"interactionGroups"`
 	}
 
 	data.Name = t.Name
 	data.Title = t.Title
 	data.Description = t.Description
-	data.ResourceMethods = t.ResourceMethods
+	data.InteractionGroups = make([]TagInteractionGroup, 0, 2)
+	for _, g := range t.InteractionGroups {
+		data.InteractionGroups = append(data.InteractionGroups, g)
+	}
 	if t.Children.Len() > 0 {
 		data.Children = t.Children
 	}

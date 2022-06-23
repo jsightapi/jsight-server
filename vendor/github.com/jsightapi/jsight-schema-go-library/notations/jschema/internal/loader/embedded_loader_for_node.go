@@ -8,12 +8,26 @@ import (
 // This class is responsible for loading the JSON elements in the nodes of the internal representation of the SCHEMA.
 
 type nodeLoader struct {
-	schema                   *schema.Schema // Parameter from the main loader. The resulting schema
-	nodesPerCurrentLineCount *uint          // Parameter from the main loader. Counts the number of nodes in a line. To check because the rule cannot be added if there is more than one nodes suitable for this in the row.
-	leaf                     schema.Node    // The schema node which is processed in the moment. A schema is a tree of nodes. Starting from the root node, we fill the nodes with lexeme events. If necessary, new nodes are added. Thus, the complete scheme tree is constructed.
+	// The schema.
+	// Parameter from the main loader.
+	schema *schema.Schema
+
+	// nodesPerCurrentLineCount counts the number of nodes in a line. To check
+	// because the rule cannot be added if there is more than one node suitable
+	// for this in the row.
+	// Parameter from the main loader.
+	nodesPerCurrentLineCount *uint
+
+	// leaf a schema node which is processed at the moment. A schema is a tree of
+	// nodes. Starting from the root node, we fill the nodes with lexeme events.
+	// If necessary, new nodes are added. Thus, the complete scheme tree is constructed.
+	leaf schema.Node
 }
 
-func newNodeLoader(schem *schema.Schema, nodesPerCurrentLineCount *uint) *nodeLoader {
+func newNodeLoader(
+	schem *schema.Schema,
+	nodesPerCurrentLineCount *uint,
+) *nodeLoader {
 	return &nodeLoader{
 		schema:                   schem,
 		nodesPerCurrentLineCount: nodesPerCurrentLineCount,

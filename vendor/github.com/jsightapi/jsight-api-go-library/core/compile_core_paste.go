@@ -7,22 +7,22 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (core *JApiCore) processPaste() *jerr.JAPIError {
+func (core *JApiCore) processPaste() *jerr.JApiError {
 	core.directivesWithPastes = make([]*directive.Directive, 0, 200)
 	core.currentContextDirective = nil
-	return core.processDirectiveList(core.directives)
+	return core.processPasteDirectiveList(core.directives)
 }
 
-func (core *JApiCore) processDirectiveList(list []*directive.Directive) *jerr.JAPIError {
-	for i := 0; i != len(list); i++ {
-		if je := core.processDirective(list[i]); je != nil {
+func (core *JApiCore) processPasteDirectiveList(list []*directive.Directive) *jerr.JApiError {
+	for _, d := range list {
+		if je := core.processDirective(d); je != nil {
 			return je
 		}
 	}
 	return nil
 }
 
-func (core *JApiCore) processDirective(d *directive.Directive) *jerr.JAPIError {
+func (core *JApiCore) processDirective(d *directive.Directive) *jerr.JApiError {
 	if d.Type() == directive.Paste {
 		if je := core.processPasteDirective(d); je != nil {
 			return d.KeywordError(je.Error())
@@ -36,7 +36,7 @@ func (core *JApiCore) processDirective(d *directive.Directive) *jerr.JAPIError {
 	}
 
 	if d.Children != nil {
-		if je := core.processDirectiveList(d.Children); je != nil {
+		if je := core.processPasteDirectiveList(d.Children); je != nil {
 			return je
 		}
 	}
@@ -48,7 +48,7 @@ func (core *JApiCore) processDirective(d *directive.Directive) *jerr.JAPIError {
 	return nil
 }
 
-func (core *JApiCore) processPasteDirective(paste *directive.Directive) *jerr.JAPIError {
+func (core *JApiCore) processPasteDirective(paste *directive.Directive) *jerr.JApiError {
 	if paste.Annotation != "" {
 		return paste.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
@@ -65,5 +65,5 @@ func (core *JApiCore) processPasteDirective(paste *directive.Directive) *jerr.JA
 	}
 
 	// macro.Children != nil - checked above
-	return core.processDirectiveList(macro.Children)
+	return core.processPasteDirectiveList(macro.Children)
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateG(s *Scanner, c byte) *jerr.JAPIError {
+func stateG(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'E':
 		s.step = stateGE
@@ -14,7 +14,7 @@ func stateG(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateGE(s *Scanner, c byte) *jerr.JAPIError {
+func stateGE(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'T':
 		s.found(KeywordEnd)
@@ -26,7 +26,7 @@ func stateGE(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func statePO(s *Scanner, c byte) *jerr.JAPIError {
+func statePO(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'S':
 		s.step = statePOS
@@ -36,7 +36,7 @@ func statePO(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func statePOS(s *Scanner, c byte) *jerr.JAPIError {
+func statePOS(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'T':
 		s.found(KeywordEnd)
@@ -48,7 +48,7 @@ func statePOS(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func statePU(s *Scanner, c byte) *jerr.JAPIError {
+func statePU(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'T':
 		s.found(KeywordEnd)
@@ -60,7 +60,7 @@ func statePU(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func statePAT(s *Scanner, c byte) *jerr.JAPIError {
+func statePAT(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'C':
 		s.step = statePATC
@@ -70,7 +70,7 @@ func statePAT(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func statePATC(s *Scanner, c byte) *jerr.JAPIError {
+func statePATC(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'H':
 		s.found(KeywordEnd)
@@ -82,7 +82,7 @@ func statePATC(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDE(s *Scanner, c byte) *jerr.JAPIError {
+func stateDE(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'L':
 		s.step = stateDEL
@@ -92,7 +92,7 @@ func stateDE(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDEL(s *Scanner, c byte) *jerr.JAPIError {
+func stateDEL(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'E':
 		s.step = stateDELE
@@ -102,7 +102,7 @@ func stateDEL(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDELE(s *Scanner, c byte) *jerr.JAPIError {
+func stateDELE(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'T':
 		s.step = stateDELET
@@ -112,7 +112,7 @@ func stateDELE(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateDELET(s *Scanner, c byte) *jerr.JAPIError {
+func stateDELET(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'E':
 		s.found(KeywordEnd)

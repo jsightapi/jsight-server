@@ -43,14 +43,14 @@ func (b Bytes) TrimSpaces() Bytes {
 	left := 0
 	right := blen - 1
 
-	for ; left < blen && isSpace(b[left]); left++ {
+	for ; left < blen && IsSpace(b[left]); left++ {
 	}
 
 	if left >= blen {
 		return Bytes{}
 	}
 
-	for ; right > 0 && isSpace(b[right]); right-- {
+	for ; right > 0 && IsSpace(b[right]); right-- {
 	}
 
 	return b[left : right+1]
@@ -58,14 +58,15 @@ func (b Bytes) TrimSpaces() Bytes {
 
 func (b Bytes) TrimSpacesFromLeft() Bytes {
 	for i, c := range b {
-		if !isSpace(c) {
+		if !IsSpace(c) {
 			return b[i:]
 		}
 	}
 	return b
 }
 
-func isSpace(c byte) bool {
+// IsSpace return true if provided byte is space.
+func IsSpace(c byte) bool {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 

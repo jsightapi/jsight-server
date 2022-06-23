@@ -34,10 +34,20 @@ const (
 	Enum
 	Macro
 	Paste
+
+	// Include directive.
+	// This directive will be processed before we build a directive tree, so you
+	// won't see it.
+	Include
+
+	Protocol
+	Method
+	Params
+	Result
 )
 
 var (
-	ss = [...]string{
+	ss = []string{
 		"JSIGHT",
 		"INFO",
 		"Title",
@@ -61,6 +71,11 @@ var (
 		"ENUM",
 		"MACRO",
 		"PASTE",
+		"INCLUDE",
+		"Protocol",
+		"Method",
+		"Params",
+		"Result",
 	}
 	eeOnce sync.Once
 	ee     map[string]Enumeration
@@ -92,79 +107,81 @@ func NewDirectiveType(s string) (Enumeration, error) {
 }
 
 func (de Enumeration) IsHTTPRequestMethod() bool {
-	switch de {
+	switch de { //nolint:exhaustive // False-positive.
 	case Get, Post, Put, Patch, Delete:
 		return true
-	default:
-		return false
 	}
+	return false
 }
 
-func IsAllowedForRootContext(child Enumeration) bool {
-	switch child {
-	case Jsight, Url, Info, Server, Type, Enum,
-		Get, Post, Put, Patch, Delete, Macro, Paste:
+func (de Enumeration) IsAllowedForRootContext() bool {
+	switch de { //nolint:exhaustive // False-positive.
+	case Jsight, Info, Server, Url, Get, Post, Put, Patch, Delete, Type, Enum,
+		Macro, Paste:
 		return true
-	default:
-		return false
 	}
+	return false
 }
 
 func (de Enumeration) IsAllowedForDirectiveContext(child Enumeration) bool {
-	switch de {
-	case Url:
-		switch child {
-		case Path, Paste,
-			Get, Post, Put, Patch, Delete:
-			return true
-		default:
-			return false
-		}
-
-	case Get, Post, Put, Patch, Delete:
-		switch child {
-		case Description, Query, Path, Request, HTTPResponseCode, Paste:
-			return true
-		default:
-			return false
-		}
-
-	case HTTPResponseCode, Request:
-		switch child {
-		case Body, Headers, Paste:
-			return true
-		default:
-			return false
-		}
-
-	case Info:
-		switch child {
-		case Title, Version, Description, Paste:
-			return true
-		default:
-			return false
-		}
-
-	case Server:
-		switch child {
-		case BaseUrl, Paste:
-			return true
-		default:
-			return false
-		}
-
-	case Macro:
-		switch child {
-		case Info, Title, Version, Description, Server, BaseUrl, Url, Get, Post, Put, Patch, Delete, Body,
-			Request, HTTPResponseCode, Path, Headers, Query, Type, Enum, Paste:
-			return true
-		default:
-			return false
-		}
-
-	default: // Body, Query, Path, Description, Jsight, Type, Title, Version, BaseUrl, Paste
+	s, ok := directiveAllowedToDirectiveContext[de]
+	if !ok {
 		return false
 	}
+
+	_, ok = s[child]
+	return ok
+}
+
+// directiveAllowedToDirectiveContext a map between directive type and directive
+// types which can be placed into this directive context.
+var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{}{
+	Url:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method),
+	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	Patch:            createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	Delete:           createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	HTTPResponseCode: createEnumerationSet(Body, Headers, Paste),
+	Request:          createEnumerationSet(Body, Headers, Paste),
+	Info:             createEnumerationSet(Title, Version, Description, Paste),
+	Server:           createEnumerationSet(BaseUrl, Paste),
+	Method:           createEnumerationSet(Description, Params, Result),
+	Macro: createEnumerationSet(
+		Info,
+		Title,
+		Version,
+		Description,
+		Server,
+		BaseUrl,
+		Url,
+		Get,
+		Post,
+		Put,
+		Patch,
+		Delete,
+		Body,
+		Request,
+		HTTPResponseCode,
+		Path,
+		Headers,
+		Query,
+		Type,
+		Enum,
+		Paste,
+	),
+}
+
+func createEnumerationSet(ee ...Enumeration) map[Enumeration]struct{} {
+	if len(ee) == 0 {
+		return nil
+	}
+
+	res := make(map[Enumeration]struct{}, len(ee))
+	for _, e := range ee {
+		res[e] = struct{}{}
+	}
+	return res
 }
 
 func IsStartWithDirective(b bytes.Bytes) bool {

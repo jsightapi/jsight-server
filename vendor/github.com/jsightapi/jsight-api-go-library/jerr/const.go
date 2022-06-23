@@ -19,4 +19,5 @@ const (
 	CannotUseTheTypeAndSchemaNotationParametersTogether = "cannot use the Type and SchemaNotation parameters together"
 	IncorrectContextOfDirective                         = "incorrect context of directive"
 	ThereIsNoExplicitContextForClosure                  = "there is no explicit context for closure"
+	DirectiveNotAllowed                                 = "directive not allowed"
 )

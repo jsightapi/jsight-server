@@ -8,12 +8,12 @@ func (s *contextStack) Push(v context) {
 }
 
 func (s *contextStack) Pop() context {
-	v := s.Peek()
+	v := s.peek()
 	*s = (*s)[:len(*s)-1]
 	return v
 }
 
-func (s *contextStack) Peek() context {
+func (s *contextStack) peek() context {
 	l := len(*s)
 	if l == 0 {
 		panic("Reading from empty stack")

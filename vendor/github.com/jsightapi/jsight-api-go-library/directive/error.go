@@ -1,6 +1,8 @@
 package directive
 
 import (
+	"github.com/jsightapi/jsight-schema-go-library/fs"
+
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
@@ -8,21 +10,27 @@ import (
 
 // TODO error interface as parameter functions. Wrap error.
 
-func (d Directive) KeywordError(msg string) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, d.keywordCoords.File(), d.keywordCoords.b)
+func (d Directive) KeywordError(msg string) *jerr.JApiError {
+	return d.makeError(msg, d.keywordCoords.File(), d.keywordCoords.begin)
 }
 
-func (d Directive) BodyError(msg string) *jerr.JAPIError {
+func (d Directive) BodyError(msg string) *jerr.JApiError {
 	if d.BodyCoords.IsSet() {
-		return jerr.NewJAPIError(msg, d.BodyCoords.File(), d.BodyCoords.b)
+		return d.makeError(msg, d.BodyCoords.File(), d.BodyCoords.begin)
 	}
 	return d.KeywordError(msg)
 }
 
-func (d Directive) BodyErrorIndex(msg string, i uint) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, d.BodyCoords.File(), d.BodyCoords.b+bytes.Index(i))
+func (d Directive) BodyErrorIndex(msg string, i uint) *jerr.JApiError {
+	return d.makeError(msg, d.BodyCoords.File(), d.BodyCoords.begin+bytes.Index(i))
 }
 
-func (d Directive) ParameterError(msg string) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, d.keywordCoords.File(), d.keywordCoords.b)
+func (d Directive) ParameterError(msg string) *jerr.JApiError {
+	return d.KeywordError(msg)
+}
+
+func (d Directive) makeError(msg string, file *fs.File, begin bytes.Index) *jerr.JApiError {
+	je := jerr.NewJApiError(msg, file, begin)
+	d.includeTracer.AddIncludeTraceToError(je)
+	return je
 }

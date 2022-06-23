@@ -9,15 +9,14 @@ import (
 
 func newASTNode() jschema.ASTNode {
 	return jschema.ASTNode{
-		Rules:      &jschema.RuleASTNodes{},
-		Properties: &jschema.ASTNodes{},
+		Rules: &jschema.RuleASTNodes{},
 	}
 }
 
 func astNodeFromNode(n Node) jschema.ASTNode {
 	an := newASTNode()
 
-	an.JSONType = n.Type().ToJSONType()
+	an.JSONType = n.Type().ToTokenType()
 	an.SchemaType = getASTNodeSchemaType(n)
 	an.Rules = collectASTRules(n.ConstraintMap())
 	an.Comment = n.Comment()

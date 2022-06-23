@@ -3,6 +3,7 @@ package loader
 import (
 	"sync"
 
+	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/scanner"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
@@ -35,6 +36,9 @@ type loader struct {
 	// lastAddedNode the last node added to the internal Schema.
 	lastAddedNode schema.Node
 
+	// rules all available rules.
+	rules map[string]jschema.Rule
+
 	// The rule is responsible for creating constraints for SCHEMA internal representation
 	// nodes from the RULES described in the SCHEMA file.
 	rule *ruleLoader
@@ -53,8 +57,13 @@ type loader struct {
 	nodesPerCurrentLineCount uint
 }
 
-func LoadSchema(scan *scanner.Scanner, rootSchema *schema.Schema, areKeysOptionalByDefault bool) *schema.Schema {
-	s := LoadSchemaWithoutCompile(scan, rootSchema)
+func LoadSchema(
+	scan *scanner.Scanner,
+	rootSchema *schema.Schema,
+	areKeysOptionalByDefault bool,
+	rules map[string]jschema.Rule,
+) *schema.Schema {
+	s := LoadSchemaWithoutCompile(scan, rootSchema, rules)
 	CompileBasic(&s, areKeysOptionalByDefault)
 	return &s
 }
@@ -67,7 +76,11 @@ var loaderPool = sync.Pool{
 	},
 }
 
-func LoadSchemaWithoutCompile(scan *scanner.Scanner, rootSchema *schema.Schema) schema.Schema {
+func LoadSchemaWithoutCompile(
+	scan *scanner.Scanner,
+	rootSchema *schema.Schema,
+	rules map[string]jschema.Rule,
+) schema.Schema {
 	l := loaderPool.Get().(*loader) //nolint:errcheck // We're sure about this type.
 	defer func() {
 		l.reset()
@@ -75,6 +88,7 @@ func LoadSchemaWithoutCompile(scan *scanner.Scanner, rootSchema *schema.Schema) 
 	}()
 
 	l.scanner = scan
+	l.rules = rules
 
 	l.rootSchema = rootSchema
 	if rootSchema == nil {
@@ -92,6 +106,7 @@ func (l *loader) reset() {
 	l.rootSchema = nil
 	l.scanner = nil
 	l.lastAddedNode = nil
+	l.rules = nil
 	l.rule = nil
 	l.node = nil
 	l.mode = readDefault
@@ -126,12 +141,16 @@ func (l *loader) doLoad() {
 	}
 }
 
-func (l *loader) handleLex(lex lexeme.LexEvent) (bool, error) {
+func (l *loader) handleLex(lex lexeme.LexEvent) (bool, error) { //nolint:gocyclo // Pretty readable though.
 	switch lex.Type() { //nolint:exhaustive // It's okay here.
 	case lexeme.TypesShortcutBegin, lexeme.KeyShortcutBegin:
-		return true, nil
+		return l.mode != readMultiLineComment && l.mode != readInlineComment, nil
 
 	case lexeme.TypesShortcutEnd:
+		if l.mode == readMultiLineComment || l.mode == readInlineComment {
+			return false, nil
+		}
+
 		l.mode = readDefault
 		if err := addShortcutConstraint(l.lastAddedNode, l.rootSchema, lex); err != nil {
 			return false, err
@@ -140,7 +159,7 @@ func (l *loader) handleLex(lex lexeme.LexEvent) (bool, error) {
 
 	case lexeme.MultiLineAnnotationBegin:
 		l.mode = readMultiLineComment
-		l.rule = newRuleLoader(l.lastAddedNode, l.nodesPerCurrentLineCount, l.rootSchema)
+		l.rule = newRuleLoader(l.lastAddedNode, l.nodesPerCurrentLineCount, l.rootSchema, l.rules)
 		return true, nil
 
 	case lexeme.MultiLineAnnotationEnd:
@@ -150,7 +169,7 @@ func (l *loader) handleLex(lex lexeme.LexEvent) (bool, error) {
 	case lexeme.InlineAnnotationBegin:
 		if l.mode == readDefault { // not multiLine comment
 			l.mode = readInlineComment
-			l.rule = newRuleLoader(l.lastAddedNode, l.nodesPerCurrentLineCount, l.rootSchema)
+			l.rule = newRuleLoader(l.lastAddedNode, l.nodesPerCurrentLineCount, l.rootSchema, l.rules)
 			return true, nil
 		}
 

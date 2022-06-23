@@ -3,10 +3,6 @@ package scanner
 // Stack of step functions, to preserve the sequence of steps (and return to them) in some cases.
 type stepFuncStack []stepFunc
 
-func (stack *stepFuncStack) Len() int {
-	return len(*stack)
-}
-
 func (stack *stepFuncStack) Push(val stepFunc) {
 	*stack = append(*stack, val)
 }
@@ -24,13 +20,4 @@ func (stack *stepFuncStack) Peek() stepFunc {
 		panic("Reading from empty stack")
 	}
 	return (*stack)[count-1]
-}
-
-// Get(1) return step-func of the stack, without removing
-func (stack *stepFuncStack) Get(i int) stepFunc {
-	count := len(*stack)
-	if i > count-1 {
-		panic("Reading a nonexistent element of the stack")
-	}
-	return (*stack)[i]
 }

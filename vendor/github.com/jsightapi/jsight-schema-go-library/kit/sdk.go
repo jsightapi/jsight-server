@@ -5,9 +5,7 @@ import (
 
 	lib "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
-	"github.com/jsightapi/jsight-schema-go-library/formats/json"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
-	"github.com/jsightapi/jsight-schema-go-library/notations/jschema"
 )
 
 type Error interface {
@@ -18,66 +16,9 @@ type Error interface {
 	IncorrectUserType() string
 }
 
-// LengthOfSchema computes length of schema specified in th file.
-// Deprecated: Use Len method of jschema.Schema instead.
-func LengthOfSchema(f *fs.File) (uint, Error) {
-	l, err := jschema.FromFile(
-		f,
-		jschema.AllowTrailingNonSpaceCharacters(),
-	).
-		Len()
-	if err != nil {
-		return 0, convertError(f, err)
-	}
-	return l, nil
-}
-
-// LengthOfJson computes length of JSON document specified in this file.
-// Deprecated: Use Len method of jschema.Schema instead.
-func LengthOfJson(f *fs.File) (uint, Error) {
-	l, err := json.FromFile(f, json.AllowTrailingNonSpaceCharacters()).Len()
-	if err != nil {
-		return 0, convertError(f, err)
-	}
-	return l, nil
-}
-
-// ValidateJson the key of extraTypes parameter is the name of the type.
-// The file name is used only for display in case of an error.
-// They may not be the same.
-// Deprecated: Use Validate method of jschema.Schema instead.
-func ValidateJson(
-	schemaFile *fs.File,
-	extraTypes map[string]*fs.File,
-	jsonFile *fs.File,
-	areKeysOptionalByDefault bool,
-) Error {
-	var oo []jschema.Option
-	if areKeysOptionalByDefault {
-		oo = append(oo, jschema.KeysAreOptionalByDefault())
-	}
-
-	sc := jschema.FromFile(schemaFile, oo...)
-
-	for name, f := range extraTypes {
-		if len(f.Content()) == 0 {
-			return errors.NewDocumentError(schemaFile, errors.Format(errors.ErrEmptyType, name))
-		}
-		if err := sc.AddType(name, jschema.FromFile(f, oo...)); err != nil {
-			return convertError(f, err)
-		}
-	}
-
-	err := sc.Validate(json.FromFile(jsonFile))
-	if err != nil {
-		return convertError(schemaFile, err)
-	}
-	return nil
-}
-
-// convertError converts error to Error interface.
+// ConvertError converts error to Error interface.
 // Added for BC
-func convertError(f *fs.File, err error) Error {
+func ConvertError(f *fs.File, err error) Error {
 	switch e := err.(type) { //nolint:errorlint // This is okay.
 	case errors.ErrorCode:
 		return sdkError{
