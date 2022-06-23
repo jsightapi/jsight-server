@@ -1,28 +1,30 @@
 JSIGHT 0.3
 
 INFO
-  Title "JDoc Exchange File Schema"
-  Version "0.3.0"
+  Title "JSight Server API"
+  Version "2.0.0"
   Description
   (
-    JDoc Exchange File Schema is described by TYPE @jdocExchange.
+    # Introduction
 
-    # Requirements to this Schema
+    The file describes the JSight Server API, which is used in [JSight Online Editor](https://editor.jsight.io/).
+
+    # Requirements to this API
 
     Schema must be:
 
     - compact (will be transmitted over network),
     - comfortable for document rendering algorithm,
-    - easy for reading by man (will be used for functional automatical tests).
+    - easy for reading by man (will be used for functional automatically tests).
 
     # Format size optimization options (for the future)
     
     1. Discard fields that are easily calculated, for example, the json Type field is easily calculated from the content.
-    2. Frequent fields should be named with one letter, for example, `t' instead of 'type'.
+    2. Frequent fields should be named with one letter, for example, 't' instead of 'type'.
     3. Abandon structures that are easily calculated, for example, 'allOf'.
   )
 
-POST /api
+POST /parse-jsight
   Description
     You should send JSight code in request.
 
@@ -36,7 +38,7 @@ POST /api
   200 @jdocExchange // Successfully parsed response.
     Headers
         {
-            "X-Jdoc-Exchange-File-Schema-Version": "0.3.0"
+            "X-Jdoc-Exchange-Version": "2.0.0"
         }
 
   409 @error // Any parsing error.
@@ -51,8 +53,8 @@ TYPE @error
 
 TYPE @jdocExchange
 {
-  "jdocExchangeFileSchemaVersion": "0.3.0",
-  "jsight": "0.3",
+  "jdocExchangeVersion": "2.0.0",                             // {const: true}
+  "jsight": "0.3",                                            // {const: true}
   "info": {                                                   // {optional: true}
     "title": "Catsbook API.",                                 // {optional: true}
     "version": "0.1",                                         // {optional: true}
@@ -64,16 +66,28 @@ TYPE @jdocExchange
   "tags": { // {additionalProperties: "@tag"}
     @tagName: @tag // {optional: true}
   },
-  "resourceMethods": {   // {additionalProperties: "@resourceMethod"}
-    @resourceMethodId : @resourceMethod // { optional: true }
+  "interactions": { // {additionalProperties: "@interaction"}
+    @interactionId : @interaction // { optional: true }
   },
-  "userTypes": {      // {additionalProperties: "@userType", optional: true}
+  "userTypes": { // {additionalProperties: "@userType", optional: true}
     @userTypeName: @userType // {optional: true}
   },
-  "userEnums": {               // {additionalProperties: "@userRule", optional: true}
+  "userEnums": { // {additionalProperties: "@userRule", optional: true}
     @userRuleName : @userRule // {optional: true}
   }
 }
+
+TYPE @interaction
+  @httpInteraction | @jsonRpcInteraction
+
+TYPE @interactionId
+  @httpInteractionId | @jsonRpcInteractionId
+
+TYPE @httpInteractionId
+  "http GET /cats/{id}" // {regex: "^http (?:GET|POST|PUT|PATCH|DELETE) \/.*"}
+
+TYPE @jsonRpcInteractionId
+  "json-rpc-2.0 /cats foo" // {regex: "^json-rpc-2.0 \/.* .+"}
 
 #---------------------------------------------- TAG -----------------------------------------------
 
@@ -86,33 +100,69 @@ TYPE @tag
   "title"          : "/cats",
   "annotation"     : "Brief description of the tag",
   "description"    : "Tag description", // {optional: true}
-  "resourceMethods": { /* {additionalProperties: "@resourceMethodIdList", 
-                             optional: true} */
-    @path     : @resourceMethodIdList // {optional: true} - There can only be an absolute path in resource paths
-  },
-  "children"   : {  // {additionalProperties: "@tagName"}
+  "interactionGroups" : [
+    @tagInteractionGroup,
+    @tagInteractionGroup
+  ],
+  "children" : {  // {additionalProperties: "@tagName", optional: true}
     @tagName : @tag // {optional: true}
   }
 }
 
-#---------------------------------------------- METHOD --------------------------------------------
+TYPE @tagInteractionGroup
+  @tagHttpInteractionGroup | @tagJsonRpcInteractionGroup
 
-TYPE @resourceMethodId
-  "GET /cats/{id}" // {regex: "[A-Z]+ .*"}
+TYPE @tagJsonRpcInteractionGroup
+{
+  "protocol": "json-rpc-2.0", // {const: true}
+  "interactions": [
+    @jsonRpcInteractionId,
+    @jsonRpcInteractionId
+  ]
+}
 
-TYPE @resourceMethodIdList
-[
-  "GET /cats/{id}" // {type: "@resourceMethodId"}
-]
+TYPE @tagHttpInteractionGroup
+{
+  "protocol": "http", // {const: true}
+  "interactions": [
+    @httpInteractionId,
+    @httpInteractionId
+  ]
+}
+
+#--------------------------------------------- JSON RPC -------------------------------------------
+  
+TYPE @jsonRpcInteraction
+{
+  "id"           : "json-rpc-2.0 /cats foo", // {type: "@jsonRpcInteractionId"}
+  "protocol"     : "json-rpc-2.0",           // {const: true}
+  "path"         : "/cats",                  // {type: "@path"}
+  "method"       : "foo",
+  "pathVariables": { // {optional: true}
+    "schema": @schema
+  },
+  "tags": [
+    @tagName
+  ],
+  "annotation" : "Method annotation.",  // {optional: true}
+  "description": "Method description.", // {optional: true}
+#  "query" : @query,  // {optional: true}
+  "params": @schema, // {optional: true}
+  "result": @schema  // {optional: true} 
+}
+
+#----------------------------------------------- HTTP ---------------------------------------------
 
 TYPE @httpMethodName
-  "GET" /* {enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]} */
+  "GET" // {enum: ["GET", "POST", "PUT", "PATCH", "DELETE"]}
 
-TYPE @resourceMethod
+TYPE @httpInteraction
 {
-  "httpMethod"   : "GET",   // {type: "@httpMethodName"}
-  "path"         : "/cats", // {type: "@path"}
-  "pathVariables": {        // {optional: true}
+  "id"           : "http GET /cats", // {type: "@httpInteractionId"}
+  "protocol"     : "http",           // {const: true}
+  "httpMethod"   : "GET",            // {type: "@httpMethodName"}
+  "path"         : "/cats",          // {type: "@path"}
+  "pathVariables": {                 // {optional: true}
     "schema": @schema
   },
   "tags": [
@@ -187,11 +237,11 @@ TYPE @userType
 {
   "annotation" : "A brief description of the type.",     // {optional: true}
   "description": "A lengthy description of the type.", // {optional: true}
-  "schema"     : @schema,
-  "links"      : [
-    @link,
-    @link
-  ]
+  "schema"     : @schema
+#  "links"      : [
+#    @link,
+#    @link
+#  ]
 }
 
 #---------------------------------------------- USER RULE -----------------------------------------
@@ -203,48 +253,20 @@ TYPE @userRule
 {
   "annotation" : "A brief description of the named rule",
   "description": "Description of the named rule",
-  "value"      : @rule,
-  "links"      : [
-    @link,
-    @link
-  ]
+  "value"      : @rule
+#  "links"      : [
+#    @link,
+#    @link
+#  ]
 }
 
 #---------------------------------------------- LINK ----------------------------------------------
 
-TYPE @link
-{
-  "type": "response.body", // {type: "@linkTypeEnum"}
-  "address": @resourceAddress | @serverAddress
-}
-
-TYPE @resourceAddress
-{
-  "resourceMethod"  : "GET /cats/{id}", // {type: "@resourceMethodId"}
-  "httpResponseCode": "200"             // {type: "@httpResponseCode", optional: true}
-}
-
-TYPE @serverAddress
-{
-  "server": "@TEST_SERVER" // {type: "@serverName"}
-}
-
-TYPE @typeAddress
-{
-  "type": "@cat" // {type: "@userTypeName"}
-}
-
-TYPE @linkTypeEnum // Where can the link lead to
-"resource.response.headers" /* {enum: [
-                                  "server.baseUrl",
-                                  "resource.path",
-                                  "resource.query",
-                                  "resource.request.headers",
-                                  "resource.request.body",
-                                  "resource.response.headers",
-                                  "resource.response.body",
-                                  "type"
-                                ]}*/
+#TYPE @link
+#{
+#  "type": "response.body", // {type: "@linkTypeEnum"}
+#  "address": @interactionAddress | @serverAddress
+#}
 
 #---------------------------------------------- SERVER --------------------------------------------
 
@@ -254,10 +276,10 @@ TYPE @serverName regex
 TYPE @server
 {
   "annotation": "Test server", // {optional: true}
-  "baseUrl": "https://{env}.catsbook.com/api/{version}/{locale}/",
-  "baseUrlVariables": { // {optional: true}
-    "schema": @schema
-  }
+  "baseUrl": "https://{env}.catsbook.com/api/{version}/{locale}/"
+#  "baseUrlVariables": { // {optional: true}
+#    "schema": @schema
+#  }
 }
 
 #---------------------------------------------- SCHEMA --------------------------------------------
@@ -278,66 +300,35 @@ TYPE @schema
 
 TYPE @jsightSchemaElement
 {
-  # "parentJsonType": "array",      // {enum: [null, "object", "array"]}
-  # "key"           : "cat",        // {optional: true} - Specified only if "parentType": "object".
-  "isKeyShortcut" : true,         // {optional: true, const: true} - Specified if shortcut is located in the key
-  # "index"         : 0,            // {optional: true} - Specified only if "parentType": "array".
-  "jsonType"      : "object",     // {type: "@jsonTypeEnum"}
-  "type"          : "@cat",       // Calculated or explicitly specified element type (for an element card or a tabular
-                                     description of data).
-  "optional"      : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
-  "scalarValue"   : "123",        /* {optional: true} - Specified only if the "jsonType" is specified
-                                                   "string", "number", "boolean", "annotation", "shortcut" or "null". */
-  "inheritedFrom" : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
+#   "parentJsonType"  : "array",      // {enum: [null, "object", "array"]}
+  "key"              : "cat",        // {optional: true, type: "string"} - Specified only if parent tokenType: "object".
+  "isKeyUserTypeRef" : true,         // {optional: true, const: true} - Specified if reference is located in the key.
+#   "index"           : 0,            // {optional: true} - Specified only if "parentType": "array".
+  "tokenType"        : "object",     // {type: "@tokenTypeEnum"}
+  "type"             : "@cat",       /* Calculated or explicitly specified element type (for an element card or a tabular
+                                     description of data). */
+  "optional"         : true,         // The calculated or explicitly specified value of the optional rule. By default, false.
+  "scalarValue"      : "123",        /* {optional: true, type: "string"} - Specified only if the "tokenType" is specified
+                                                  "string", "number", "boolean", "annotation", "reference" or "null". */
+  "inheritedFrom"    : "@austronaut",/* {type: "@userTypeName", optional: true} - The source of the object property is
                                                             specified if it is inherited through the 'allOf' rule. */
-  "note"          : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
-  "rules": {                      // {additionalProperties: "@rule", optional: true}
-    @ruleName : @rule             // {optional: true}
-  },
-  "properties": {   /* {additionalProperties: "@jsightSchemaElement", optional: true} 
-                      - specified only if jsonType: "object". */
-    "catSize": @jsightSchemaElement // {optional: true}
-  },
-  "items": [        // {optional: true} - specified only if jsonType: "array".
+  "note"             : "Note to the \n element of the example.", // {optional: true} - May contain line breaks.
+  "rules": [                      // {optional: true}
+    @rule
+  ],
+  "children": [                   // {optional: true} - specified only if tokenType: "array" or "object".
     @jsightSchemaElement
   ]
 }
 
-TYPE @ruleName
-  "minLength" /* {enum: [
-                    "type",
-                    "optional",
-                    "nullable",
-                    "min",
-                    "max",
-                    "exclusiveMinimum",
-                    "exclusiveMaximum",
-                    "precision",
-                    "minLength",
-                    "maxLength",
-                    "regexp",
-                    "minItems",
-                    "maxItems",
-                    "or",
-                    "additionalProperties",
-                    "const",
-                    "serializeFormat",
-                    "serializedType",
-                    "enum",
-                    "allOf"
-                  ]} */
-
 TYPE @rule
 {
-  "jsonType"   : "object",   // {type: "@jsonTypeEnum"}
-  "scalarValue": "@cat",     // {optional: true} - Specified only if "jsonType" specifies "string", "number", "boolean",
-                                                   "annotation" or "null".
-  "note"       : "Note to the \n rule.", // May contain line breaks.
-  "properties" : {           /* {additionalProperties: "@ruleNameEnum", optional: true} 
-                                 - Specified only if "jsonType": "object" */
-    @ruleNameEnum : @rule
-  },
-  "items" : [             // {optional: true} - Specified only if "jsonType": "array".
+  "key"        : @ruleNameEnum,
+  "tokenType"  : "object", // {type: "@tokenTypeEnum"}
+  "scalarValue": "@cat",   /* {optional: true} - Specified only if "tokenType" specifies "string", "number", "boolean",
+                                               "annotation" or "null". */
+  # "note"       : "Note to the \n rule.", // {optional: true} - May contain line breaks.
+  "children"   : [         // {optional: true} - specified only if tokenType: "array" or "object". 
     @rule
   ]
 }
@@ -366,7 +357,7 @@ TYPE @ruleNameEnum
                     "allOf"
                   ]} */
 
-TYPE @jsonTypeEnum # TODO: think of another name
+TYPE @tokenTypeEnum
 "object" /* [
             "object", 
             "array", 
@@ -374,9 +365,9 @@ TYPE @jsonTypeEnum # TODO: think of another name
             "number", 
             "boolean", 
             "null",
-            "annotation", // Yes, that's so interesting! This means an interline annotation.
-            "shortcut" // It is also unusual, it is used when a shortcut is inserted into the example, for example,
-                          a type name instead of a value
+            "annotation", // This means an interline annotation.
+            "reference"   // It is used when a reference is inserted into the example, for example,
+                             a type name instead of a value
           ]
           */
 
