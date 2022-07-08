@@ -7,6 +7,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/catalog"
 )
 
+// checkSimilarPaths Returns an error if similar paths are found. For example: "/cats/{id}" and "/cats/{name}".
 func (core *JApiCore) checkSimilarPaths(pp []PathParameter) error {
 	for _, p := range pp {
 		path := removeLastSegment(p.path)

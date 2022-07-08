@@ -71,43 +71,42 @@ func (c *Catalog) AddDescriptionToInfo(text string) error {
 	return nil
 }
 
-func (c *Catalog) AddMethod(d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+func (c *Catalog) AddHTTPMethod(d directive.Directive) error {
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("method is already defined in resource %s", rk.String())
+	if c.Interactions.Has(httpId) {
+		return fmt.Errorf("method is already defined in resource %s", httpId.String())
 	}
 
-	t := c.tag(rk)
-	t.appendInteractionId(rk)
+	t := c.tag(httpId)
+	t.appendInteractionId(httpId)
 
-	rm := initHttpInteraction(rk.path, rk.method, d.Annotation, t.Name)
-	c.HttpInteractions.Set(rk, &rm)
+	c.Interactions.Set(httpId, newHttpInteraction(httpId, d.Annotation, t.Name))
 
 	return nil
 }
 
 func (c *Catalog) AddDescriptionToHttpMethod(d directive.Directive, text string) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("%s %q", jerr.ResourceNotFound, rk.String())
+	if !c.Interactions.Has(httpId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, httpId.String())
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	if v.Description != nil {
 		return errors.New(jerr.NotUniqueDirective)
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Description = &text
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Description = &text
 		return v
 	})
 
@@ -115,23 +114,23 @@ func (c *Catalog) AddDescriptionToHttpMethod(d directive.Directive, text string)
 }
 
 func (c *Catalog) AddQueryToCurrentMethod(d directive.Directive, q Query) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("%s %q", jerr.ResourceNotFound, rk.String())
+	if !c.Interactions.Has(httpId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, httpId.String())
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	if v.Query != nil {
 		return errors.New(jerr.NotUniqueDirective)
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Query = &q
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Query = &q
 		return v
 	})
 
@@ -139,15 +138,15 @@ func (c *Catalog) AddQueryToCurrentMethod(d directive.Directive, q Query) error 
 }
 
 func (c *Catalog) AddResponse(code string, annotation string, d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
 	r := HTTPResponse{Code: code, Annotation: annotation, Directive: d}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Responses = append(v.Responses, r)
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Responses = append(v.(*HttpInteraction).Responses, r)
 		return v
 	})
 
@@ -163,20 +162,20 @@ func (c *Catalog) AddResponseBody(
 	tt *UserSchemas,
 	rr map[string]jschemaLib.Rule,
 ) *jerr.JApiError {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return d.KeywordError(err.Error())
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return d.KeywordError(fmt.Sprintf("%s %q", jerr.ResourceNotFound, rk.String()))
+	if !c.Interactions.Has(httpId) {
+		return d.KeywordError(fmt.Sprintf("%s %q", jerr.HttpResourceNotFound, httpId.String()))
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	i := len(v.Responses) - 1
 	if i == -1 {
-		return d.KeywordError(fmt.Sprintf("%s for %q", jerr.ResponsesIsEmpty, rk.String()))
+		return d.KeywordError(fmt.Sprintf("%s for %q", jerr.ResponsesIsEmpty, httpId.String()))
 	}
 
 	httpResponseBody, je := NewHTTPResponseBody(schemaName, schemaBytes, bodyFormat, sn, d, tt, rr)
@@ -184,8 +183,8 @@ func (c *Catalog) AddResponseBody(
 		return je
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Responses[i].Body = &httpResponseBody
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Responses[i].Body = &httpResponseBody
 		return v
 	})
 
@@ -193,28 +192,28 @@ func (c *Catalog) AddResponseBody(
 }
 
 func (c *Catalog) AddResponseHeaders(s Schema, d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("%s %q", jerr.ResourceNotFound, rk.String())
+	if !c.Interactions.Has(httpId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, httpId.String())
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	i := len(v.Responses) - 1
 	if i == -1 {
-		return fmt.Errorf("%s for %q", jerr.ResponsesIsEmpty, rk.String())
+		return fmt.Errorf("%s for %q", jerr.ResponsesIsEmpty, httpId.String())
 	}
 
 	if v.Responses[i].Headers != nil {
 		return errors.New(jerr.NotUniqueDirective)
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Responses[i].Headers = &HTTPResponseHeaders{Schema: &s, Directive: d}
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Responses[i].Headers = &HTTPResponseHeaders{Schema: &s, Directive: d}
 		return v
 	})
 
@@ -323,14 +322,14 @@ func (c *Catalog) AddType(
 }
 
 func (c *Catalog) AddRequest(d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		if v.Request == nil {
-			v.Request = &HTTPRequest{
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		if v.(*HttpInteraction).Request == nil {
+			v.(*HttpInteraction).Request = &HTTPRequest{
 				Directive: d,
 			}
 		}
@@ -341,27 +340,27 @@ func (c *Catalog) AddRequest(d directive.Directive) error {
 }
 
 func (c *Catalog) AddRequestBody(s Schema, f SerializeFormat, d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("%s %q", jerr.ResourceNotFound, rk.String())
+	if !c.Interactions.Has(httpId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, httpId.String())
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	if v.Request == nil {
-		return fmt.Errorf("%s for %q", jerr.RequestIsEmpty, rk.String())
+		return fmt.Errorf("%s for %q", jerr.RequestIsEmpty, httpId.String())
 	}
 
 	if v.Request.HTTPRequestBody != nil {
 		return errors.New(jerr.NotUniqueDirective)
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Request.HTTPRequestBody = &HTTPRequestBody{Format: f, Schema: &s, Directive: d}
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Request.HTTPRequestBody = &HTTPRequestBody{Format: f, Schema: &s, Directive: d}
 		return v
 	})
 
@@ -369,34 +368,95 @@ func (c *Catalog) AddRequestBody(s Schema, f SerializeFormat, d directive.Direct
 }
 
 func (c *Catalog) AddRequestHeaders(s Schema, d directive.Directive) error {
-	rk, err := newHttpInteractionId(d)
+	httpId, err := newHttpInteractionId(d)
 	if err != nil {
 		return err
 	}
 
-	if !c.HttpInteractions.Has(rk) {
-		return fmt.Errorf("%s %q", jerr.ResourceNotFound, rk.String())
+	if !c.Interactions.Has(httpId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, httpId.String())
 	}
 
-	v := c.HttpInteractions.GetValue(rk)
+	v := c.Interactions.GetValue(httpId).(*HttpInteraction) //nolint:errcheck
 
 	if v.Request == nil {
-		return fmt.Errorf("%s for %q", jerr.RequestIsEmpty, rk.String())
+		return fmt.Errorf("%s for %q", jerr.RequestIsEmpty, httpId.String())
 	}
 
 	if v.Request.HTTPRequestHeaders != nil {
 		return errors.New(jerr.NotUniqueDirective)
 	}
 
-	c.HttpInteractions.Update(rk, func(v *HttpInteraction) *HttpInteraction {
-		v.Request.HTTPRequestHeaders = &HTTPRequestHeaders{Schema: &s, Directive: d}
+	c.Interactions.Update(httpId, func(v Interaction) Interaction {
+		v.(*HttpInteraction).Request.HTTPRequestHeaders = &HTTPRequestHeaders{Schema: &s, Directive: d}
 		return v
 	})
 
 	return nil
 }
 
-func (_ *Catalog) AddProtocol(_ directive.Directive) error {
-	// TODO
+func (c *Catalog) AddJsonRpcMethod(d directive.Directive) error {
+	rpcId, err := newJsonRpcInteractionId(d)
+	if err != nil {
+		return err
+	}
+
+	if c.Interactions.Has(rpcId) {
+		return fmt.Errorf("method is already defined in resource %s", rpcId.String())
+	}
+
+	t := c.tag(rpcId)
+	t.appendInteractionId(rpcId)
+
+	c.Interactions.Set(rpcId, newJsonRpcInteraction(rpcId, d.Parameter("MethodName"), d.Annotation, t.Name))
+
+	return nil
+}
+
+func (c *Catalog) AddJsonRpcParams(s Schema, d directive.Directive) error {
+	rpcId, err := newJsonRpcInteractionId(d)
+	if err != nil {
+		return err
+	}
+
+	if !c.Interactions.Has(rpcId) {
+		return fmt.Errorf("%s %q", jerr.JsonRpcResourceNotFound, rpcId.String())
+	}
+
+	v := c.Interactions.GetValue(rpcId).(*JsonRpcInteraction) //nolint:errcheck
+
+	if v.Params != nil {
+		return errors.New(jerr.NotUniqueDirective)
+	}
+
+	c.Interactions.Update(rpcId, func(v Interaction) Interaction {
+		v.(*JsonRpcInteraction).Params = &jsonRpcParams{Schema: &s, Directive: d}
+		return v
+	})
+
+	return nil
+}
+
+func (c *Catalog) AddJsonRpcResult(s Schema, d directive.Directive) error {
+	rpcId, err := newJsonRpcInteractionId(d)
+	if err != nil {
+		return err
+	}
+
+	if !c.Interactions.Has(rpcId) {
+		return fmt.Errorf("%s %q", jerr.JsonRpcResourceNotFound, rpcId.String())
+	}
+
+	v := c.Interactions.GetValue(rpcId).(*JsonRpcInteraction) //nolint:errcheck
+
+	if v.Result != nil {
+		return errors.New(jerr.NotUniqueDirective)
+	}
+
+	c.Interactions.Update(rpcId, func(v Interaction) Interaction {
+		v.(*JsonRpcInteraction).Result = &jsonRpcResult{Schema: &s, Directive: d}
+		return v
+	})
+
 	return nil
 }

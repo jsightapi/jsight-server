@@ -7,7 +7,7 @@ type TagJsonRpcInteractionGroup struct {
 
 func newTagJsonRpcInteractionGroup() *TagJsonRpcInteractionGroup {
 	return &TagJsonRpcInteractionGroup{
-		Protocol:     jsonRpc,
+		Protocol:     JsonRpc,
 		Interactions: make([]InteractionId, 0, 5),
 	}
 }

@@ -11,12 +11,12 @@ import (
 )
 
 // Set sets a value with specified key.
-func (m *HttpInteractions) Set(k HttpInteractionId, v *HttpInteraction) {
+func (m *Interactions) Set(k InteractionId, v Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
 	if m.data == nil {
-		m.data = map[HttpInteractionId]*HttpInteraction{}
+		m.data = map[InteractionId]Interaction{}
 	}
 	if !m.has(k) {
 		m.order = append(m.order, k)
@@ -26,21 +26,21 @@ func (m *HttpInteractions) Set(k HttpInteractionId, v *HttpInteraction) {
 
 // SetToTop do the same as Set, but new key will be placed on top of the order
 // map.
-func (m *HttpInteractions) SetToTop(k HttpInteractionId, v *HttpInteraction) {
+func (m *Interactions) SetToTop(k InteractionId, v Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
 	if m.data == nil {
-		m.data = map[HttpInteractionId]*HttpInteraction{}
+		m.data = map[InteractionId]Interaction{}
 	}
 	if !m.has(k) {
-		m.order = append([]HttpInteractionId{k}, m.order...)
+		m.order = append([]InteractionId{k}, m.order...)
 	}
 	m.data[k] = v
 }
 
 // Update updates a value with specified key.
-func (m *HttpInteractions) Update(k HttpInteractionId, fn func(v *HttpInteraction) *HttpInteraction) {
+func (m *Interactions) Update(k InteractionId, fn func(v Interaction) Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
@@ -54,7 +54,7 @@ func (m *HttpInteractions) Update(k HttpInteractionId, fn func(v *HttpInteractio
 }
 
 // GetValue gets a value by key.
-func (m *HttpInteractions) GetValue(k HttpInteractionId) *HttpInteraction {
+func (m *Interactions) GetValue(k InteractionId) Interaction {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -62,7 +62,7 @@ func (m *HttpInteractions) GetValue(k HttpInteractionId) *HttpInteraction {
 }
 
 // Get gets a value by key.
-func (m *HttpInteractions) Get(k HttpInteractionId) (*HttpInteraction, bool) {
+func (m *Interactions) Get(k InteractionId) (Interaction, bool) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -71,20 +71,20 @@ func (m *HttpInteractions) Get(k HttpInteractionId) (*HttpInteraction, bool) {
 }
 
 // Has checks that specified key is set.
-func (m *HttpInteractions) Has(k HttpInteractionId) bool {
+func (m *Interactions) Has(k InteractionId) bool {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
 	return m.has(k)
 }
 
-func (m *HttpInteractions) has(k HttpInteractionId) bool {
+func (m *Interactions) has(k InteractionId) bool {
 	_, ok := m.data[k]
 	return ok
 }
 
 // Len returns count of values.
-func (m *HttpInteractions) Len() int {
+func (m *Interactions) Len() int {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -92,25 +92,25 @@ func (m *HttpInteractions) Len() int {
 }
 
 // Find finds first matched item from the map.
-func (m *HttpInteractions) Find(fn findHttpInteractionsFunc) (HttpInteractionsItem, bool) {
+func (m *Interactions) Find(fn findInteractionsFunc) (InteractionsItem, bool) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
 	for _, k := range m.order {
 		if fn(k, m.data[k]) {
-			return HttpInteractionsItem{
+			return InteractionsItem{
 				Key:   k,
 				Value: m.data[k],
 			}, true
 		}
 	}
-	return HttpInteractionsItem{}, false
+	return InteractionsItem{}, false
 }
 
-type findHttpInteractionsFunc = func(k HttpInteractionId, v *HttpInteraction) bool
+type findInteractionsFunc = func(k InteractionId, v Interaction) bool
 
 // Each iterates and perform given function on each item in the map.
-func (m *HttpInteractions) Each(fn eachHttpInteractionsFunc) error {
+func (m *Interactions) Each(fn eachInteractionsFunc) error {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -123,7 +123,7 @@ func (m *HttpInteractions) Each(fn eachHttpInteractionsFunc) error {
 }
 
 // EachReverse act almost the same as Each but in reverse order.
-func (m *HttpInteractions) EachReverse(fn eachHttpInteractionsFunc) error {
+func (m *Interactions) EachReverse(fn eachInteractionsFunc) error {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -136,9 +136,9 @@ func (m *HttpInteractions) EachReverse(fn eachHttpInteractionsFunc) error {
 	return nil
 }
 
-type eachHttpInteractionsFunc = func(k HttpInteractionId, v *HttpInteraction) error
+type eachInteractionsFunc = func(k InteractionId, v Interaction) error
 
-func (m *HttpInteractions) EachSafe(fn eachSafeHttpInteractionsFunc) {
+func (m *Interactions) EachSafe(fn eachSafeInteractionsFunc) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -147,10 +147,10 @@ func (m *HttpInteractions) EachSafe(fn eachSafeHttpInteractionsFunc) {
 	}
 }
 
-type eachSafeHttpInteractionsFunc = func(k HttpInteractionId, v *HttpInteraction)
+type eachSafeInteractionsFunc = func(k InteractionId, v Interaction)
 
 // Map iterates and changes values in the map.
-func (m *HttpInteractions) Map(fn mapHttpInteractionsFunc) error {
+func (m *Interactions) Map(fn mapInteractionsFunc) error {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
@@ -164,17 +164,17 @@ func (m *HttpInteractions) Map(fn mapHttpInteractionsFunc) error {
 	return nil
 }
 
-type mapHttpInteractionsFunc = func(k HttpInteractionId, v *HttpInteraction) (*HttpInteraction, error)
+type mapInteractionsFunc = func(k InteractionId, v Interaction) (Interaction, error)
 
-// HttpInteractionsItem represent single data from the HttpInteractions.
-type HttpInteractionsItem struct {
-	Key   HttpInteractionId
-	Value *HttpInteraction
+// InteractionsItem represent single data from the Interactions.
+type InteractionsItem struct {
+	Key   InteractionId
+	Value Interaction
 }
 
-var _ json.Marshaler = &HttpInteractions{}
+var _ json.Marshaler = &Interactions{}
 
-func (m *HttpInteractions) MarshalJSON() ([]byte, error) {
+func (m *Interactions) MarshalJSON() ([]byte, error) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 

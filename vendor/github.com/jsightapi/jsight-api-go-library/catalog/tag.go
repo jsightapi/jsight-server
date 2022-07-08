@@ -60,10 +60,16 @@ func (t *Tag) MarshalJSON() ([]byte, error) {
 	data.Name = t.Name
 	data.Title = t.Title
 	data.Description = t.Description
-	data.InteractionGroups = make([]TagInteractionGroup, 0, 2)
-	for _, g := range t.InteractionGroups {
-		data.InteractionGroups = append(data.InteractionGroups, g)
+	data.InteractionGroups = make([]TagInteractionGroup, 0, len(t.InteractionGroups))
+
+	// it is important to keep the sorting
+	if v, ok := t.InteractionGroups[HTTP]; ok {
+		data.InteractionGroups = append(data.InteractionGroups, v)
 	}
+	if v, ok := t.InteractionGroups[JsonRpc]; ok {
+		data.InteractionGroups = append(data.InteractionGroups, v)
+	}
+
 	if t.Children.Len() > 0 {
 		data.Children = t.Children
 	}

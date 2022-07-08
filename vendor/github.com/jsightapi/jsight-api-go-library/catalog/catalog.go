@@ -27,7 +27,7 @@ type Catalog struct {
 	// UserTypes contains information about defined user types.
 	UserTypes *UserTypes
 
-	HttpInteractions *HttpInteractions
+	Interactions *Interactions
 
 	Tags *Tags
 
@@ -41,16 +41,16 @@ func (c *Catalog) ToJson() ([]byte, error) {
 }
 
 func (c *Catalog) ToJsonIndent() ([]byte, error) {
-	return json.MarshalIndent(c, "", "\t")
+	return json.MarshalIndent(c, "", "  ")
 }
 
 func NewCatalog() *Catalog {
 	return &Catalog{
-		rawUserTypes:     &directive.Directives{},
-		Servers:          &Servers{},
-		UserTypes:        &UserTypes{},
-		HttpInteractions: &HttpInteractions{},
-		Tags:             &Tags{},
+		rawUserTypes: &directive.Directives{},
+		Servers:      &Servers{},
+		UserTypes:    &UserTypes{},
+		Interactions: &Interactions{},
+		Tags:         &Tags{},
 	}
 }
 
@@ -68,13 +68,13 @@ func (*Catalog) Read(coords directive.Coords) bytes.Bytes {
 
 func (c *Catalog) MarshalJSON() ([]byte, error) {
 	var data struct {
-		Tags                *Tags             `json:"tags"`
-		Info                *Info             `json:"info,omitempty"`
-		Servers             *Servers          `json:"servers,omitempty"`
-		UserTypes           *UserTypes        `json:"userTypes,omitempty"`
-		HTTPInteractions    *HttpInteractions `json:"interactions"`
-		JSightVersion       string            `json:"jsight"`
-		JdocExchangeVersion string            `json:"jdocExchangeVersion"`
+		Tags                *Tags         `json:"tags"`
+		Info                *Info         `json:"info,omitempty"`
+		Servers             *Servers      `json:"servers,omitempty"`
+		UserTypes           *UserTypes    `json:"userTypes,omitempty"`
+		Interactions        *Interactions `json:"interactions"`
+		JSightVersion       string        `json:"jsight"`
+		JdocExchangeVersion string        `json:"jdocExchangeVersion"`
 	}
 
 	data.JdocExchangeVersion = JDocExchangeVersion
@@ -86,7 +86,7 @@ func (c *Catalog) MarshalJSON() ([]byte, error) {
 	if c.UserTypes.Len() > 0 {
 		data.UserTypes = c.UserTypes
 	}
-	data.HTTPInteractions = c.HttpInteractions
+	data.Interactions = c.Interactions
 	data.Tags = c.Tags
 
 	return json.Marshal(data)

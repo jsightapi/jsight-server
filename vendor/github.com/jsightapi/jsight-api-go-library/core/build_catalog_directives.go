@@ -214,7 +214,42 @@ func (core *JApiCore) addURL(d *directive.Directive) *jerr.JApiError {
 
 	core.uniqURLPath[p] = struct{}{}
 
+	return checkJsonRpcUrlChildCompatible(d)
+}
+
+// checkJsonRpcUrlChildCompatible checks the compatibility of child directives for HTTP and JSON-RPC protocols.
+func checkJsonRpcUrlChildCompatible(d *directive.Directive) *jerr.JApiError {
+	if len(d.Children) == 0 {
+		return nil
+	}
+
+	var base *directive.Directive
+	var isBaseJsonRpc bool
+
+	for _, dd := range d.Children {
+		if base == nil {
+			base = dd
+			isBaseJsonRpc = isJsonRpcUrlChildDirective(base)
+		} else if isBaseJsonRpc != isJsonRpcUrlChildDirective(dd) {
+			return dd.KeywordError(
+				fmt.Sprintf("directives %q and %q cannot be within the same URL directive",
+					base.Type().String(),
+					dd.Type().String(),
+				),
+			)
+		}
+	}
+
 	return nil
+}
+
+func isJsonRpcUrlChildDirective(d *directive.Directive) bool {
+	switch d.Type() {
+	case directive.Protocol, directive.Method:
+		return true
+	default:
+		return false
+	}
 }
 
 func (core JApiCore) addHTTPMethod(d *directive.Directive) *jerr.JApiError {
@@ -233,7 +268,7 @@ func (core JApiCore) addHTTPMethod(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(err.Error())
 	}
 
-	if err = core.catalog.AddMethod(*d); err != nil {
+	if err = core.catalog.AddHTTPMethod(*d); err != nil {
 		return d.KeywordError(err.Error())
 	}
 
@@ -448,13 +483,79 @@ func (core JApiCore) addProtocol(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
 
-	if d.Parameter("Protocol") != "json-rpc-2.0" {
-		return d.KeywordError("the parameter value should be \"json-rpc-2.0\"")
+	if d.Parameter("ProtocolName") == "" {
+		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "ProtocolName"))
 	}
 
-	if err := core.catalog.AddProtocol(*d); err != nil {
+	if d.Parameter("ProtocolName") != "json-rpc-2.0" {
+		return d.KeywordError("the parameter value have to be \"json-rpc-2.0\"")
+	}
+
+	if _, ok := core.onlyOneProtocolIntoUrl[d.Parent]; ok {
+		return d.KeywordError("the directive Protocol must be unique within the directive URL")
+	}
+	core.onlyOneProtocolIntoUrl[d.Parent] = struct{}{}
+
+	return nil
+}
+
+func (core JApiCore) addJsonRpcMethod(d *directive.Directive) *jerr.JApiError {
+	if d.Parameter("MethodName") == "" {
+		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "MethodName"))
+	}
+
+	if !isProtocolExists(d) {
+		return d.KeywordError("the directive \"Protocol\" was not found")
+	}
+
+	if err := core.catalog.AddJsonRpcMethod(*d); err != nil {
 		return d.KeywordError(err.Error())
 	}
 
 	return nil
+}
+
+func isProtocolExists(d *directive.Directive) bool {
+	for _, dd := range d.Parent.Children {
+		if dd.Type() == directive.Protocol {
+			return true
+		}
+	}
+	return false
+}
+
+func (core JApiCore) addJsonRpcSchema(d *directive.Directive, f func(catalog.Schema, directive.Directive) error) *jerr.JApiError {
+	if d.Annotation != "" {
+		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
+	}
+	if !d.BodyCoords.IsSet() {
+		return d.KeywordError(jerr.EmptyBody)
+	}
+
+	var s catalog.Schema
+	var err error
+
+	s, err = catalog.UnmarshalSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
+	if err != nil {
+		var e kit.Error
+		if errors.As(err, &e) {
+			return d.BodyErrorIndex(e.Message(), e.Position())
+		}
+		return d.BodyError(err.Error())
+	}
+
+	err = f(s, *d)
+	if err != nil {
+		return d.KeywordError(err.Error())
+	}
+
+	return nil
+}
+
+func (core JApiCore) addJsonRpcParams(d *directive.Directive) *jerr.JApiError {
+	return core.addJsonRpcSchema(d, core.catalog.AddJsonRpcParams)
+}
+
+func (core JApiCore) addJsonRpcResult(d *directive.Directive) *jerr.JApiError {
+	return core.addJsonRpcSchema(d, core.catalog.AddJsonRpcResult)
 }

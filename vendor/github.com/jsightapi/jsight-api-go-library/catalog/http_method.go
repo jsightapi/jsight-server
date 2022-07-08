@@ -7,10 +7,10 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-type Method uint8
+type HttpMethod uint8
 
 const (
-	GET Method = iota
+	GET HttpMethod = iota
 	POST
 	PUT
 	PATCH
@@ -18,7 +18,7 @@ const (
 	OPTIONS
 )
 
-func NewMethod(de directive.Enumeration) (Method, error) {
+func NewHttpMethod(de directive.Enumeration) (HttpMethod, error) {
 	switch de {
 	case directive.Get:
 		return GET, nil
@@ -35,7 +35,7 @@ func NewMethod(de directive.Enumeration) (Method, error) {
 	}
 }
 
-func (e Method) String() string {
+func (e HttpMethod) String() string {
 	switch e {
 	case GET:
 		return "GET"
@@ -54,6 +54,6 @@ func (e Method) String() string {
 	}
 }
 
-func (e Method) MarshalText() ([]byte, error) {
+func (e HttpMethod) MarshalText() ([]byte, error) {
 	return []byte(e.String()), nil
 }

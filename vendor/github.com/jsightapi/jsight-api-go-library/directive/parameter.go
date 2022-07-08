@@ -81,10 +81,10 @@ func (d *Directive) AppendParameter(b bytes.Bytes) error {
 		}
 
 	case Protocol:
-		return d.SetParameter("Protocol", s)
+		return d.SetParameter("ProtocolName", s)
 
 	case Method:
-		return d.SetParameter("Method", s)
+		return d.SetParameter("MethodName", s)
 	}
 
 	return fmt.Errorf("%s %q", jerr.IncorrectParameter, s)

@@ -44,22 +44,34 @@ func (core *JApiCore) getIncludedFilePath(keyword *scanner.Lexeme) (string, *jer
 	}
 
 	if parameter == nil {
-		return "", japiErrorForLexeme(keyword, fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Filename"))
+		return "", requiredParameterNotSpecified(keyword)
 	}
 
 	if parameter.Type() != scanner.Parameter {
-		return "", japiErrorForLexeme(keyword, fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Filename"))
+		return "", requiredParameterNotSpecified(keyword)
 	}
 
 	path := parameter.Value().String()
 
 	if err := validateIncludeFileName(path); err != nil {
-		return "", japiErrorForLexeme(keyword, fmt.Sprintf("%s (%s) %s", jerr.IncorrectParameter, "Filename", err))
+		return "", incorrectParameter(keyword, path, err.Error())
 	}
 
 	// We included file path is always will be relative to currently scanned file
 	// directory.
-	return filepath.Join(filepath.Dir(core.scanner.File().Name()), path), nil
+	absolutePath := filepath.Join(filepath.Dir(core.scanner.File().Name()), path)
+	info, err := os.Stat(absolutePath)
+	if err == nil {
+		if info.IsDir() {
+			return "", incorrectParameter(keyword, path, "is a directory")
+		}
+		return absolutePath, nil
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		return "", incorrectParameter(keyword, path, "isn't exists")
+	}
+	return "", incorrectParameter(keyword, path, err.Error())
 }
 
 func readFile(p string) (*fs.File, error) {
@@ -69,6 +81,14 @@ func readFile(p string) (*fs.File, error) {
 	}
 
 	return fs.NewFile(p, c), nil
+}
+
+func incorrectParameter(lex *scanner.Lexeme, path, msg string) *jerr.JApiError {
+	return japiErrorForLexeme(lex, fmt.Sprintf("%s (%s) %q: %s", jerr.IncorrectParameter, "Filename", path, msg))
+}
+
+func requiredParameterNotSpecified(lex *scanner.Lexeme) *jerr.JApiError {
+	return japiErrorForLexeme(lex, fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Filename"))
 }
 
 func japiErrorForLexeme(lex *scanner.Lexeme, msg string) *jerr.JApiError {

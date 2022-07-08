@@ -79,6 +79,11 @@ func (core *JApiCore) collectUsedUserTypes(sc *catalog.SchemaContentJSight, used
 						// TODO if not found ???
 					}
 
+					// Schema types shouldn't be added.
+					if jschema.IsValidType(userType) {
+						continue
+					}
+
 					if err := core.appendUsedUserType(usedUserTypes, userType); err != nil {
 						return err
 					}

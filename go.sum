@@ -14,6 +14,8 @@ github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220610164737-478dbc317a44 
 github.com/jsightapi/jsight-api-go-library v0.3.1-0.20220610164737-478dbc317a44/go.mod h1:8UjFwluFsKBmT2NyxDhA/iwm4++QwrG3Bs31s122m8g=
 github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220623164203-95893d4c2213 h1:ZLB124ArZC9ZpA7Syok5iJMLPQ6TBJdpwyeQv0qBFBc=
 github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220623164203-95893d4c2213/go.mod h1:klWnRZfe1yYdkcllPisZQzmKLd8w9ZRyLKzTH/zooLc=
+github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220708151916-f545b30d4f0d h1:X80n0SvlHHYqzHJmOQn+bogm1Ig9w+rrKzQNeJpRmNo=
+github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220708151916-f545b30d4f0d/go.mod h1:klWnRZfe1yYdkcllPisZQzmKLd8w9ZRyLKzTH/zooLc=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220518141303-90f81f34b796 h1:w7DcC0xJFlot4sCOs5im9PXXVPVmk+liAtp8J/f4Z1U=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220518141303-90f81f34b796/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
 github.com/jsightapi/jsight-schema-go-library v0.3.1-0.20220608142925-ffc7adb01d28 h1:s5sh4VErEhfGiNbgedtsAqcYvLQFbL3PgxRqPSJMXCw=

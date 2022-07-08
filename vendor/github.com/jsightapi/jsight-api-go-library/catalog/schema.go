@@ -372,7 +372,7 @@ func (c SchemaContentJSight) MarshalJSON() (b []byte, err error) {
 	return b, err
 }
 
-func (c SchemaContentJSight) marshalJSONObject() ([]byte, error) {
+func (c SchemaContentJSight) marshalJSONObject() ([]byte, error) { //nolint:dupl
 	var data struct {
 		Rules            []Rule                 `json:"rules,omitempty"`
 		Key              string                 `json:"key,omitempty"`
@@ -404,7 +404,7 @@ func (c SchemaContentJSight) marshalJSONObject() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (c SchemaContentJSight) marshalJSONArray() ([]byte, error) {
+func (c SchemaContentJSight) marshalJSONArray() ([]byte, error) { //nolint:dupl
 	var data struct {
 		Rules            []Rule                 `json:"rules,omitempty"`
 		Key              string                 `json:"key,omitempty"`

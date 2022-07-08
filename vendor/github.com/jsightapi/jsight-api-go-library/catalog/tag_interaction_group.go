@@ -6,7 +6,7 @@ type TagInteractionGroup interface {
 
 func newTagInteractionGroup(p Protocol) TagInteractionGroup {
 	switch p {
-	case jsonRpc:
+	case JsonRpc:
 		return newTagJsonRpcInteractionGroup()
 	default: // case http:
 		return newTagHttpInteractionGroup()

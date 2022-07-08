@@ -7,7 +7,7 @@ type TagHttpInteractionGroup struct {
 
 func newTagHttpInteractionGroup() *TagHttpInteractionGroup {
 	return &TagHttpInteractionGroup{
-		Protocol:     http,
+		Protocol:     HTTP,
 		Interactions: make([]InteractionId, 0, 5),
 	}
 }

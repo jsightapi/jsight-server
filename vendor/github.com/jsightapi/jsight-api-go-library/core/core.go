@@ -16,6 +16,9 @@ type JApiCore struct {
 	// builtUserTypes a "set" of already build user types.
 	processedUserTypes map[string]struct{}
 
+	// onlyOneProtocolIntoUrl to verify the uniqueness of a directive Protocol within a directive URL
+	onlyOneProtocolIntoUrl map[*directive.Directive]struct{}
+
 	// uniqURLPath used for checking the uniqueness URL paths.
 	uniqURLPath map[catalog.Path]struct{}
 
@@ -85,18 +88,19 @@ func WithBannedDirectives(dd ...directive.Enumeration) Option {
 
 func NewJApiCore(file *fs.File, oo ...Option) *JApiCore {
 	core := &JApiCore{
-		userTypes:          &catalog.UserSchemas{},
-		processedUserTypes: make(map[string]struct{}, 30),
-		scanner:            scanner.NewJApiScanner(file),
-		catalog:            catalog.NewCatalog(),
-		currentDirective:   nil,
-		directives:         make([]*directive.Directive, 0, 200),
-		uniqURLPath:        make(map[catalog.Path]struct{}, 20),
-		similarPaths:       make(map[string]string, 20),
-		rawPathVariables:   make([]rawPathVariable, 0, 40),
-		macro:              make(map[string]*directive.Directive, 20),
-		scannersStack:      &scanner.Stack{},
-		rules:              map[string]jschema.Rule{},
+		userTypes:              &catalog.UserSchemas{},
+		processedUserTypes:     make(map[string]struct{}, 30),
+		scanner:                scanner.NewJApiScanner(file),
+		catalog:                catalog.NewCatalog(),
+		currentDirective:       nil,
+		directives:             make([]*directive.Directive, 0, 200),
+		onlyOneProtocolIntoUrl: make(map[*directive.Directive]struct{}, 20),
+		uniqURLPath:            make(map[catalog.Path]struct{}, 20),
+		similarPaths:           make(map[string]string, 20),
+		rawPathVariables:       make([]rawPathVariable, 0, 40),
+		macro:                  make(map[string]*directive.Directive, 20),
+		scannersStack:          &scanner.Stack{},
+		rules:                  map[string]jschema.Rule{},
 	}
 	core.directiveFunctions = map[directive.Enumeration]func(*directive.Directive) *jerr.JApiError{
 		directive.Jsight:           core.addJSight,
@@ -119,9 +123,9 @@ func NewJApiCore(file *fs.File, oo ...Option) *JApiCore {
 		directive.Headers:          core.addHeaders,
 		directive.Body:             core.addBody,
 		directive.Protocol:         core.addProtocol,
-		// TODO directive.Method:           core.addMethod,
-		// TODO directive.Params:           core.addParams,
-		// TODO directive.Result:           core.addResult,
+		directive.Method:           core.addJsonRpcMethod,
+		directive.Params:           core.addJsonRpcParams,
+		directive.Result:           core.addJsonRpcResult,
 	}
 
 	for _, o := range oo {

@@ -18,5 +18,5 @@ func IsHTTPResponseCode(s string) bool {
 }
 
 func isHTTPResponseCode(code int) bool {
-	return code >= 100 && code <= 526 // TODO make strict list
+	return code >= 100 && code <= 599 // official and unofficial codes
 }

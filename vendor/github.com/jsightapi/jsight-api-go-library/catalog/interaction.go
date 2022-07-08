@@ -1,5 +1,6 @@
 package catalog
 
 type Interaction interface {
-	path() Path
+	Path() Path
+	// SetPathVariables(*PathVariables)
 }

@@ -120,25 +120,28 @@ func (core *JApiCore) BuildResourceMethodsPathVariables() *jerr.JApiError {
 		}
 	}
 
-	err := core.catalog.HttpInteractions.Map(func(id catalog.HttpInteractionId, resourceMethod *catalog.HttpInteraction) (*catalog.HttpInteraction, error) {
-		pp := pathParameters(resourceMethod.Path.String())
-		properties := make([]prop, 0, len(pp))
+	// set PathVariables
+	err := core.catalog.Interactions.Map(func(_ catalog.InteractionId, v catalog.Interaction) (catalog.Interaction, error) {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			pp := pathParameters(v.Path().String())
+			properties := make([]prop, 0, len(pp))
 
-		for _, p := range pp {
-			if pr, ok := allProjectProperties[p.path]; ok {
-				pr.parameter = p.parameter
-				properties = append(properties, pr)
+			for _, p := range pp {
+				if pr, ok := allProjectProperties[p.path]; ok {
+					pr.parameter = p.parameter
+					properties = append(properties, pr)
+				}
+			}
+
+			if len(properties) != 0 {
+				pv, err := core.newPathVariables(properties)
+				if err != nil {
+					return nil, err
+				}
+				hi.SetPathVariables(pv)
 			}
 		}
-
-		if len(properties) != 0 {
-			pv, err := core.newPathVariables(properties)
-			if err != nil {
-				return nil, err
-			}
-			resourceMethod.PathVariables = pv
-		}
-		return resourceMethod, nil
+		return v, nil
 	})
 	if err != nil {
 		return err.(*jerr.JApiError) //nolint:errorlint
@@ -239,11 +242,13 @@ func (core *JApiCore) processRawPathVariablesAllOf() *jerr.JApiError {
 }
 
 func (core *JApiCore) processQueryAllOf() *jerr.JApiError {
-	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
-		q := v.Query
-		if q != nil && q.Schema != nil && q.Schema.Notation == notation.SchemaNotationJSight {
-			if err := core.processSchemaContentJSightAllOf(q.Schema.ContentJSight, q.Schema.UsedUserTypes); err != nil {
-				return q.Directive.BodyError(err.Error())
+	return adoptError(core.catalog.Interactions.Each(func(_ catalog.InteractionId, v catalog.Interaction) error {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			q := hi.Query
+			if q != nil && q.Schema != nil && q.Schema.Notation == notation.SchemaNotationJSight {
+				if err := core.processSchemaContentJSightAllOf(q.Schema.ContentJSight, q.Schema.UsedUserTypes); err != nil {
+					return q.Directive.BodyError(err.Error())
+				}
 			}
 		}
 		return nil
@@ -251,12 +256,14 @@ func (core *JApiCore) processQueryAllOf() *jerr.JApiError {
 }
 
 func (core *JApiCore) processRequestHeaderAllOf() *jerr.JApiError {
-	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
-		r := v.Request
-		if r != nil && r.HTTPRequestHeaders != nil && r.HTTPRequestHeaders.Schema != nil && r.HTTPRequestHeaders.Schema.Notation == notation.SchemaNotationJSight {
-			h := r.HTTPRequestHeaders
-			if err := core.processSchemaContentJSightAllOf(h.Schema.ContentJSight, h.Schema.UsedUserTypes); err != nil {
-				return r.HTTPRequestHeaders.Directive.BodyError(err.Error())
+	return adoptError(core.catalog.Interactions.Each(func(_ catalog.InteractionId, v catalog.Interaction) error {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			r := hi.Request
+			if r != nil && r.HTTPRequestHeaders != nil && r.HTTPRequestHeaders.Schema != nil && r.HTTPRequestHeaders.Schema.Notation == notation.SchemaNotationJSight {
+				h := r.HTTPRequestHeaders
+				if err := core.processSchemaContentJSightAllOf(h.Schema.ContentJSight, h.Schema.UsedUserTypes); err != nil {
+					return r.HTTPRequestHeaders.Directive.BodyError(err.Error())
+				}
 			}
 		}
 		return nil
@@ -264,12 +271,14 @@ func (core *JApiCore) processRequestHeaderAllOf() *jerr.JApiError {
 }
 
 func (core *JApiCore) processRequestAllOf() *jerr.JApiError {
-	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
-		r := v.Request
-		if r != nil && r.HTTPRequestBody != nil && r.HTTPRequestBody.Schema != nil && r.HTTPRequestBody.Schema.Notation == notation.SchemaNotationJSight {
-			b := r.HTTPRequestBody
-			if err := core.processSchemaContentJSightAllOf(b.Schema.ContentJSight, b.Schema.UsedUserTypes); err != nil {
-				return r.HTTPRequestBody.Directive.BodyError(err.Error())
+	return adoptError(core.catalog.Interactions.Each(func(_ catalog.InteractionId, v catalog.Interaction) error {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			r := hi.Request
+			if r != nil && r.HTTPRequestBody != nil && r.HTTPRequestBody.Schema != nil && r.HTTPRequestBody.Schema.Notation == notation.SchemaNotationJSight {
+				b := r.HTTPRequestBody
+				if err := core.processSchemaContentJSightAllOf(b.Schema.ContentJSight, b.Schema.UsedUserTypes); err != nil {
+					return r.HTTPRequestBody.Directive.BodyError(err.Error())
+				}
 			}
 		}
 		return nil
@@ -277,12 +286,14 @@ func (core *JApiCore) processRequestAllOf() *jerr.JApiError {
 }
 
 func (core *JApiCore) processResponseHeaderAllOf() *jerr.JApiError {
-	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
-		for _, resp := range v.Responses {
-			h := resp.Headers
-			if h != nil && h.Schema != nil && h.Schema.Notation == notation.SchemaNotationJSight {
-				if err := core.processSchemaContentJSightAllOf(h.Schema.ContentJSight, h.Schema.UsedUserTypes); err != nil {
-					return resp.Headers.Directive.BodyError(err.Error())
+	return adoptError(core.catalog.Interactions.Each(func(_ catalog.InteractionId, v catalog.Interaction) error {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			for _, resp := range hi.Responses {
+				h := resp.Headers
+				if h != nil && h.Schema != nil && h.Schema.Notation == notation.SchemaNotationJSight {
+					if err := core.processSchemaContentJSightAllOf(h.Schema.ContentJSight, h.Schema.UsedUserTypes); err != nil {
+						return resp.Headers.Directive.BodyError(err.Error())
+					}
 				}
 			}
 		}
@@ -291,12 +302,14 @@ func (core *JApiCore) processResponseHeaderAllOf() *jerr.JApiError {
 }
 
 func (core *JApiCore) processResponseAllOf() *jerr.JApiError {
-	return adoptError(core.catalog.HttpInteractions.Each(func(_ catalog.HttpInteractionId, v *catalog.HttpInteraction) error {
-		for _, resp := range v.Responses {
-			b := resp.Body
-			if b != nil && b.Schema != nil && b.Schema.Notation == notation.SchemaNotationJSight {
-				if err := core.processSchemaContentJSightAllOf(b.Schema.ContentJSight, b.Schema.UsedUserTypes); err != nil {
-					return resp.Body.Directive.BodyError(err.Error())
+	return adoptError(core.catalog.Interactions.Each(func(_ catalog.InteractionId, v catalog.Interaction) error {
+		if hi, ok := v.(*catalog.HttpInteraction); ok {
+			for _, resp := range hi.Responses {
+				b := resp.Body
+				if b != nil && b.Schema != nil && b.Schema.Notation == notation.SchemaNotationJSight {
+					if err := core.processSchemaContentJSightAllOf(b.Schema.ContentJSight, b.Schema.UsedUserTypes); err != nil {
+						return resp.Body.Directive.BodyError(err.Error())
+					}
 				}
 			}
 		}

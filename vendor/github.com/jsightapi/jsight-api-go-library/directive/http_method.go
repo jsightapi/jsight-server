@@ -6,12 +6,12 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (d Directive) Method() (Enumeration, error) {
+func (d Directive) HttpMethod() (Enumeration, error) {
 	if d.Type().IsHTTPRequestMethod() {
 		return d.Type(), nil
 	} else if d.Parent != nil {
-		return d.Parent.Method()
+		return d.Parent.HttpMethod()
 	}
 
-	return Get, errors.New(jerr.MethodNotFound)
+	return Get, errors.New(jerr.HttpMethodNotFound)
 }

@@ -23,9 +23,7 @@ func NewJapi(filepath string, oo ...core.Option) (JApi, error) {
 	if err != nil {
 		return JApi{}, err
 	}
-	return JApi{
-		core.NewJApiCore(f, oo...),
-	}, nil
+	return NewJApiFromFile(f, oo...), nil
 }
 
 func readPanicFree(filename string) (f *fs.File, err error) {
@@ -38,9 +36,14 @@ func readPanicFree(filename string) (f *fs.File, err error) {
 	return f, err
 }
 
+// Deprecated: use NewJApiFromFile
 func NewJapiFromBytes(b bytes.Bytes, oo ...core.Option) JApi {
+	return NewJApiFromFile(fs.NewFile("root", b), oo...)
+}
+
+func NewJApiFromFile(file *fs.File, oo ...core.Option) JApi {
 	return JApi{
-		core.NewJApiCore(fs.NewFile("root", b), oo...),
+		core.NewJApiCore(file, oo...),
 	}
 }
 
