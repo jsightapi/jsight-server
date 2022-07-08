@@ -138,17 +138,21 @@ TYPE @jsonRpcInteraction
   "protocol"     : "json-rpc-2.0",           // {const: true}
   "path"         : "/cats",                  // {type: "@path"}
   "method"       : "foo",
-  "pathVariables": { // {optional: true}
-    "schema": @schema
-  },
+#  "pathVariables": { // {optional: true}
+#    "schema": @schema
+#  },
   "tags": [
     @tagName
   ],
   "annotation" : "Method annotation.",  // {optional: true}
   "description": "Method description.", // {optional: true}
 #  "query" : @query,  // {optional: true}
-  "params": @schema, // {optional: true}
-  "result": @schema  // {optional: true} 
+  "params": { // {optional: true}
+    "schema": @schema
+  },
+  "result": { // {optional: true}
+    "schema": @schema
+  }
 }
 
 #----------------------------------------------- HTTP ---------------------------------------------
