@@ -59,5 +59,5 @@ func (c Precision) Validate(value bytes.Bytes) {
 }
 
 func (c Precision) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, strconv.FormatUint(uint64(c.value), 10), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.JSONTypeNumber, strconv.FormatUint(uint64(c.value), 10), jschema.RuleASTNodeSourceManual) //nolint:lll
 }

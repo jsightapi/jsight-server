@@ -7,6 +7,7 @@ import (
 	jschemaLib "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/kit"
+	"github.com/jsightapi/jsight-schema-go-library/rules/enum"
 
 	"github.com/jsightapi/jsight-api-go-library/directive"
 	"github.com/jsightapi/jsight-api-go-library/jerr"
@@ -459,4 +460,45 @@ func (c *Catalog) AddJsonRpcResult(s Schema, d directive.Directive) error {
 	})
 
 	return nil
+}
+
+func (c *Catalog) AddEnum(d *directive.Directive, e *enum.Enum) *jerr.JApiError {
+	name := d.Parameter("Name")
+	if c.UserEnums.Has(name) {
+		return d.KeywordError(fmt.Sprintf("duplicate enum name %q", name))
+	}
+
+	r, err := c.enumDirectiveToUserRule(d, e)
+	if err != nil {
+		return d.KeywordError(err.Error())
+	}
+
+	c.UserEnums.Set(name, r)
+	return nil
+}
+
+func (*Catalog) enumDirectiveToUserRule(d *directive.Directive, e *enum.Enum) (*UserRule, error) {
+	vv, err := e.Values()
+	if err != nil {
+		return nil, err
+	}
+
+	r := Rule{
+		Key:       d.Parameter("Name"),
+		TokenType: RuleTokenTypeObject,
+	}
+
+	for _, v := range vv {
+		r.Children = append(r.Children, Rule{
+			Key:         v.Value.Unquote().String(),
+			TokenType:   RuleTokenType(v.Type.ToTokenType()),
+			ScalarValue: v.Value.Unquote().String(),
+		})
+	}
+
+	return &UserRule{
+		Annotation: d.Annotation,
+		Value:      r,
+		Directive:  d,
+	}, nil
 }

@@ -99,12 +99,12 @@ func (c *allOfConstraintCompiler) extendWith(node schema.Node, name string) {
 	// The constraint cannot be applied to other types of nodes.
 	toObject, ok := node.(*schema.ObjectNode)
 	if !ok {
-		panic(errors.Format(errors.ErrUnexpectedConstraint, constraint.AllOfConstraintType.String(), node.Type().String()))
+		panic(errors.Format(errors.ErrUnexpectedConstraint, constraint.AllOfConstraintType.String(), node.Type().String())) //nolint:lll
 	}
 
-	if fromAdditionalProperties := fromObject.Constraint(constraint.AdditionalPropertiesConstraintType); fromAdditionalProperties != nil {
-		fromAdditionalProperties := fromAdditionalProperties.(*constraint.AdditionalProperties) //nolint:errcheck // We're sure about this type.
-		if toAdditionalProperties := toObject.Constraint(constraint.AdditionalPropertiesConstraintType); toAdditionalProperties != nil {
+	if fromAdditionalProperties := fromObject.Constraint(constraint.AdditionalPropertiesConstraintType); fromAdditionalProperties != nil { //nolint:lll
+		fromAdditionalProperties := fromAdditionalProperties.(*constraint.AdditionalProperties)                                          //nolint:errcheck // We're sure about this type.
+		if toAdditionalProperties := toObject.Constraint(constraint.AdditionalPropertiesConstraintType); toAdditionalProperties != nil { //nolint:lll
 			toAdditionalProperties := toAdditionalProperties.(*constraint.AdditionalProperties) //nolint:errcheck // We're sure about this type.
 			if !fromAdditionalProperties.IsEqual(*toAdditionalProperties) {
 				panic(errors.ErrConflictAdditionalProperties)

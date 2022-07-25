@@ -27,6 +27,9 @@ type Catalog struct {
 	// UserTypes contains information about defined user types.
 	UserTypes *UserTypes
 
+	// UserEnums contains information about defined user enums.
+	UserEnums *UserRules
+
 	Interactions *Interactions
 
 	Tags *Tags
@@ -49,6 +52,7 @@ func NewCatalog() *Catalog {
 		rawUserTypes: &directive.Directives{},
 		Servers:      &Servers{},
 		UserTypes:    &UserTypes{},
+		UserEnums:    &UserRules{},
 		Interactions: &Interactions{},
 		Tags:         &Tags{},
 	}
@@ -72,6 +76,7 @@ func (c *Catalog) MarshalJSON() ([]byte, error) {
 		Info                *Info         `json:"info,omitempty"`
 		Servers             *Servers      `json:"servers,omitempty"`
 		UserTypes           *UserTypes    `json:"userTypes,omitempty"`
+		UserEnums           *UserRules    `json:"userEnums,omitempty"`
 		Interactions        *Interactions `json:"interactions"`
 		JSightVersion       string        `json:"jsight"`
 		JdocExchangeVersion string        `json:"jdocExchangeVersion"`
@@ -85,6 +90,9 @@ func (c *Catalog) MarshalJSON() ([]byte, error) {
 	}
 	if c.UserTypes.Len() > 0 {
 		data.UserTypes = c.UserTypes
+	}
+	if c.UserEnums.Len() > 0 {
+		data.UserEnums = c.UserEnums
 	}
 	data.Interactions = c.Interactions
 	data.Tags = c.Tags

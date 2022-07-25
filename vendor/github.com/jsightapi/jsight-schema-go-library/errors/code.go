@@ -136,7 +136,7 @@ var errorFormat = map[ErrorCode]string{
 	// old error format
 	ErrGeneric: "%s",
 
-	ErrImpossible: "The error should not occur during regular operation. May appear only in the process of unfinished code refactoring.",
+	ErrImpossible: "The error should not occur during regular operation. May appear only in the process of unfinished code refactoring.", //nolint:lll
 
 	// main & common
 	ErrUserTypeFound:      "Found an invalid reference to the type",
@@ -200,11 +200,11 @@ var errorFormat = map[ErrorCode]string{
 	ErrLoader:                           "Loader error", // error somewhere in the loader code
 	ErrIncorrectRuleValueType:           "Incorrect rule value type",
 	ErrIncorrectRuleWithoutExample:      "You cannot place a RULE on line without EXAMPLE",
-	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.",
+	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.", //nolint:lll
 	ErrLiteralValueExpected:             "Literal value expected",
 	ErrInvalidValueInEnumRule:           `An array or rule name was expected as a value for the "enum"`,
 	ErrIncorrectArrayItemTypeInEnumRule: `Incorrect array item type in "enum". Only literals are allowed.`,
-	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`,
+	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`, //nolint:lll
 	ErrTypeNameNotFoundInAllOfRule:      `Type name not found in "allOf" rule`,
 	ErrDuplicationInEnumRule:            `%s value duplicates in "enum"`,
 
@@ -242,7 +242,7 @@ var errorFormat = map[ErrorCode]string{
 	// link checker
 	ErrIncorrectUserType: `Incorrect type of user type`,
 	ErrTypeNotFound:      `Type "%s" not found`,
-	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type "%s"`,
+	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type "%s"`, //nolint:lll
 
 	// sdk
 	ErrEmptyType:                          `Type "%s" must not be empty`,

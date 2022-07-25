@@ -4,8 +4,8 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-schema-go-library/internal/ds"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
-	internalScanner "github.com/jsightapi/jsight-schema-go-library/internal/scanner"
 )
 
 type state uint8
@@ -75,7 +75,7 @@ type scanner struct {
 
 	// returnToStep a stack of step functions, to preserve the sequence of steps
 	// (and return to them) in some cases.
-	returnToStep stepFuncStack
+	returnToStep *ds.Stack[stepFunc]
 
 	// file a structure containing JSON data.
 	file *fs.File
@@ -85,7 +85,7 @@ type scanner struct {
 
 	// stack a stack of found lexical event. The stack is needed for the scanner
 	// to take into account the nesting of JSON or SCHEME elements.
-	stack internalScanner.LexemesStack
+	stack *ds.Stack[lexeme.LexEvent]
 
 	// finds a list of found types of lexical event for the current step. Several
 	// lexical events can be found in one step (example: ArrayItemBegin and LiteralBegin).
@@ -111,8 +111,8 @@ func newScanner(file *fs.File) *scanner {
 		file:         file,
 		data:         file.Content(),
 		dataSize:     bytes.Index(len(file.Content())),
-		returnToStep: make(stepFuncStack, 0, 2),
-		stack:        internalScanner.NewLexemesStack(),
+		returnToStep: &ds.Stack[stepFunc]{},
+		stack:        &ds.Stack[lexeme.LexEvent]{},
 		finds:        make([]lexeme.LexEventType, 0, 3),
 	}
 }
@@ -137,7 +137,7 @@ func (s *scanner) Length() uint {
 			break
 		}
 		c := s.data[length-1]
-		if s.isSpace(c) {
+		if bytes.IsBlank(c) {
 			length--
 		} else {
 			break
@@ -240,10 +240,6 @@ func (s *scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 	panic("Incorrect ending of the lexical event")
 }
 
-func (*scanner) isSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
-}
-
 func stateFoundRootValue(s *scanner, c byte) state {
 	r := stateBeginValue(s, c)
 	switch r { //nolint:exhaustive // It's okay.
@@ -260,7 +256,7 @@ func stateFoundRootValue(s *scanner, c byte) state {
 }
 
 func stateFoundObjectKeyBeginOrEmpty(s *scanner, c byte) state {
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 
@@ -268,7 +264,7 @@ func stateFoundObjectKeyBeginOrEmpty(s *scanner, c byte) state {
 }
 
 func stateFoundObjectKeyBegin(s *scanner, c byte) state {
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 
@@ -332,7 +328,7 @@ func stateFoundArrayItemBegin(s *scanner, c byte) state {
 }
 
 func stateBeginValue(s *scanner, c byte) state { //nolint:gocyclo // It's okay.
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	switch c {
@@ -438,7 +434,7 @@ func stateEndValue(s *scanner, c byte) state {
 }
 
 func stateAfterObjectKey(s *scanner, c byte) state {
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 
@@ -450,7 +446,7 @@ func stateAfterObjectKey(s *scanner, c byte) state {
 }
 
 func stateAfterObjectValue(s *scanner, c byte) state {
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if c == ',' {
@@ -464,7 +460,7 @@ func stateAfterObjectValue(s *scanner, c byte) state {
 }
 
 func stateAfterArrayItem(s *scanner, c byte) state {
-	if s.isSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if c == ',' {
@@ -497,7 +493,7 @@ func stateFoundArrayEnd(s *scanner) state {
 // such as after reading `{}` or `[1,2,3]`.
 // Only space characters should be seen now.
 func stateEndTop(s *scanner, c byte) state {
-	if !s.isSpace(c) {
+	if !bytes.IsBlank(c) {
 		if !s.allowTrailingNonSpaceCharacters {
 			panic(s.newDocumentErrorAtCharacter("non-space byte after top-level value"))
 		}

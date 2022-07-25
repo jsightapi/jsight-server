@@ -120,7 +120,7 @@ func stateDescriptionTextBegin(s *Scanner, c byte) *jerr.JApiError {
 }
 
 func stateDescriptionTextBracketsInner(s *Scanner, c byte) *jerr.JApiError {
-	if isNewLine(c) {
+	if IsNewLine(c) {
 		s.step = stateDescriptionTextBracketsInnerNewLine
 	}
 	return nil

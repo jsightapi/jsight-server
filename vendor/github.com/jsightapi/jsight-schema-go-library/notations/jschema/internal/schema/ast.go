@@ -30,7 +30,7 @@ func getASTNodeSchemaType(n Node) string {
 	}
 
 	if n.Constraint(constraint.OrConstraintType) != nil {
-		return jschema.JSONTypeMixed
+		return string(jschema.SchemaTypeMixed)
 	}
 
 	if c := n.Constraint(constraint.TypeConstraintType); c != nil {
@@ -40,7 +40,7 @@ func getASTNodeSchemaType(n Node) string {
 	}
 
 	if n.Constraint(constraint.PrecisionConstraintType) != nil {
-		return "decimal"
+		return string(jschema.SchemaTypeDecimal)
 	}
 
 	return n.Type().String()

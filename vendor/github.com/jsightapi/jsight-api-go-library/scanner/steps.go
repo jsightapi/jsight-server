@@ -273,6 +273,6 @@ func stateContextOpenedOnNewline(s *Scanner, c byte) *jerr.JApiError {
 	case CommentSign:
 		return s.startComment()
 	default:
-		return s.japiErrorUnexpectedChar("after explicit context open", "")
+		return s.japiErrorBasic(jerr.ApartFromTheOpeningParenthesis)
 	}
 }

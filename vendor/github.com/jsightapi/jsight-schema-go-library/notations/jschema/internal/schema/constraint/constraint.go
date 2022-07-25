@@ -47,7 +47,7 @@ func NewConstraintFromRule( //nolint:gocyclo // For now it's okay.
 	ruleValue bytes.Bytes,
 	nodeValue bytes.Bytes,
 ) Constraint {
-	str := ruleNameLex.Value().Unquote().String()
+	str := ruleNameLex.Value().TrimSpaces().Unquote().String()
 	switch str {
 	case "minLength":
 		return NewMinLength(ruleValue)

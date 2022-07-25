@@ -38,7 +38,7 @@ func newNodeLoader(
 func (nl *nodeLoader) load(lex lexeme.LexEvent) schema.Node {
 	defer lexeme.CatchLexEventError(lex)
 
-	switch lex.Type() { //nolint:exhaustive // We will handle over cases below.
+	switch lex.Type() {
 	case lexeme.NewLine:
 		*(nl.nodesPerCurrentLineCount) = 0
 		return nil

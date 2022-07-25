@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/rules"
+	"github.com/jsightapi/jsight-schema-go-library/rules/enum"
 
 	"github.com/jsightapi/jsight-api-go-library/directive"
 	"github.com/jsightapi/jsight-api-go-library/jerr"
@@ -27,11 +27,11 @@ func (core *JApiCore) buildRule(d *directive.Directive) *jerr.JApiError {
 
 	name := d.Parameter("Name")
 
-	r := rules.NewEnum(name, d.BodyCoords.Read())
+	r := enum.New(name, d.BodyCoords.Read())
 	if err := r.Check(); err != nil {
 		return jschemaToJAPIError(err, d)
 	}
 
 	core.rules[name] = r
-	return nil
+	return core.catalog.AddEnum(d, r)
 }

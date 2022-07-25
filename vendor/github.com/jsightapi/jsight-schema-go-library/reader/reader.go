@@ -1,7 +1,7 @@
 package reader
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
@@ -13,7 +13,7 @@ func Read(filename string) *fs.File {
 }
 
 func ReadWithName(filename, name string) *fs.File {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		docErr := errors.DocumentError{}
 		docErr.SetMessage(err.Error())

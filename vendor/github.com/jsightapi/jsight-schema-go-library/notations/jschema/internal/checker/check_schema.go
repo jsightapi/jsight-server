@@ -44,7 +44,8 @@ func (c *checkSchema) checkType(name string, typ schema.Type, ss map[string]sche
 			return
 		}
 
-		if documentError, ok := r.(errors.DocumentError); ok { // return an error with the full set of bytes of the root schema
+		// Return an error with the full set of bytes of the root schema.
+		if documentError, ok := r.(errors.DocumentError); ok {
 			documentError.SetFile(typ.RootFile())
 			documentError.SetIndex(documentError.Index() + typ.Begin())
 			documentError.SetIncorrectUserType(name)

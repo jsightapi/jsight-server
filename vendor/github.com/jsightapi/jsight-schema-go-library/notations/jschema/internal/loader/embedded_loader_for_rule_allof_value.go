@@ -12,8 +12,13 @@ import (
 
 type allOfValueLoader struct {
 	allOfConstraint *constraint.AllOf
-	stateFunc       func(lexeme.LexEvent) // A function for running a state machine (the current state of the state machine)
-	inProgress      bool                  // true - if loading in progress, false - if loading finisher
+
+	// stateFunc a function for running a state machine (the current state of the
+	// state machine).
+	stateFunc func(lexeme.LexEvent)
+
+	// inProgress indicates loading finished.
+	inProgress bool
 }
 
 func newAllOfValueLoader(allOfConstraint *constraint.AllOf) embeddedLoader {

@@ -15,7 +15,6 @@ const (
 	JSONTypeArray    JSONType = "array"
 	JSONTypeObject   JSONType = "object"
 	JSONTypeShortcut JSONType = "reference"
-	JSONTypeMixed    JSONType = "mixed"
 	JSONTypeNull     JSONType = "null"
 )
 
@@ -39,6 +38,7 @@ const (
 	SchemaTypeEnum      SchemaType = "enum"
 	SchemaTypeMixed     SchemaType = "mixed"
 	SchemaTypeAny       SchemaType = "any"
+	SchemaTypeComment   SchemaType = "comment"
 )
 
 func IsValidType(s string) bool {
@@ -59,8 +59,29 @@ func IsValidType(s string) bool {
 		string(SchemaTypeEnum):     {},
 		string(SchemaTypeMixed):    {},
 		string(SchemaTypeAny):      {},
+		string(SchemaTypeComment):  {},
 	}[s]
 	return ok
+}
+
+func (t SchemaType) ToTokenType() string {
+	switch t { //nolint:exhaustive // We return an empty string.
+	case SchemaTypeObject:
+		return "object"
+	case SchemaTypeArray:
+		return "array"
+	case SchemaTypeString:
+		return "string"
+	case SchemaTypeInteger, SchemaTypeFloat, SchemaTypeDecimal:
+		return "number"
+	case SchemaTypeBoolean:
+		return "boolean"
+	case SchemaTypeNull:
+		return "null"
+	case SchemaTypeMixed:
+		return "reference"
+	}
+	return ""
 }
 
 func (t SchemaType) IsScalar() bool {

@@ -58,7 +58,7 @@ func (c Max) Validate(value bytes.Bytes) {
 	}
 	if c.exclusive {
 		if c.max.LessThanOrEqual(jsonNumber) {
-			panic(errors.Format(errors.ErrConstraintValidation, MaxConstraintType.String(), c.max.String(), "(exclusive)"))
+			panic(errors.Format(errors.ErrConstraintValidation, MaxConstraintType.String(), c.max.String(), "(exclusive)")) //nolint:lll
 		}
 	} else {
 		if c.max.LessThan(jsonNumber) {

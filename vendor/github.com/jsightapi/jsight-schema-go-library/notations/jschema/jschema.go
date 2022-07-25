@@ -1,6 +1,7 @@
 package jschema
 
 import (
+	stdBytes "bytes"
 	stdErrors "errors"
 	"fmt"
 	"io"
@@ -11,10 +12,10 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/formats/json"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-schema-go-library/internal/panics"
 	"github.com/jsightapi/jsight-schema-go-library/notations/internal"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/checker"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/loader"
-	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/panics"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/scanner"
 	internalSchema "github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
@@ -104,54 +105,77 @@ func (s *Schema) Example() (b []byte, err error) {
 		return nil, errors.NewDocumentError(s.file, errors.ErrEmptySchema)
 	}
 
-	return buildExample(s.inner.RootNode()), nil
+	return buildExample(s.inner.RootNode())
 }
 
-func buildExample(node internalSchema.Node) []byte {
-	c := node.Constraint(constraint.TypesListConstraintType)
-	if c != nil {
-		panic(errors.ErrUserTypeFound)
+var exampleBufferPool = sync.Pool{
+	New: func() interface{} {
+		return stdBytes.NewBuffer(make([]byte, 0, 512))
+	},
+}
+
+func resetExampleBufferPool(b *stdBytes.Buffer) {
+	b.Reset()
+	exampleBufferPool.Put(b)
+}
+
+func buildExample(node internalSchema.Node) ([]byte, error) { //nolint:gocyclo // Will be fixed soon.
+	if node.Constraint(constraint.TypesListConstraintType) != nil {
+		return nil, errors.ErrUserTypeFound
 	}
 
 	switch typedNode := node.(type) {
 	case *internalSchema.ObjectNode:
-		b := make([]byte, 0, 512)
-		b = append(b, '{')
+		b := exampleBufferPool.Get().(*stdBytes.Buffer) //nolint:errcheck // We're sure about this type.
+		defer resetExampleBufferPool(b)
+
+		b.WriteRune('{')
 		objectNode := node.(*internalSchema.ObjectNode) //nolint:errcheck // We're sure about this type.
 		children := objectNode.Children()
 		length := len(children)
 		for i, childNode := range children {
 			key := objectNode.Key(i)
-			b = append(b, '"')
-			b = append(b, []byte(key.Key)...)
-			b = append(b, '"', ':')
-			b = append(b, buildExample(childNode)...)
+			b.WriteRune('"')
+			b.WriteString(key.Key)
+			b.WriteString(`":`)
+
+			ex, err := buildExample(childNode)
+			if err != nil {
+				return nil, err
+			}
+			b.Write(ex)
 			if i+1 != length {
-				b = append(b, ',')
+				b.WriteRune(',')
 			}
 		}
-		b = append(b, '}')
-		return b
+		b.WriteRune('}')
+		return b.Bytes(), nil
 
 	case *internalSchema.ArrayNode:
-		b := make([]byte, 0, 512)
-		b = append(b, '[')
+		b := exampleBufferPool.Get().(*stdBytes.Buffer) //nolint:errcheck // We're sure about this type.
+		defer resetExampleBufferPool(b)
+
+		b.WriteRune('[')
 		children := typedNode.Children()
 		length := len(children)
 		for i, childNode := range children {
-			b = append(b, buildExample(childNode)...)
+			ex, err := buildExample(childNode)
+			if err != nil {
+				return nil, err
+			}
+			b.Write(ex)
 			if i+1 != length {
-				b = append(b, ',')
+				b.WriteRune(',')
 			}
 		}
-		b = append(b, ']')
-		return b
+		b.WriteRune(']')
+		return b.Bytes(), nil
 
 	case *internalSchema.LiteralNode:
-		return typedNode.BasisLexEventOfSchemaForNode().Value()
+		return typedNode.BasisLexEventOfSchemaForNode().Value(), nil
 
 	default:
-		panic(fmt.Sprintf("unhandled node type %T", node))
+		return nil, fmt.Errorf("unhandled node type %T", node)
 	}
 }
 

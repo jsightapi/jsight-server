@@ -142,7 +142,7 @@ func (l *loader) doLoad() {
 }
 
 func (l *loader) handleLex(lex lexeme.LexEvent) (bool, error) { //nolint:gocyclo // Pretty readable though.
-	switch lex.Type() { //nolint:exhaustive // It's okay here.
+	switch lex.Type() {
 	case lexeme.TypesShortcutBegin, lexeme.KeyShortcutBegin:
 		return l.mode != readMultiLineComment && l.mode != readInlineComment, nil
 

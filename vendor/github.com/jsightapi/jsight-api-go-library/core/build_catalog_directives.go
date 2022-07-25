@@ -116,10 +116,15 @@ func (core JApiCore) addDescription(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(jerr.EmptyDescription)
 	}
 
-	text := string(description(d.BodyCoords.Read()))
-	if text == "" {
+	bb, err := description(d.BodyCoords.Read())
+	if err != nil {
+		return d.BodyError(err.Error())
+	}
+	if len(bb) == 0 {
 		return d.KeywordError(jerr.EmptyDescription)
 	}
+
+	text := string(bb)
 
 	switch d.Parent.Type() {
 	case directive.Info:

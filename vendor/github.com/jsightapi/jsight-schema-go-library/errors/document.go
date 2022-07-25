@@ -116,7 +116,7 @@ func (e *DocumentError) detectNewLineSymbol() {
 	e.nl = '\n' // default new line
 	var found bool
 	for _, c := range content {
-		if c == '\n' || c == '\r' {
+		if bytes.IsNewLine(c) {
 			e.nl = c
 			found = true
 		} else if found { // first symbol after new line
@@ -239,7 +239,10 @@ func (e *DocumentError) String() string {
 	if e.file != nil {
 		filename := e.file.Name()
 		if e.hasIndex {
-			return fmt.Sprintf("%s: %s\n\tin line %d on file %s\n\t> %s\n\t--%s", prefix, e.message, e.Line(), filename, e.SourceSubString(), e.pointerToTheErrorCharacter())
+			return fmt.Sprintf(`%s: %s
+	in line %d on file %s
+	> %s
+	--%s`, prefix, e.message, e.Line(), filename, e.SourceSubString(), e.pointerToTheErrorCharacter())
 		} else if filename != "" {
 			return fmt.Sprintf("%s: %s\n\tin file %s", prefix, e.message, filename)
 		}

@@ -170,6 +170,9 @@ type Rule interface {
 	// Check checks this rule is valid.
 	// Can return ParsingError if rule isn't valid.
 	Check() error
+
+	// GetAST returns a root AST node for this schema.
+	GetAST() (ASTNode, error)
 }
 
 // ParsingError indicates something bad was happened during parsing.

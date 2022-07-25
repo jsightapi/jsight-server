@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/kit"
-	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/rules"
+	"github.com/jsightapi/jsight-schema-go-library/rules/enum"
 
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
@@ -105,7 +105,7 @@ func (s *Scanner) readEnumWithJsc() (uint, *jerr.JApiError) {
 	fc := s.file.Content()
 	file := fs.NewFile("", fc.Slice(s.curIndex, bytes.Index(fc.Len()-1)))
 
-	l, err := rules.EnumFromFile(file).Len()
+	l, err := enum.FromFile(file).Len()
 	if err != nil {
 		err := kit.ConvertError(file, err)
 		return 0, s.japiError(err.Message(), s.curIndex+bytes.Index(err.Position()))

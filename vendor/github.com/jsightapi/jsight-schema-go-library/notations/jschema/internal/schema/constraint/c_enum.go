@@ -54,8 +54,10 @@ func (c Enum) String() string {
 
 func (c *Enum) Append(b jbytes.Bytes) int {
 	key := b.TrimSpaces().String()
-	if _, ok := c.uniqueIdx[key]; ok {
-		panic(errors.Format(errors.ErrDuplicationInEnumRule, b.String()))
+	if key != "" {
+		if _, ok := c.uniqueIdx[key]; ok {
+			panic(errors.Format(errors.ErrDuplicationInEnumRule, b.String()))
+		}
 	}
 	idx := len(c.items)
 	c.items = append(c.items, enumItem{value: b})

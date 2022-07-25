@@ -13,14 +13,14 @@ func isWhitespace(c byte) bool {
 }
 
 func caseNewLine(c byte) byte {
-	if isNewLine(c) {
+	if IsNewLine(c) {
 		return c
 	} else {
 		return otherByte(c)
 	}
 }
 
-func isNewLine(c byte) bool {
+func IsNewLine(c byte) bool {
 	return c == '\n' || c == '\r'
 }
 

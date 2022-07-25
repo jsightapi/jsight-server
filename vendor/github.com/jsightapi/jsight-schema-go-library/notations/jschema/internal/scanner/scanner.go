@@ -6,8 +6,8 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-schema-go-library/internal/ds"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
-	"github.com/jsightapi/jsight-schema-go-library/internal/scanner"
 )
 
 type state uint8
@@ -102,7 +102,15 @@ type Scanner struct {
 
 	// returnToStep a stack of step functions, to preserve the sequence of steps
 	// (and return to them) in some cases.
-	returnToStep stepFuncStack
+	returnToStep *ds.Stack[stepFunc]
+
+	// stack a stack of found lexical event. The stack is needed for the scanner
+	// to take into account the nesting of SCHEME elements.
+	stack *ds.Stack[lexeme.LexEvent]
+
+	// prevContextsStack a stack of previous scanner contexts.
+	// Used for restoring a previous context after finishing current one.
+	prevContextsStack *ds.Stack[context]
 
 	// file a structure containing jSchema data.
 	file *fs.File
@@ -110,17 +118,9 @@ type Scanner struct {
 	// data jSchema content.
 	data bytes.Bytes
 
-	// stack a stack of found lexical event. The stack is needed for the scanner
-	// to take into account the nesting of SCHEME elements.
-	stack scanner.LexemesStack
-
 	// finds a list of found types of lexical event for the current step. Several
 	// lexical events can be found in one step (example: ArrayItemBegin and LiteralBegin).
 	finds []lexeme.LexEventType
-
-	// prevContextsStack a stack of previous scanner contexts.
-	// Used for restoring a previous context after finishing current one.
-	prevContextsStack contextStack
 
 	// context indicates which type of entity we process right now.
 	context context
@@ -175,15 +175,16 @@ func New(file *fs.File, oo ...Option) *Scanner {
 	content := file.Content()
 
 	s := &Scanner{
-		step:            stateFoundRootValue,
-		file:            file,
-		data:            content,
-		dataSize:        bytes.Index(len(content)),
-		returnToStep:    make(stepFuncStack, 0, 2),
-		stack:           scanner.NewLexemesStack(),
-		finds:           make([]lexeme.LexEventType, 0, 3),
-		context:         newContext(contextTypeInitial),
-		allowAnnotation: true,
+		step:              stateFoundRootValue,
+		file:              file,
+		data:              content,
+		dataSize:          bytes.Index(len(content)),
+		returnToStep:      &ds.Stack[stepFunc]{},
+		stack:             &ds.Stack[lexeme.LexEvent]{},
+		prevContextsStack: &ds.Stack[context]{},
+		finds:             make([]lexeme.LexEventType, 0, 3),
+		context:           newContext(contextTypeInitial),
+		allowAnnotation:   true,
 	}
 
 	for _, o := range oo {
@@ -226,7 +227,7 @@ func (s *Scanner) Length() uint {
 	}
 	for ; length > 0; length-- {
 		c := s.data[length-1]
-		if !bytes.IsSpace(c) {
+		if !bytes.IsBlank(c) {
 			break
 		}
 	}
@@ -234,7 +235,7 @@ func (s *Scanner) Length() uint {
 }
 
 func (s *Scanner) newDocumentError(code errors.ErrorCode, c byte) errors.DocumentError {
-	e := errors.Format(code, scanner.QuoteChar(c))
+	e := errors.Format(code, bytes.QuoteChar(c))
 	err := errors.NewDocumentError(s.file, e)
 	err.SetIndex(s.index - 1)
 	return err
@@ -306,25 +307,25 @@ func (s *Scanner) isFoundLastObjectEndOnAnnotation() (bool, lexeme.LexEventType)
 		s.stack.Get(length-2).Type() == lexeme.MixedValueBegin &&
 		s.stack.Get(length-3).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-4).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-5).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-5).Type() == lexeme.MultiLineAnnotationBegin):
+		(s.stack.Get(length-5).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-5).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
 		return true, s.stack.Get(length - 5).Type()
 
 	case length >= 4 &&
 		s.stack.Get(length-1).Type() == lexeme.LiteralBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-3).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin):
+		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
 		return true, s.stack.Get(length - 4).Type()
 
 	case length >= 3 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin):
+		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
 		return true, s.stack.Get(length - 3).Type()
 
 	case length >= 2 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin):
+		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
 		return true, s.stack.Get(length - 2).Type()
 	}
 	return false, lexeme.InlineAnnotationBegin
@@ -474,7 +475,7 @@ func stateFoundObjectKeyBeginOrEmpty(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -507,7 +508,7 @@ func stateFoundObjectKeyBegin(s *Scanner, c byte) state {
 		s.step = stateFoundObjectKeyBeginAfterNewLine
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -538,7 +539,7 @@ func stateFoundObjectKeyBeginAfterNewLine(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isCommentStart(c) {
@@ -663,7 +664,7 @@ func stateBeginValue(s *Scanner, c byte) state { //nolint:gocyclo // It's okay.
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -822,7 +823,7 @@ func stateAfterObjectKey(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -842,7 +843,7 @@ func stateAfterObjectValue(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -868,7 +869,7 @@ func stateAfterArrayItem(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if s.isAnnotationStart(c) {
@@ -939,7 +940,7 @@ func stateEndTop(s *Scanner, c byte) state {
 		s.switchToComment()
 		return scanContinue
 
-	case !bytes.IsSpace(c):
+	case !bytes.IsBlank(c):
 		if s.lengthComputing {
 			if s.stack.Len() > 0 {
 				// Looks like we have invalid schema, and we should keep scanning.
@@ -1204,7 +1205,7 @@ func stateTypesShortcutSchemaName(s *Scanner, c byte) state {
 	case bytes.IsValidUserTypeNameByte(c):
 		s.step = stateTypesShortcutSchemaName
 
-	case c == ' ' || c == '\t':
+	case bytes.IsSpace(c):
 		s.step = stateTypesShortcutBeforePipe
 
 	case c == '|':
@@ -1230,7 +1231,7 @@ func stateTypesShortcutBeforePipe(s *Scanner, c byte) state {
 	}
 
 	switch {
-	case c == ' ' || c == '\t':
+	case bytes.IsSpace(c):
 		s.step = stateTypesShortcutBeforePipe
 
 	case c == '|':
@@ -1289,7 +1290,7 @@ func stateMultiLineAnnotation(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanSkipSpace
 	}
 	if c == '{' {
@@ -1305,7 +1306,7 @@ func stateMultiLineAnnotationEndAfterObject(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 		return scanSkipSpace
 	}
-	if bytes.IsSpace(c) {
+	if bytes.IsBlank(c) {
 		return scanContinue
 	}
 	if c == '*' {
@@ -1343,10 +1344,10 @@ func stateInlineAnnotation(s *Scanner, c byte) state {
 }
 
 func stateInlineAnnotationTextPrefix(s *Scanner, c byte) state {
-	if c == ' ' || c == '\t' {
+	if bytes.IsSpace(c) {
 		return scanSkipSpace
 	}
-	if c == '\n' || c == '\r' {
+	if bytes.IsNewLine(c) {
 		s.found(lexeme.InlineAnnotationEnd)
 		s.found(lexeme.NewLine)
 		s.step = s.returnToStep.Pop()
@@ -1369,7 +1370,7 @@ func stateInlineAnnotationTextPrefix(s *Scanner, c byte) state {
 }
 
 func stateInlineAnnotationTextPrefix2(s *Scanner, c byte) state {
-	if c == ' ' || c == '\t' {
+	if bytes.IsSpace(c) {
 		return scanContinue
 	}
 	s.found(lexeme.InlineAnnotationTextBegin)
@@ -1407,7 +1408,7 @@ func stateInlineAnnotationText(s *Scanner, c byte) state {
 }
 
 func stateInlineAnnotationTextSkip(s *Scanner, c byte) state {
-	if c != '\n' && c != '\r' {
+	if !bytes.IsNewLine(c) {
 		return scanContinue
 	}
 
@@ -1448,7 +1449,7 @@ func stateBeginAnnotationObjectKey(s *Scanner, c byte) state {
 }
 
 func stateInAnnotationObjectKeyFirstLetter(s *Scanner, c byte) state {
-	if (s.boundary == 0 && (c == ':' || c == '\n' || c == '\r' || c == '\\')) || c == s.boundary || c < 0x20 {
+	if (s.boundary == 0 && (c == ':' || bytes.IsNewLine(c) || c == '\\')) || c == s.boundary || c < 0x20 {
 		panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
 	}
 	s.step = stateInAnnotationObjectKey
@@ -1466,7 +1467,7 @@ func stateInAnnotationObjectKey(s *Scanner, c byte) state {
 	case c == ' ':
 		s.step = stateInAnnotationObjectKeyAfter
 
-	case c < 0x20 || (c == '"' || c == '\n' || c == '\r'):
+	case c < 0x20 || (c == '"' || bytes.IsNewLine(c)):
 		panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
 	}
 	return scanContinue
@@ -1522,7 +1523,7 @@ func stateAnyCommentStart(s *Scanner, c byte) state {
 }
 
 func stateInlineComment(s *Scanner, c byte) state {
-	if c == '\n' || c == '\r' {
+	if bytes.IsNewLine(c) {
 		s.step = s.returnToStep.Pop()
 		s.found(lexeme.NewLine)
 		s.index--

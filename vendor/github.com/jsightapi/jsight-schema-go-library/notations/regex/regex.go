@@ -10,7 +10,6 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
-	"github.com/jsightapi/jsight-schema-go-library/internal/scanner"
 )
 
 type Schema struct {
@@ -135,7 +134,7 @@ loop:
 }
 
 func (s *Schema) newDocumentError(code errors.ErrorCode, idx uint, c byte) errors.DocumentError {
-	e := errors.Format(code, scanner.QuoteChar(c))
+	e := errors.Format(code, bytes.QuoteChar(c))
 	err := errors.NewDocumentError(s.file, e)
 	err.SetIndex(bytes.Index(idx))
 	return err

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"math"
+	"strconv"
 )
 
 type Index uint
@@ -43,14 +44,14 @@ func (b Bytes) TrimSpaces() Bytes {
 	left := 0
 	right := blen - 1
 
-	for ; left < blen && IsSpace(b[left]); left++ {
+	for ; left < blen && IsBlank(b[left]); left++ {
 	}
 
 	if left >= blen {
 		return Bytes{}
 	}
 
-	for ; right > 0 && IsSpace(b[right]); right-- {
+	for ; right > 0 && IsBlank(b[right]); right-- {
 	}
 
 	return b[left : right+1]
@@ -58,27 +59,20 @@ func (b Bytes) TrimSpaces() Bytes {
 
 func (b Bytes) TrimSpacesFromLeft() Bytes {
 	for i, c := range b {
-		if !IsSpace(c) {
+		if !IsBlank(c) {
 			return b[i:]
 		}
 	}
 	return b
 }
 
-// IsSpace return true if provided byte is space.
-func IsSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
-}
-
 func (b Bytes) CountSpacesFromLeft() int {
-	var i int
-	var c byte
-	for i, c = range b {
-		if c != ' ' && c != '\t' && c != '\n' && c != '\r' {
-			break
+	for i, c := range b {
+		if !IsBlank(c) {
+			return i
 		}
 	}
-	return i
+	return 0
 }
 
 // OneOf checks current bytes sequence equal to at least one of specified strings.
@@ -206,4 +200,18 @@ func (b Bytes) LineFrom(start Index) (Bytes, error) {
 // it didn't allow to use that symbol in the name.
 func IsValidUserTypeNameByte(c byte) bool {
 	return c == '-' || c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9')
+}
+
+// QuoteChar formats char as a quoted character literal.
+func QuoteChar(c byte) string {
+	// special cases - different from quoted strings
+	if c == '\'' {
+		return `'\''`
+	}
+	if c == '"' {
+		return `'"'`
+	}
+	// use quoted string with different quotation marks
+	s := strconv.Quote(string(c))
+	return "'" + s[1:len(s)-1] + "'"
 }

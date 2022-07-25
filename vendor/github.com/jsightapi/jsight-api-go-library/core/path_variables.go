@@ -33,7 +33,7 @@ func (core *JApiCore) newPathVariables(properties []prop) (*catalog.PathVariable
 			return nil, p.directive.KeywordError(err.Error())
 		}
 
-		p.schemaContentJSight.Key = p.parameter
+		p.schemaContentJSight.Key = catalog.SrtPtr(p.parameter)
 		s.ContentJSight.Children = append(s.ContentJSight.Children, p.schemaContentJSight)
 	}
 

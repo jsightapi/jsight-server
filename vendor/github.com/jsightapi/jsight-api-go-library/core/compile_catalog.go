@@ -86,7 +86,7 @@ func checkPathSchema(s catalog.Schema) error {
 
 	for _, v := range s.ContentJSight.Children {
 		if v.TokenType == jschema.JSONTypeObject || v.TokenType == jschema.JSONTypeArray {
-			return fmt.Errorf("the multi-level property %q is not allowed in the Path directive", v.Key)
+			return fmt.Errorf("the multi-level property %q is not allowed in the Path directive", *(v.Key))
 		}
 	}
 
@@ -157,7 +157,7 @@ func (*JApiCore) propertiesToMap(pp []*catalog.SchemaContentJSight) map[string]*
 
 	res := make(map[string]*catalog.SchemaContentJSight, len(pp))
 	for _, v := range pp {
-		res[v.Key] = v
+		res[*(v.Key)] = v
 	}
 	return res
 }
@@ -329,15 +329,15 @@ func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJ
 	}
 
 	if rule, ok := sc.Rules.Get("allOf"); ok {
-		switch rule.TokenType {
-		case jschema.JSONTypeArray:
+		switch rule.TokenType { //nolint:exhaustive // We expects only this types.
+		case catalog.RuleTokenTypeArray:
 			for i := len(rule.Children) - 1; i >= 0; i-- {
 				r := rule.Children[i]
 				if err := core.inheritPropertiesFromUserType(sc, uut, r.ScalarValue); err != nil {
 					return err
 				}
 			}
-		case jschema.JSONTypeString:
+		case catalog.RuleTokenTypeString:
 			if err := core.inheritPropertiesFromUserType(sc, uut, rule.ScalarValue); err != nil {
 				return err
 			}
@@ -363,8 +363,12 @@ func (core *JApiCore) inheritPropertiesFromUserType(sc *catalog.SchemaContentJSi
 	for i := len(ut.Schema.ContentJSight.Children) - 1; i >= 0; i-- {
 		v := ut.Schema.ContentJSight.Children[i]
 
-		if sc.IsObjectHaveProperty(v.Key) {
-			return fmt.Errorf(`it is not allowed to override the "%s" property from the user type "%s"`, v.Key, userTypeName)
+		if v.Key == nil {
+			return fmt.Errorf(jerr.InternalServerError)
+		}
+
+		if sc.IsObjectHaveProperty(*(v.Key)) {
+			return fmt.Errorf(`it is not allowed to override the "%s" property from the user type "%s"`, *(v.Key), userTypeName)
 		}
 		vv := *v
 		if vv.InheritedFrom == "" {
