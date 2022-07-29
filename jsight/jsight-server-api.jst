@@ -327,11 +327,11 @@ TYPE @jsightSchemaElement
 
 TYPE @rule
 {
-  "key"        : @ruleNameEnum,
+  "key"        : @ruleNameEnum, // {optional: true}
   "tokenType"  : "object", // {type: "@tokenTypeEnum"}
   "scalarValue": "@cat",   /* {optional: true} - Specified only if "tokenType" specifies "string", "number", "boolean",
                                                "annotation" or "null". */
-  # "note"       : "Note to the \n rule.", // {optional: true} - May contain line breaks.
+  "note"       : "Note to the \n rule.", // {optional: true} - May contain line breaks.
   "children"   : [         // {optional: true} - specified only if tokenType: "array" or "object". 
     @rule
   ]
