@@ -72,8 +72,8 @@ TYPE @jdocExchange
   "userTypes": { // {additionalProperties: "@userType", optional: true}
     @userTypeName: @userType // {optional: true}
   },
-  "userEnums": { // {additionalProperties: "@userRule", optional: true}
-    @userRuleName : @userRule // {optional: true}
+  "userEnums": { // {additionalProperties: "@userEnum", optional: true}
+    @userEnumName : @userEnum // {optional: true}
   }
 }
 
@@ -264,6 +264,14 @@ TYPE @userRule
 #  ]
 }
 
+#---------------------------------------------- USER ENUM -----------------------------------------
+
+TYPE @userEnumName
+  @userRuleName
+
+TYPE @userEnum
+  @userRule
+
 #---------------------------------------------- LINK ----------------------------------------------
 
 #TYPE @link
@@ -297,7 +305,7 @@ TYPE @schema
     "@dog"           // {type: "@userTypeName"}
   ],
   "usedUserEnums": [ // {optional: true}
-    "@catSizeEnum"   // {type: "@userRuleName"}
+    "@catSizeEnum"   // {type: "@userEnumName"}
   ],
   "example": "{\n  \"id\": 123\n}" // {optional: true}
 }
@@ -327,12 +335,13 @@ TYPE @jsightSchemaElement
 
 TYPE @rule
 {
-  "key"        : @ruleNameEnum, // {optional: true}
-  "tokenType"  : "object", // {type: "@tokenTypeEnum"}
+  "tokenType"  : "object", // {type: "@tokenTypeEnum"} - All other properties depend on the value of this property.
+  "key"        : @ruleNameEnum, // {optional: true} - Specified only for object properties.
   "scalarValue": "@cat",   /* {optional: true} - Specified only if "tokenType" specifies "string", "number", "boolean",
-                                               "annotation" or "null". */
-  "note"       : "Note to the \n rule.", // {optional: true} - May contain line breaks.
-  "children"   : [         // {optional: true} - specified only if tokenType: "array" or "object". 
+                                               "null", "annotation" or "reference". */
+  "note"       : "Note to the \n rule.", /* {optional: true} - Specified only for ENUM values, if necessary.
+                                                             May contain line breaks. */
+  "children"   : [         // {optional: true} - Specified only if tokenType: "array" or "object".
     @rule
   ]
 }
