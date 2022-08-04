@@ -36,55 +36,66 @@ func (d *Directive) AppendParameter(b bytes.Bytes) error {
 
 	switch d.Type() { //nolint:exhaustive // We catch all uncovered enumeration.
 	case Url, Get, Post, Put, Patch, Delete:
-		return d.SetParameter("Path", s)
+		return d.SetNamedParameter("Path", s)
 
 	case Request, HTTPResponseCode, Body:
 		switch {
 		case isSchemaNotation(s):
-			return d.SetParameter("SchemaNotation", s)
+			return d.SetNamedParameter("SchemaNotation", s)
 		case IsArrayOfTypes(b):
-			return d.SetParameter("Type", s)
+			return d.SetNamedParameter("Type", s)
 		case b.IsUserTypeName():
-			return d.SetParameter("Type", s)
+			return d.SetNamedParameter("Type", s)
 		}
 
 	case Type:
 		switch {
 		case isSchemaNotation(s):
-			return d.SetParameter("SchemaNotation", s)
+			return d.SetNamedParameter("SchemaNotation", s)
 		case IsArrayOfTypes(b):
-			return d.SetParameter("Name", s)
+			return d.SetNamedParameter("Name", s)
 		case b.IsUserTypeName():
-			return d.SetParameter("Name", s)
+			return d.SetNamedParameter("Name", s)
 		}
 
 	case Query:
 		switch s {
 		case "htmlFormEncoded", "noFormat":
-			return d.SetParameter("Format", s)
+			return d.SetNamedParameter("Format", s)
 		default:
-			return d.SetParameter("QueryExample", s)
+			return d.SetNamedParameter("QueryExample", s)
 		}
 
 	case Jsight, Version:
-		return d.SetParameter("Version", s)
+		return d.SetNamedParameter("Version", s)
 
 	case Title:
-		return d.SetParameter("Title", s)
+		return d.SetNamedParameter("Title", s)
 
 	case BaseUrl:
-		return d.SetParameter("Path", s)
+		return d.SetNamedParameter("Path", s)
 
 	case Server, Enum, Macro, Paste:
 		if b.IsUserTypeName() {
-			return d.SetParameter("Name", s)
+			return d.SetNamedParameter("Name", s)
 		}
 
 	case Protocol:
-		return d.SetParameter("ProtocolName", s)
+		return d.SetNamedParameter("ProtocolName", s)
 
 	case Method:
-		return d.SetParameter("MethodName", s)
+		return d.SetNamedParameter("MethodName", s)
+
+	case TAG:
+		if b.IsUserTypeName() {
+			return d.SetNamedParameter("TagName", s)
+		}
+
+	case Tags:
+		if b.IsUserTypeName() {
+			d.AppendUnnamedParameter(s)
+			return nil
+		}
 	}
 
 	return fmt.Errorf("%s %q", jerr.IncorrectParameter, s)

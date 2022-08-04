@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
@@ -49,19 +48,9 @@ func (l *nodeCheckerListConstructor) appendNodeValidators(node schema.Node) {
 		l.list = make([]nodeChecker, 0, 1) // optimizing memory allocation
 	}
 
-	var c nodeChecker
-
-	switch node.(type) {
-	case *schema.LiteralNode:
-		c = newLiteralChecker(node)
-	case *schema.ObjectNode:
-		c = newObjectChecker(node)
-	case *schema.ArrayNode:
-		c = newArrayChecker(node)
-	case *schema.MixedNode:
-		c = newMixedChecker(node)
-	default:
-		panic(errors.ErrImpossible)
+	c, err := newNodeChecker(node)
+	if err != nil {
+		panic(err)
 	}
 
 	l.list = append(l.list, c)

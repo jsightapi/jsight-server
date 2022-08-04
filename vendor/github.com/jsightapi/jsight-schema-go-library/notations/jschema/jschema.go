@@ -1,18 +1,17 @@
 package jschema
 
 import (
-	stdBytes "bytes"
 	stdErrors "errors"
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/formats/json"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/internal/panics"
+	"github.com/jsightapi/jsight-schema-go-library/internal/sync"
 	"github.com/jsightapi/jsight-schema-go-library/notations/internal"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/checker"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/loader"
@@ -29,26 +28,20 @@ type Schema struct {
 
 	rules map[string]jschema.Rule
 
-	loadErr    error
-	compileErr error
-
 	usedUserTypes []string
 
-	astNode jschema.ASTNode
+	lenOnce     sync.ErrOnceWithValue[uint]
+	loadOnce    sync.ErrOnce
+	compileOnce sync.ErrOnce
 
-	len uint
-
-	lenOnce     sync.Once
-	loadOnce    sync.Once
-	compileOnce sync.Once
-
+	astNode                  jschema.ASTNode
 	areKeysOptionalByDefault bool
 }
 
-var _ jschema.Schema = &Schema{}
+var _ jschema.Schema = (*Schema)(nil)
 
 // New creates a Jsight schema with specified name and content.
-func New(name string, content []byte, oo ...Option) *Schema {
+func New[T fs.FileContent](name string, content T, oo ...Option) *Schema {
 	return FromFile(fs.NewFile(name, content), oo...)
 }
 
@@ -75,11 +68,9 @@ func KeysAreOptionalByDefault() Option {
 }
 
 func (s *Schema) Len() (uint, error) {
-	var err error
-	s.lenOnce.Do(func() {
-		s.len, err = s.computeLen()
+	return s.lenOnce.Do(func() (uint, error) {
+		return s.computeLen()
 	})
-	return s.len, err
 }
 
 func (s *Schema) computeLen() (length uint, err error) {
@@ -97,7 +88,7 @@ func (s *Schema) Example() (b []byte, err error) {
 		err = panics.Handle(recover(), err)
 	}()
 
-	if err := s.load(); err != nil {
+	if err := s.compile(); err != nil {
 		return nil, err
 	}
 
@@ -105,78 +96,7 @@ func (s *Schema) Example() (b []byte, err error) {
 		return nil, errors.NewDocumentError(s.file, errors.ErrEmptySchema)
 	}
 
-	return buildExample(s.inner.RootNode())
-}
-
-var exampleBufferPool = sync.Pool{
-	New: func() interface{} {
-		return stdBytes.NewBuffer(make([]byte, 0, 512))
-	},
-}
-
-func resetExampleBufferPool(b *stdBytes.Buffer) {
-	b.Reset()
-	exampleBufferPool.Put(b)
-}
-
-func buildExample(node internalSchema.Node) ([]byte, error) { //nolint:gocyclo // Will be fixed soon.
-	if node.Constraint(constraint.TypesListConstraintType) != nil {
-		return nil, errors.ErrUserTypeFound
-	}
-
-	switch typedNode := node.(type) {
-	case *internalSchema.ObjectNode:
-		b := exampleBufferPool.Get().(*stdBytes.Buffer) //nolint:errcheck // We're sure about this type.
-		defer resetExampleBufferPool(b)
-
-		b.WriteRune('{')
-		objectNode := node.(*internalSchema.ObjectNode) //nolint:errcheck // We're sure about this type.
-		children := objectNode.Children()
-		length := len(children)
-		for i, childNode := range children {
-			key := objectNode.Key(i)
-			b.WriteRune('"')
-			b.WriteString(key.Key)
-			b.WriteString(`":`)
-
-			ex, err := buildExample(childNode)
-			if err != nil {
-				return nil, err
-			}
-			b.Write(ex)
-			if i+1 != length {
-				b.WriteRune(',')
-			}
-		}
-		b.WriteRune('}')
-		return b.Bytes(), nil
-
-	case *internalSchema.ArrayNode:
-		b := exampleBufferPool.Get().(*stdBytes.Buffer) //nolint:errcheck // We're sure about this type.
-		defer resetExampleBufferPool(b)
-
-		b.WriteRune('[')
-		children := typedNode.Children()
-		length := len(children)
-		for i, childNode := range children {
-			ex, err := buildExample(childNode)
-			if err != nil {
-				return nil, err
-			}
-			b.Write(ex)
-			if i+1 != length {
-				b.WriteRune(',')
-			}
-		}
-		b.WriteRune(']')
-		return b.Bytes(), nil
-
-	case *internalSchema.LiteralNode:
-		return typedNode.BasisLexEventOfSchemaForNode().Value(), nil
-
-	default:
-		return nil, fmt.Errorf("unhandled node type %T", node)
-	}
+	return newExampleBuilder(s.inner.TypesList()).Build(s.inner.RootNode())
 }
 
 func (s *Schema) AddType(name string, sc jschema.Schema) (err error) {
@@ -206,7 +126,7 @@ func (s *Schema) AddType(name string, sc jschema.Schema) (err error) {
 			return fmt.Errorf("generate example for Regex type: %w", err)
 		}
 
-		typSc := New(name, []byte(fmt.Sprintf("%q // {regex: %q}", example, pattern)))
+		typSc := New(name, fmt.Sprintf("%q // {regex: %q}", example, pattern))
 		if err := typSc.load(); err != nil {
 			return fmt.Errorf("load added type: %w", err)
 		}
@@ -313,9 +233,9 @@ func (s *Schema) UsedUserTypes() ([]string, error) {
 }
 
 func (s *Schema) load() error {
-	s.loadOnce.Do(func() {
+	return s.loadOnce.Do(func() (err error) {
 		defer func() {
-			s.loadErr = panics.Handle(recover(), s.loadErr)
+			err = panics.Handle(recover(), err)
 		}()
 		sc := loader.LoadSchemaWithoutCompile(
 			scanner.New(s.file),
@@ -326,8 +246,8 @@ func (s *Schema) load() error {
 		s.astNode = s.buildASTNode()
 		s.collectUserTypes()
 		loader.CompileBasic(s.inner, s.areKeysOptionalByDefault)
+		return nil
 	})
-	return s.loadErr
 }
 
 func (s *Schema) Build() error {
@@ -341,83 +261,122 @@ func (s *Schema) collectUserTypes() {
 		return
 	}
 
-	uu := map[string]struct{}{}
-	collectUserTypes(node, uu)
-	s.usedUserTypes = make([]string, 0, len(uu))
-
-	for u := range uu {
-		s.usedUserTypes = append(s.usedUserTypes, u)
-	}
+	s.usedUserTypes = collectUserTypes(node)
 }
 
-func collectUserTypes(node internalSchema.Node, uu map[string]struct{}) {
-	collectUserTypesFromTypesListConstraint(node, uu)
-	collectUserTypesFromTypeConstraint(node, uu)
-	collectUserTypesFromAllOfConstraint(node, uu)
+func collectUserTypes(node internalSchema.Node) []string {
+	c := &userTypesCollector{
+		alreadyProcessed: map[string]struct{}{},
+	}
+	c.collect(node)
+	return c.userTypes
+}
+
+type userTypesCollector struct {
+	alreadyProcessed map[string]struct{}
+	userTypes        []string
+}
+
+func (c *userTypesCollector) collect(node internalSchema.Node) {
+	c.collectUserTypesFromTypesListConstraint(node)
+	c.collectUserTypesFromTypeConstraint(node)
+	c.collectUserTypesFromAllOfConstraint(node)
 
 	switch n := node.(type) {
 	case *internalSchema.ObjectNode:
-		collectUserTypesObjectNode(n, uu)
+		c.collectUserTypesObjectNode(n)
 
 	case *internalSchema.ArrayNode:
 		for _, child := range n.Children() {
-			collectUserTypes(child, uu)
+			c.collect(child)
 		}
 
 	case *internalSchema.MixedValueNode:
 		for _, ut := range strings.Split(n.Value().String(), "|") {
 			s := strings.TrimSpace(ut)
 			if s[0] == '@' {
-				uu[s] = struct{}{}
+				c.addType(s)
 			}
 		}
 	}
 }
 
-func collectUserTypesFromTypesListConstraint(node internalSchema.Node, uu map[string]struct{}) {
-	if c := node.Constraint(constraint.TypesListConstraintType); c != nil {
-		for _, name := range c.(*constraint.TypesList).Names() {
-			if name[0] == '@' {
-				uu[name] = struct{}{}
-			}
+func (c *userTypesCollector) collectUserTypesFromTypesListConstraint(node internalSchema.Node) {
+	cnstr := node.Constraint(constraint.TypesListConstraintType)
+	if cnstr == nil {
+		return
+	}
+
+	list, ok := cnstr.(*constraint.TypesList)
+	if !ok {
+		return
+	}
+
+	for _, name := range list.Names() {
+		if name[0] == '@' {
+			c.addType(name)
 		}
 	}
 }
 
-func collectUserTypesFromTypeConstraint(node internalSchema.Node, uu map[string]struct{}) {
-	if c := node.Constraint(constraint.TypeConstraintType); c != nil {
-		s := c.(*constraint.TypeConstraint).Bytes().Unquote().String()
-		if s[0] == '@' {
-			uu[s] = struct{}{}
+func (c *userTypesCollector) collectUserTypesFromTypeConstraint(node internalSchema.Node) {
+	cnstr := node.Constraint(constraint.TypeConstraintType)
+	if cnstr == nil {
+		return
+	}
+
+	typ, ok := cnstr.(*constraint.TypeConstraint)
+	if !ok {
+		return
+	}
+
+	name := typ.Bytes().Unquote().String()
+	if name[0] == '@' {
+		c.addType(name)
+	}
+}
+
+func (c *userTypesCollector) collectUserTypesFromAllOfConstraint(node internalSchema.Node) {
+	cnstr := node.Constraint(constraint.AllOfConstraintType)
+	if c == nil {
+		return
+	}
+
+	allOf, ok := cnstr.(*constraint.AllOf)
+	if !ok {
+		return
+	}
+
+	for _, name := range allOf.SchemaNames() {
+		if name[0] == '@' {
+			c.addType(name)
 		}
 	}
 }
 
-func collectUserTypesFromAllOfConstraint(node internalSchema.Node, uu map[string]struct{}) {
-	if c := node.Constraint(constraint.AllOfConstraintType); c != nil {
-		for _, s := range c.(*constraint.AllOf).SchemaNames() {
-			if s[0] == '@' {
-				uu[s] = struct{}{}
-			}
-		}
-	}
-}
-
-func collectUserTypesObjectNode(node *internalSchema.ObjectNode, uu map[string]struct{}) {
+func (c *userTypesCollector) collectUserTypesObjectNode(node *internalSchema.ObjectNode) {
 	for _, v := range node.Keys().Data {
 		k := v.Key
 
 		if v.IsShortcut {
 			if k[0] == '@' {
-				uu[k] = struct{}{}
+				c.addType(k)
 			}
 		}
 
-		c, ok := node.Child(k)
+		child, ok := node.Child(k)
 		if ok {
-			collectUserTypes(c, uu)
+			c.collect(child)
 		}
 	}
+}
+
+func (c *userTypesCollector) addType(n string) {
+	if _, ok := c.alreadyProcessed[n]; ok {
+		return
+	}
+	c.alreadyProcessed[n] = struct{}{}
+	c.userTypes = append(c.userTypes, n)
 }
 
 func (s *Schema) buildASTNode() jschema.ASTNode {
@@ -437,17 +396,16 @@ func (s *Schema) buildASTNode() jschema.ASTNode {
 }
 
 func (s *Schema) compile() error {
-	s.compileOnce.Do(func() {
+	return s.compileOnce.Do(func() (err error) {
 		defer func() {
-			s.compileErr = panics.Handle(recover(), s.compileErr)
+			err = panics.Handle(recover(), err)
 		}()
 		if err := s.load(); err != nil {
-			s.compileErr = err
-			return
+			return err
 		}
 		loader.CompileAllOf(s.inner)
 		loader.AddUnnamedTypes(s.inner)
 		checker.CheckRootSchema(s.inner)
+		return checker.CheckRecursion(s.file.Name(), s.inner)
 	})
-	return s.compileErr
 }

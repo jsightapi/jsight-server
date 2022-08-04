@@ -53,7 +53,7 @@ func (core *JApiCore) processPasteDirective(paste *directive.Directive) *jerr.JA
 		return paste.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
 
-	name := paste.Parameter("Name")
+	name := paste.NamedParameter("Name")
 
 	if name == "" {
 		return paste.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
@@ -62,6 +62,10 @@ func (core *JApiCore) processPasteDirective(paste *directive.Directive) *jerr.JA
 	macro, ok := core.macro[name]
 	if !ok {
 		return paste.KeywordError("macro not found")
+	}
+
+	if je := core.collectRulesFromDirectives(macro.Children); je != nil {
+		return je
 	}
 
 	// macro.Children != nil - checked above

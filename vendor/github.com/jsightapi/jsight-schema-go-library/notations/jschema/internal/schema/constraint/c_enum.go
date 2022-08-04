@@ -21,7 +21,12 @@ type enumItem struct {
 	value   jbytes.Bytes
 }
 
-var _ Constraint = Enum{}
+var (
+	_ Constraint       = Enum{}
+	_ Constraint       = (*Enum)(nil)
+	_ LiteralValidator = Enum{}
+	_ LiteralValidator = (*Enum)(nil)
+)
 
 func NewEnum() *Enum {
 	return &Enum{
@@ -83,7 +88,7 @@ func (c Enum) Validate(a jbytes.Bytes) {
 			return
 		}
 	}
-	panic(errors.Format(errors.ErrDoesNotMatchAnyOfTheEnumValues))
+	panic(errors.ErrDoesNotMatchAnyOfTheEnumValues)
 }
 
 func (c Enum) ASTNode() jschema.RuleASTNode {

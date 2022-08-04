@@ -2,12 +2,10 @@ package schema
 
 import (
 	"fmt"
-	"strings"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
-	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
 type ObjectNode struct {
@@ -117,34 +115,6 @@ func (n ObjectNode) Key(index int) ObjectNodeKey {
 
 func (n ObjectNode) Keys() *ObjectNodeKeys {
 	return n.keys
-}
-
-func (n ObjectNode) IndentedTreeString(depth int) string {
-	indent := strings.Repeat("\t", depth)
-
-	var str strings.Builder
-	str.WriteString(n.IndentedNodeString(depth))
-
-	for index, childNode := range n.children {
-		key := n.Key(index) // can panic: Index not found in array
-		str.WriteString(indent + "\t\"" + key.Key + "\":\n")
-		str.WriteString(childNode.IndentedTreeString(depth + 2))
-	}
-
-	return str.String()
-}
-
-func (n ObjectNode) IndentedNodeString(depth int) string {
-	indent := strings.Repeat("\t", depth)
-
-	var str strings.Builder
-	str.WriteString(indent + "* " + n.Type().String() + "\n")
-
-	n.constraints.EachSafe(func(k constraint.Type, v constraint.Constraint) {
-		str.WriteString(indent + "* " + v.String() + "\n")
-	})
-
-	return str.String()
 }
 
 func (n *ObjectNode) ASTNode() (jschema.ASTNode, error) {

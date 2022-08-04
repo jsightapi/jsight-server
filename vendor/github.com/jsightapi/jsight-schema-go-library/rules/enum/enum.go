@@ -2,29 +2,22 @@ package enum
 
 import (
 	stdErrors "errors"
-	"sync"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
+	"github.com/jsightapi/jsight-schema-go-library/internal/sync"
 )
 
 // The Enum rule.
 type Enum struct {
-	compileErr       error
-	computeLengthErr error
-	buildAStNodeErr  error
-
 	file   *fs.File
 	values []Value
 
-	astNode jschema.ASTNode
-	length  uint
-
-	compileOnce       sync.Once
-	computeLengthOnce sync.Once
-	buildASTNodeOnce  sync.Once
+	compileOnce       sync.ErrOnce
+	computeLengthOnce sync.ErrOnceWithValue[uint]
+	buildASTNodeOnce  sync.ErrOnceWithValue[jschema.ASTNode]
 }
 
 // Value represents single enum's value.
@@ -42,7 +35,7 @@ type Value struct {
 var _ jschema.Rule = (*Enum)(nil)
 
 // New creates new Enum rule with specified name and content.
-func New(name string, content []byte) *Enum {
+func New[T fs.FileContent](name string, content T) *Enum {
 	return FromFile(fs.NewFile(name, content))
 }
 
@@ -52,10 +45,9 @@ func FromFile(f *fs.File) *Enum {
 }
 
 func (e *Enum) Len() (uint, error) {
-	e.computeLengthOnce.Do(func() {
-		e.length, e.computeLengthErr = newScanner(e.file, scannerComputeLength).Length()
+	return e.computeLengthOnce.Do(func() (uint, error) {
+		return newScanner(e.file, scannerComputeLength).Length()
 	})
-	return e.length, e.computeLengthErr
 }
 
 // Check checks that enum is valid.
@@ -72,17 +64,17 @@ func (e *Enum) GetAST() (jschema.ASTNode, error) {
 }
 
 func (e *Enum) buildASTNode() (jschema.ASTNode, error) {
-	e.buildASTNodeOnce.Do(func() {
-		e.astNode = jschema.ASTNode{
+	return e.buildASTNodeOnce.Do(func() (jschema.ASTNode, error) {
+		an := jschema.ASTNode{
 			JSONType:   jschema.JSONTypeArray,
 			SchemaType: string(jschema.SchemaTypeEnum),
 		}
 
 		if len(e.values) == 0 {
-			return
+			return an, nil
 		}
 
-		e.astNode.Children = make([]jschema.ASTNode, 0, len(e.values))
+		an.Children = make([]jschema.ASTNode, 0, len(e.values))
 
 		for _, v := range e.values {
 			n := jschema.ASTNode{
@@ -98,10 +90,11 @@ func (e *Enum) buildASTNode() (jschema.ASTNode, error) {
 				n.SchemaType = string(v.Type)
 			}
 
-			e.astNode.Children = append(e.astNode.Children, n)
+			an.Children = append(an.Children, n)
 		}
+
+		return an, nil
 	})
-	return e.astNode, e.buildAStNodeErr
 }
 
 // Values returns a list of values defined in this enum.
@@ -113,16 +106,16 @@ func (e *Enum) Values() ([]Value, error) {
 }
 
 func (e *Enum) compile() error {
-	e.compileOnce.Do(func() {
-		e.compileErr = e.doCompile()
+	return e.compileOnce.Do(func() error {
+		return e.doCompile()
 	})
-	return e.compileErr
 }
 
 func (e *Enum) doCompile() (err error) {
 	scan := newScanner(e.file)
 
 	collectLiteral := false
+	inAnnotation := false
 	for {
 		lex, err := scan.Next()
 		if stdErrors.Is(err, errEOS) {
@@ -136,30 +129,48 @@ func (e *Enum) doCompile() (err error) {
 		switch lex.Type() {
 		case lexeme.LiteralEnd:
 			collectLiteral = true
-			v := lex.Value()
-			t, err := jschema.GuessSchemaType(v)
-			if err != nil {
+			if err := e.handleLiteralEnd(lex); err != nil {
 				return err
 			}
 
-			e.values = append(e.values, Value{
-				Value: v,
-				Type:  t,
-			})
-
 		case lexeme.NewLine:
-			collectLiteral = false
-
-		case lexeme.InlineAnnotationTextEnd:
-			comment := lex.Value().TrimSpaces().String()
-			if collectLiteral {
-				e.values[len(e.values)-1].Comment = comment
-			} else {
-				e.values = append(e.values, Value{
-					Comment: comment,
-				})
+			if !inAnnotation {
+				collectLiteral = false
 			}
+
+		case lexeme.MultiLineAnnotationTextBegin:
+			inAnnotation = true
+
+		case lexeme.InlineAnnotationTextEnd, lexeme.MultiLineAnnotationTextEnd:
+			e.handleEndOfComment(lex, collectLiteral)
+			inAnnotation = false
 		}
 	}
 	return nil
+}
+
+func (e *Enum) handleLiteralEnd(lex lexeme.LexEvent) error {
+	v := lex.Value()
+	t, err := jschema.GuessSchemaType(v)
+	if err != nil {
+		return err
+	}
+
+	e.values = append(e.values, Value{
+		Value: v,
+		Type:  t,
+	})
+	return nil
+}
+
+func (e *Enum) handleEndOfComment(lex lexeme.LexEvent, collectLiteral bool) {
+	comment := lex.Value().TrimSpaces().String()
+	if collectLiteral {
+		e.values[len(e.values)-1].Comment = comment
+	} else {
+		e.values = append(e.values, Value{
+			Comment: comment,
+			Type:    jschema.SchemaTypeComment,
+		})
+	}
 }

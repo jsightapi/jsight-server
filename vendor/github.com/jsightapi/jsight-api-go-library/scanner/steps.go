@@ -25,65 +25,65 @@ func stateExpectKeyword(s *Scanner, c byte) *jerr.JApiError {
 		s.found(ContextClose)
 		s.step = stateContextClosed
 		return nil
-	case 'U': // URL
+	case 'B': // Body, BaseUrl
 		s.found(KeywordBegin)
-		s.step = stateU
-		return nil
-	case 'R': // Request, Result
-		s.found(KeywordBegin)
-		s.step = stateR
-		return nil
-	case 'G': // GET
-		s.found(KeywordBegin)
-		s.step = stateG
-		return nil
-	case 'P': // POST, PUT, PATCH, Path, PASTE, Protocol, Params
-		s.found(KeywordBegin)
-		s.step = stateP
+		s.step = stateB
 		return nil
 	case 'D': // DELETE, Description
 		s.found(KeywordBegin)
 		s.step = stateD
 		return nil
-	case 'S': // SERVER
+	case 'E': // ENUM
 		s.found(KeywordBegin)
-		s.step = stateS
+		s.step = stateE
+		return nil
+	case 'G': // GET
+		s.found(KeywordBegin)
+		s.step = stateG
+		return nil
+	case 'H': // Headers
+		s.found(KeywordBegin)
+		s.step = stateH
 		return nil
 	case 'I': // INFO, INCLUDE
 		s.found(KeywordBegin)
 		s.step = stateI
 		return nil
-	case 'T': // Title, TYPE
-		s.found(KeywordBegin)
-		s.step = stateT
-		return nil
-	case 'V': // Version
-		s.found(KeywordBegin)
-		s.step = stateV
-		return nil
 	case 'J': // JSIGHT
 		s.found(KeywordBegin)
 		s.step = stateJ
-		return nil
-	case 'E': // ENUM
-		s.found(KeywordBegin)
-		s.step = stateE
-		return nil
-	case 'Q': // Query
-		s.found(KeywordBegin)
-		s.step = stateQ
 		return nil
 	case 'M': // MACRO, Method
 		s.found(KeywordBegin)
 		s.step = stateM
 		return nil
-	case 'B': // Body, BaseUrl
+	case 'P': // POST, PUT, PATCH, Path, PASTE, Protocol, Params
 		s.found(KeywordBegin)
-		s.step = stateB
+		s.step = stateP
 		return nil
-	case 'H': // Headers
+	case 'Q': // Query
 		s.found(KeywordBegin)
-		s.step = stateH
+		s.step = stateQ
+		return nil
+	case 'R': // Request, Result
+		s.found(KeywordBegin)
+		s.step = stateR
+		return nil
+	case 'S': // SERVER
+		s.found(KeywordBegin)
+		s.step = stateS
+		return nil
+	case 'T': // Title, TYPE, TAG, Tags
+		s.found(KeywordBegin)
+		s.step = stateT
+		return nil
+	case 'U': // URL
+		s.found(KeywordBegin)
+		s.step = stateU
+		return nil
+	case 'V': // Version
+		s.found(KeywordBegin)
+		s.step = stateV
 		return nil
 	case '1', '2', '3', '4', '5': // HTTP responses
 		s.found(KeywordBegin)
@@ -210,6 +210,12 @@ func stateT(s *Scanner, c byte) *jerr.JApiError {
 		return nil
 	case 'Y': // TYPE
 		s.step = stateTy
+		return nil
+	case 'A': // TAG
+		s.step = stateTA
+		return nil
+	case 'a': // Tags
+		s.step = stateTa
 		return nil
 	default:
 		return s.japiErrorUnexpectedChar("in directive name", "")

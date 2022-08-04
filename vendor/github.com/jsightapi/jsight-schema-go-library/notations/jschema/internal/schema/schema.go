@@ -2,7 +2,6 @@ package schema
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -65,22 +64,4 @@ func (s *Schema) AddType(n string, t Type) {
 
 func (s *Schema) SetRootNode(node Node) {
 	s.rootNode = node
-}
-
-func (s Schema) String() string {
-	var str strings.Builder
-
-	if len(s.types) != 0 {
-		str.WriteString("Types:\n")
-		for name, typ := range s.types {
-			str.WriteString("\t" + name + "\n")
-			str.WriteString(typ.schema.rootNode.IndentedTreeString(2) + "\n")
-		}
-	}
-
-	if s.rootNode != nil {
-		str.WriteString("Schema root node:\n" + s.rootNode.IndentedTreeString(1) + "\n")
-	}
-
-	return str.String()
 }

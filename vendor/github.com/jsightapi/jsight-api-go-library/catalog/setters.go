@@ -14,18 +14,143 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/notation"
 )
 
-// tag returns a Tag from the collection, or creates a new one and adds it to the collection
-func (c *Catalog) tag(r InteractionId) *Tag {
-	title := tagTitle(r.Path().String())
-	name := tagName(title)
-
-	t, ok := c.Tags.Get(name)
-	if !ok {
-		t = newEmptyTag(r)
-		c.Tags.Set(name, t)
+func (c *Catalog) AddTag(name, title string) error {
+	if c.Tags.Has(TagName(name)) {
+		return fmt.Errorf("%s (%q)", jerr.DuplicateNames, name)
 	}
 
+	if title == "" {
+		title = name
+	}
+
+	t := NewTag(name, title)
+
+	c.Tags.Set(t.Name, t)
+
+	return nil
+}
+
+func (c *Catalog) tagNames(d directive.Directive, id InteractionId) ([]TagName, *jerr.JApiError) {
+	tt, je := c.tags(d, id)
+	if je != nil {
+		return nil, je
+	}
+
+	tns := make([]TagName, 0, len(tt))
+
+	for _, t := range tt {
+		t.appendInteractionId(id)
+		tns = append(tns, t.Name)
+	}
+
+	return tns, nil
+}
+
+// tags return tag names for directives HTTP request method or JSON-RPC method.
+func (c *Catalog) tags(d directive.Directive, id InteractionId) ([]*Tag, *jerr.JApiError) {
+	if td := getChildrenTagsDirective(d); td != nil { // child directive Tags for HTTP or JSON-RPC methods
+		return c.tagsFromTagsDirective(td)
+	}
+
+	if td := getParentTagsDirective(d); td != nil { // parent URL
+		return c.tagsFromTagsDirective(td)
+	}
+
+	return []*Tag{c.pathTag(id)}, nil
+}
+
+// pathTag returns a Tag from the collection, or creates a new one and adds it to the collection
+func (c *Catalog) pathTag(r InteractionId) *Tag {
+	t := newPathTag(r)
+
+	if tt, ok := c.Tags.Get(t.Name); ok {
+		return tt
+	}
+
+	c.Tags.Set(t.Name, t)
+
 	return t
+}
+
+func getChildrenTagsDirective(d directive.Directive) *directive.Directive {
+	for _, dd := range d.Children {
+		if dd.Type() == directive.Tags {
+			return dd
+		}
+	}
+	return nil
+}
+
+func getParentTagsDirective(d directive.Directive) *directive.Directive {
+	if d.Parent != nil && d.Parent.Type() == directive.Url {
+		return getChildrenTagsDirective(*d.Parent)
+	}
+	return nil
+}
+
+func (c *Catalog) tagsFromTagsDirective(d *directive.Directive) ([]*Tag, *jerr.JApiError) {
+	if je := checkTagsDirective(d); je != nil {
+		return nil, je
+	}
+
+	tt := make([]*Tag, 0, d.UnnamedParametersLen())
+
+	for _, name := range d.UnnamedParameter() {
+		tn := TagName(name)
+
+		t, ok := c.Tags.Get(tn)
+		if !ok {
+			return nil, d.KeywordError(fmt.Sprintf("%s %q", jerr.TagNotFound, tn))
+		}
+
+		tt = append(tt, t)
+	}
+
+	return tt, nil
+}
+
+func checkTagsDirective(d *directive.Directive) *jerr.JApiError {
+	if d.Annotation != "" {
+		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
+	}
+
+	if !d.HasUnnamedParameter() {
+		return d.KeywordError(jerr.RequiredParameterNotSpecified)
+	}
+
+	return nil
+}
+
+func (c *Catalog) AddDescriptionToTag(name, description string) error {
+	n := TagName(name)
+
+	t, ok := c.Tags.Get(n)
+	if !ok {
+		return fmt.Errorf("%s (%q)", jerr.TagNotFound, n)
+	}
+
+	if t.Description != nil {
+		return errors.New(jerr.NotUniqueDirective)
+	}
+
+	c.Tags.Update(n, func(v *Tag) *Tag {
+		v.Description = &description
+		return v
+	})
+
+	return nil
+}
+
+func (c *Catalog) AddTagDescription(name, title string) error {
+	t := NewTag(name, title)
+
+	if _, ok := c.Tags.Get(t.Name); ok {
+		return errors.New("")
+	}
+
+	c.Tags.Set(t.Name, t)
+
+	return nil
 }
 
 func (c *Catalog) AddJSight(version string) error {
@@ -72,20 +197,27 @@ func (c *Catalog) AddDescriptionToInfo(text string) error {
 	return nil
 }
 
-func (c *Catalog) AddHTTPMethod(d directive.Directive) error {
+func (c *Catalog) AddHTTPMethod(d directive.Directive) *jerr.JApiError {
 	httpId, err := newHttpInteractionId(d)
 	if err != nil {
-		return err
+		return d.KeywordError(err.Error())
 	}
 
 	if c.Interactions.Has(httpId) {
-		return fmt.Errorf("method is already defined in resource %s", httpId.String())
+		return d.KeywordError(fmt.Sprintf("method is already defined in resource %s", httpId.String()))
 	}
 
-	t := c.tag(httpId)
-	t.appendInteractionId(httpId)
+	in := newHttpInteraction(httpId, d.Annotation)
 
-	c.Interactions.Set(httpId, newHttpInteraction(httpId, d.Annotation, t.Name))
+	tns, je := c.tagNames(d, httpId)
+	if je != nil {
+		return je
+	}
+	for _, tn := range tns {
+		in.appendTagName(tn)
+	}
+
+	c.Interactions.Set(httpId, in)
 
 	return nil
 }
@@ -108,6 +240,30 @@ func (c *Catalog) AddDescriptionToHttpMethod(d directive.Directive, text string)
 
 	c.Interactions.Update(httpId, func(v Interaction) Interaction {
 		v.(*HttpInteraction).Description = &text
+		return v
+	})
+
+	return nil
+}
+
+func (c *Catalog) AddDescriptionToJsonRpcMethod(d directive.Directive, text string) error {
+	rpcId, err := newJsonRpcInteractionId(d)
+	if err != nil {
+		return err
+	}
+
+	if !c.Interactions.Has(rpcId) {
+		return fmt.Errorf("%s %q", jerr.HttpResourceNotFound, rpcId.String())
+	}
+
+	v := c.Interactions.GetValue(rpcId).(*JsonRpcInteraction) //nolint:errcheck
+
+	if v.Description != nil {
+		return errors.New(jerr.NotUniqueDirective)
+	}
+
+	c.Interactions.Update(rpcId, func(v Interaction) Interaction {
+		v.(*JsonRpcInteraction).Description = &text
 		return v
 	})
 
@@ -155,7 +311,6 @@ func (c *Catalog) AddResponse(code string, annotation string, d directive.Direct
 }
 
 func (c *Catalog) AddResponseBody(
-	schemaName string,
 	schemaBytes bytes.Bytes,
 	bodyFormat SerializeFormat,
 	sn notation.SchemaNotation,
@@ -179,7 +334,7 @@ func (c *Catalog) AddResponseBody(
 		return d.KeywordError(fmt.Sprintf("%s for %q", jerr.ResponsesIsEmpty, httpId.String()))
 	}
 
-	httpResponseBody, je := NewHTTPResponseBody(schemaName, schemaBytes, bodyFormat, sn, d, tt, rr)
+	httpResponseBody, je := NewHTTPResponseBody(schemaBytes, bodyFormat, sn, d, tt, rr)
 	if je != nil {
 		return je
 	}
@@ -223,7 +378,7 @@ func (c *Catalog) AddResponseHeaders(s Schema, d directive.Directive) error {
 
 func (c *Catalog) AddServer(name string, annotation string) error {
 	if c.Servers.Has(name) {
-		return fmt.Errorf("duplicate server name %q", name)
+		return fmt.Errorf("%s (%q)", jerr.DuplicateNames, name)
 	}
 
 	server := new(Server)
@@ -278,17 +433,17 @@ func (c *Catalog) AddType(
 	tt *UserSchemas,
 	rr map[string]jschemaLib.Rule,
 ) *jerr.JApiError {
-	name := d.Parameter("Name")
+	name := d.NamedParameter("Name")
 
 	if c.UserTypes.Has(name) {
-		return d.KeywordError(fmt.Sprintf("duplicate type name %q", name))
+		return d.KeywordError(fmt.Sprintf("%s (%q)", jerr.DuplicateNames, name))
 	}
 
 	userType := &UserType{
 		Annotation: d.Annotation,
 		Directive:  d,
 	}
-	typeNotation, err := notation.NewSchemaNotation(d.Parameter("SchemaNotation"))
+	typeNotation, err := notation.NewSchemaNotation(d.NamedParameter("SchemaNotation"))
 	if err != nil {
 		return d.KeywordError(err.Error())
 	}
@@ -396,20 +551,27 @@ func (c *Catalog) AddRequestHeaders(s Schema, d directive.Directive) error {
 	return nil
 }
 
-func (c *Catalog) AddJsonRpcMethod(d directive.Directive) error {
+func (c *Catalog) AddJsonRpcMethod(d directive.Directive) *jerr.JApiError {
 	rpcId, err := newJsonRpcInteractionId(d)
 	if err != nil {
-		return err
+		return d.KeywordError(err.Error())
 	}
 
 	if c.Interactions.Has(rpcId) {
-		return fmt.Errorf("method is already defined in resource %s", rpcId.String())
+		return d.KeywordError(fmt.Sprintf("method is already defined in resource %s", rpcId.String()))
 	}
 
-	t := c.tag(rpcId)
-	t.appendInteractionId(rpcId)
+	in := newJsonRpcInteraction(rpcId, d.NamedParameter("MethodName"), d.Annotation)
 
-	c.Interactions.Set(rpcId, newJsonRpcInteraction(rpcId, d.Parameter("MethodName"), d.Annotation, t.Name))
+	tns, je := c.tagNames(d, rpcId)
+	if je != nil {
+		return je
+	}
+	for _, tn := range tns {
+		in.appendTagName(tn)
+	}
+
+	c.Interactions.Set(rpcId, in)
 
 	return nil
 }
@@ -463,9 +625,9 @@ func (c *Catalog) AddJsonRpcResult(s Schema, d directive.Directive) error {
 }
 
 func (c *Catalog) AddEnum(d *directive.Directive, e *enum.Enum) *jerr.JApiError {
-	name := d.Parameter("Name")
+	name := d.NamedParameter("Name")
 	if c.UserEnums.Has(name) {
-		return d.KeywordError(fmt.Sprintf("duplicate enum name %q", name))
+		return d.KeywordError(fmt.Sprintf("%s (%q)", jerr.DuplicateNames, name))
 	}
 
 	r, err := c.enumDirectiveToUserRule(d, e)
@@ -484,15 +646,14 @@ func (*Catalog) enumDirectiveToUserRule(d *directive.Directive, e *enum.Enum) (*
 	}
 
 	r := Rule{
-		Key:       d.Parameter("Name"),
-		TokenType: RuleTokenTypeObject,
+		TokenType: RuleTokenTypeArray,
 	}
 
 	for _, v := range vv {
 		r.Children = append(r.Children, Rule{
-			Key:         v.Value.Unquote().String(),
 			TokenType:   RuleTokenType(v.Type.ToTokenType()),
 			ScalarValue: v.Value.Unquote().String(),
+			Note:        v.Comment,
 		})
 	}
 

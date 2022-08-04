@@ -10,50 +10,23 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 )
 
-type state uint8
-type annotation uint8
 type stepFunc func(*Scanner, byte) state
 
-const (
-	annotationNone      annotation = iota // not inside the annotation
-	annotationInline                      // the pointer inside the inline annotation
-	annotationMultiLine                   // the pointer inside the multi-line annotation
-)
+// state are returned by the state transition functions assigned to scanner.state.
+// They give details about the current state of the scan that callers might be
+// interested to know about.
+// It is okay to ignore the return value of any particular call to scanner.state.
+type state uint8
 
-// These values are returned by the state transition functions
-// assigned to scanner.state and the method scanner.eof.
-// They give details about the current state of the scan that
-// callers might be interested to know about.
-// It is okay to ignore the return value of any particular
-// call to scanner.state.
 const (
 	// scanContinue indicates an uninteresting byte, so we can keep scanning forward.
 	scanContinue state = iota // uninteresting byte
 
-	// scanSkipSpace indicates a space byte, can be skipped.
-	scanSkipSpace
-
 	// scanBeginObject indicates beginning of an object.
 	scanBeginObject
 
-	// scanObjectKey indicates finished object key (string)
-	scanObjectKey
-
-	// scanObjectValue indicates finished non-last value in an object.
-	scanObjectValue
-
-	// scanEndObject indicates the end of object (implies scanObjectValue if
-	// possible).
-	scanEndObject
-
 	// scanBeginArray indicates beginning of an array.
 	scanBeginArray
-
-	// scanArrayValue indicates finished array value.
-	scanArrayValue
-
-	// scanEndArray indicates the end of array (implies scanArrayValue if possible).
-	scanEndArray
 
 	// scanBeginLiteral indicates beginning of any value outside an array or object.
 	scanBeginLiteral
@@ -67,18 +40,6 @@ const (
 	//   "bar": @Fizz
 	// }
 	scanBeginTypesShortcut
-
-	// scanKeyShortcutBegin indicates beginning of shortcut with user defined
-	// types like:
-	// Example
-	// {
-	//   @cat: "Tom"
-	// }
-	scanKeyShortcutBegin
-
-	// scanEnd indicates the end of the scanning. Top-level value ended *before*
-	// this byte.
-	scanEnd
 )
 
 // Scanner represents a scanner is a JSchema scanning state machine.
@@ -357,9 +318,11 @@ func (s *Scanner) shiftFound() lexeme.LexEventType {
 
 func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexEvent { //nolint:gocyclo // todo try to make this more readable
 	i := s.index - 1
-	if lexType == lexeme.NewLine || lexType == lexeme.EndTop { //nolint:gocritic // todo rewrite this logic to switch
+	if lexType == lexeme.NewLine || lexType == lexeme.EndTop {
 		return lexeme.NewLexEvent(lexType, i, i, s.file)
-	} else if lexType.IsOpening() {
+	}
+
+	if lexType.IsOpening() {
 		var lex lexeme.LexEvent
 		if lexType == lexeme.InlineAnnotationBegin || lexType == lexeme.MultiLineAnnotationBegin {
 			lex = lexeme.NewLexEvent(lexType, i-1, i, s.file) // `//` or `/*`
@@ -369,28 +332,29 @@ func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 		}
 		s.stack.Push(lex)
 		return lex
-	} else { // closing tag
-		pair := s.stack.Pop()
-		pairType := pair.Type()
-		if (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
-			(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd) ||
-			(pairType == lexeme.MultiLineAnnotationBegin && lexType == lexeme.MultiLineAnnotationEnd) {
-			return lexeme.NewLexEvent(lexType, pair.Begin(), i, s.file)
-		} else if (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
-			(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
-			(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
-			(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd) ||
-			(pairType == lexeme.InlineAnnotationTextBegin && lexType == lexeme.InlineAnnotationTextEnd) ||
-			(pairType == lexeme.MultiLineAnnotationTextBegin && lexType == lexeme.MultiLineAnnotationTextEnd) ||
-			(pairType == lexeme.InlineAnnotationBegin && lexType == lexeme.InlineAnnotationEnd) ||
-			(pairType == lexeme.KeyShortcutBegin && lexType == lexeme.KeyShortcutEnd) ||
-			(pairType == lexeme.TypesShortcutBegin && lexType == lexeme.TypesShortcutEnd) ||
-			(pairType == lexeme.MixedValueBegin && lexType == lexeme.MixedValueEnd) {
-			if lexType == lexeme.MixedValueEnd && s.data[i-1] == ' ' {
-				i--
-			}
-			return lexeme.NewLexEvent(lexType, pair.Begin(), i-1, s.file)
+	}
+
+	// closing tag
+	pair := s.stack.Pop()
+	pairType := pair.Type()
+	if (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
+		(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd) ||
+		(pairType == lexeme.MultiLineAnnotationBegin && lexType == lexeme.MultiLineAnnotationEnd) {
+		return lexeme.NewLexEvent(lexType, pair.Begin(), i, s.file)
+	} else if (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
+		(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
+		(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
+		(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd) ||
+		(pairType == lexeme.InlineAnnotationTextBegin && lexType == lexeme.InlineAnnotationTextEnd) ||
+		(pairType == lexeme.MultiLineAnnotationTextBegin && lexType == lexeme.MultiLineAnnotationTextEnd) ||
+		(pairType == lexeme.InlineAnnotationBegin && lexType == lexeme.InlineAnnotationEnd) ||
+		(pairType == lexeme.KeyShortcutBegin && lexType == lexeme.KeyShortcutEnd) ||
+		(pairType == lexeme.TypesShortcutBegin && lexType == lexeme.TypesShortcutEnd) ||
+		(pairType == lexeme.MixedValueBegin && lexType == lexeme.MixedValueEnd) {
+		if lexType == lexeme.MixedValueEnd && s.data[i-1] == ' ' {
+			i--
 		}
+		return lexeme.NewLexEvent(lexType, pair.Begin(), i-1, s.file)
 	}
 	panic("Incorrect ending of the lexical event")
 }
@@ -404,30 +368,6 @@ func (s *Scanner) isNewLine(c byte) bool {
 		panic(s.newDocumentErrorAtCharacter("inside inline annotation"))
 	}
 	return true
-}
-
-func (*Scanner) isAnnotationStart(c byte) bool {
-	return c == '/'
-}
-
-func (s *Scanner) switchToAnnotation() {
-	if !s.allowAnnotation {
-		err := errors.NewDocumentError(s.file, errors.Format(errors.ErrAnnotationNotAllowed))
-		err.SetIndex(s.index - 1)
-		panic(err)
-	}
-
-	switch s.annotation {
-	case annotationNone:
-		s.returnToStep.Push(s.step)
-		s.step = stateAnyAnnotationStart
-	case annotationMultiLine:
-		s.returnToStep.Push(s.step)
-		s.step = stateInlineAnnotationStart
-	default:
-		// panic("Incorrect annotation mode")
-		panic(s.newDocumentErrorAtCharacter("inside inline annotation"))
-	}
 }
 
 func (s *Scanner) setContext(c context) {
@@ -473,10 +413,10 @@ func stateFoundRootValue(s *Scanner, c byte) state {
 func stateFoundObjectKeyBeginOrEmpty(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -506,10 +446,10 @@ func stateFoundObjectKeyBegin(s *Scanner, c byte) state {
 			s.allowAnnotation = true
 		}
 		s.step = stateFoundObjectKeyBeginAfterNewLine
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -537,10 +477,10 @@ func stateFoundObjectKeyBegin(s *Scanner, c byte) state {
 func stateFoundObjectKeyBeginAfterNewLine(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isCommentStart(c) {
 		s.switchToComment()
@@ -656,16 +596,16 @@ func beginKeyShortcut(s *Scanner) state {
 	}
 	s.found(lexeme.KeyShortcutBegin)
 	s.step = stateKeyShortcut
-	return scanKeyShortcutBegin
+	return scanContinue
 }
 
 func stateBeginValue(s *Scanner, c byte) state { //nolint:gocyclo // It's okay.
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -738,11 +678,11 @@ func stateBeginKeyOrEmpty(s *Scanner, c byte) state {
 
 // after reading `{"key": value,`
 func stateBeginString(s *Scanner, c byte) state {
-	if c == '"' {
-		s.step = stateInString
-		return scanBeginLiteral
+	if c != '"' {
+		panic(s.newDocumentErrorAtCharacter("looking for beginning of string"))
 	}
-	panic(s.newDocumentErrorAtCharacter("looking for beginning of string"))
+	s.step = stateInString
+	return scanBeginLiteral
 }
 
 func stateEndValue(s *Scanner, c byte) state { //nolint:gocyclo // Pretty readable though.
@@ -824,7 +764,7 @@ func stateAfterObjectKey(s *Scanner, c byte) state {
 		s.found(lexeme.NewLine)
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -833,7 +773,7 @@ func stateAfterObjectKey(s *Scanner, c byte) state {
 
 	if c == ':' {
 		s.step = stateFoundObjectValueBegin
-		return scanObjectKey
+		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("after object key"))
 }
@@ -841,10 +781,10 @@ func stateAfterObjectKey(s *Scanner, c byte) state {
 func stateAfterObjectValue(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -856,7 +796,7 @@ func stateAfterObjectValue(s *Scanner, c byte) state {
 	}
 	if c == ',' {
 		s.step = stateFoundObjectKeyBegin
-		return scanObjectValue
+		return scanContinue
 	}
 	if c == '}' {
 		return stateFoundObjectEnd(s)
@@ -867,10 +807,10 @@ func stateAfterObjectValue(s *Scanner, c byte) state {
 func stateAfterArrayItem(s *Scanner, c byte) state {
 	if s.isNewLine(c) {
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 	}
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if s.isAnnotationStart(c) {
 		s.switchToAnnotation()
@@ -882,7 +822,7 @@ func stateAfterArrayItem(s *Scanner, c byte) state {
 	}
 	if c == ',' {
 		s.step = stateFoundArrayItemBegin
-		return scanArrayValue
+		return scanContinue
 	}
 	if c == ']' {
 		return stateFoundArrayEnd(s)
@@ -894,19 +834,20 @@ func stateFoundObjectEnd(s *Scanner) state {
 	s.found(lexeme.ObjectEnd)
 	s.restoreContext()
 	s.step = stateEndValue
-	if s.annotation != annotationNone {
-		if ok, annotationType := s.isFoundLastObjectEndOnAnnotation(); ok {
-			switch annotationType {
-			case lexeme.InlineAnnotationBegin:
-				s.step = stateInlineAnnotationTextPrefix
-			case lexeme.MultiLineAnnotationBegin:
-				s.step = stateMultiLineAnnotationEndAfterObject
-			default:
-				panic("Incorrect annotation begin in stack")
-			}
+	if s.annotation == annotationNone {
+		return scanContinue
+	}
+	if ok, annotationType := s.isFoundLastObjectEndOnAnnotation(); ok {
+		switch annotationType {
+		case lexeme.InlineAnnotationBegin:
+			s.step = stateInlineAnnotationTextPrefix
+		case lexeme.MultiLineAnnotationBegin:
+			s.step = stateMultiLineAnnotationTextPrefix
+		default:
+			panic("Incorrect annotation begin in stack")
 		}
 	}
-	return scanEndObject
+	return scanContinue
 }
 
 func stateFoundArrayEnd(s *Scanner) state {
@@ -920,7 +861,7 @@ func stateFoundArrayEnd(s *Scanner) state {
 	} else {
 		s.step = stateEndValue
 	}
-	return scanEndArray
+	return scanContinue
 }
 
 // stateEndTop is the state after finishing the top-level value,
@@ -930,7 +871,7 @@ func stateEndTop(s *Scanner, c byte) state {
 	switch {
 	case s.isNewLine(c):
 		s.found(lexeme.NewLine)
-		return scanSkipSpace
+		return scanContinue
 
 	case s.isAnnotationStart(c):
 		s.switchToAnnotation()
@@ -948,7 +889,7 @@ func stateEndTop(s *Scanner, c byte) state {
 				return scanContinue
 			}
 			s.found(lexeme.EndTop)
-			return scanEnd
+			return scanContinue
 		} else if s.annotation == annotationNone {
 			panic(s.newDocumentErrorAtCharacter("non-space byte after top-level value"))
 		}
@@ -957,7 +898,7 @@ func stateEndTop(s *Scanner, c byte) state {
 	if s.hasTrailingCharacters {
 		s.found(lexeme.EndTop)
 	}
-	return scanEnd
+	return scanContinue
 }
 
 // after reading `"`
@@ -1255,242 +1196,6 @@ func stateTypesShortcutAfterPipe(s *Scanner, c byte) state {
 
 	default:
 		panic(s.newDocumentErrorAtCharacter("expects ' ', '\\t', or '@'"))
-	}
-	return scanContinue
-}
-
-func stateAnyAnnotationStart(s *Scanner, c byte) state {
-	switch c {
-	case '/': // second slash - inline annotation
-		s.annotation = annotationInline
-		s.found(lexeme.InlineAnnotationBegin)
-		s.step = stateInlineAnnotation
-		return scanContinue
-	case '*': // multi-line annotation
-		s.annotation = annotationMultiLine
-		s.found(lexeme.MultiLineAnnotationBegin)
-		s.step = stateMultiLineAnnotation
-		return scanContinue
-	}
-	panic(s.newDocumentErrorAtCharacter("after first slash"))
-}
-
-func stateInlineAnnotationStart(s *Scanner, c byte) state {
-	if c == '/' { // second slash - inline annotation
-		s.annotation = annotationInline
-		s.found(lexeme.InlineAnnotationBegin)
-		s.step = stateInlineAnnotation
-		return scanContinue
-	}
-	panic(s.newDocumentErrorAtCharacter("after first slash on start inline annotation"))
-}
-
-func stateMultiLineAnnotation(s *Scanner, c byte) state {
-	if s.isNewLine(c) {
-		s.found(lexeme.NewLine)
-		return scanSkipSpace
-	}
-	if bytes.IsBlank(c) {
-		return scanSkipSpace
-	}
-	if c == '{' {
-		return stateFoundRootValue(s, c)
-	}
-	s.found(lexeme.MultiLineAnnotationTextBegin)
-	s.step = stateMultiLineAnnotationText
-	return s.step(s, c)
-}
-
-func stateMultiLineAnnotationEndAfterObject(s *Scanner, c byte) state {
-	if s.isNewLine(c) {
-		s.found(lexeme.NewLine)
-		return scanSkipSpace
-	}
-	if bytes.IsBlank(c) {
-		return scanContinue
-	}
-	if c == '*' {
-		s.step = stateMultiLineAnnotationEnd
-		return scanContinue
-	} else {
-		// proceed annotation
-		s.step = stateMultiLineAnnotation
-		return scanContinue
-	}
-}
-
-func stateMultiLineAnnotationEnd(s *Scanner, c byte) state {
-	if c == '/' { // after *
-		s.annotation = annotationNone
-		s.found(lexeme.MultiLineAnnotationEnd)
-		s.step = s.returnToStep.Pop()
-		return scanContinue
-	}
-	panic(s.newDocumentErrorAtCharacter("in multi-line annotation after \"*\" character"))
-}
-
-func stateInlineAnnotation(s *Scanner, c byte) state {
-	switch c {
-	case ' ', '\t':
-		return scanContinue
-
-	case '{':
-		return stateFoundRootValue(s, c)
-	}
-
-	s.found(lexeme.InlineAnnotationTextBegin)
-	s.step = stateInlineAnnotationText
-	return s.step(s, c)
-}
-
-func stateInlineAnnotationTextPrefix(s *Scanner, c byte) state {
-	if bytes.IsSpace(c) {
-		return scanSkipSpace
-	}
-	if bytes.IsNewLine(c) {
-		s.found(lexeme.InlineAnnotationEnd)
-		s.found(lexeme.NewLine)
-		s.step = s.returnToStep.Pop()
-		if s.isInsideMultiLineAnnotation() {
-			s.annotation = annotationMultiLine
-		} else {
-			s.annotation = annotationNone
-		}
-		return scanContinue
-	}
-	if s.isCommentStart(c) {
-		s.switchToComment()
-		return scanContinue
-	}
-	if c == '-' {
-		s.step = stateInlineAnnotationTextPrefix2
-		return scanContinue
-	}
-	panic(s.newDocumentErrorAtCharacter("after object in inline annotation"))
-}
-
-func stateInlineAnnotationTextPrefix2(s *Scanner, c byte) state {
-	if bytes.IsSpace(c) {
-		return scanContinue
-	}
-	s.found(lexeme.InlineAnnotationTextBegin)
-	s.step = stateInlineAnnotationText
-	return s.step(s, c)
-}
-
-func stateInlineAnnotationText(s *Scanner, c byte) state {
-	switch c {
-	case '\n', '\r':
-		s.found(lexeme.InlineAnnotationTextEnd)
-		s.found(lexeme.InlineAnnotationEnd)
-		s.found(lexeme.NewLine)
-		fn := s.returnToStep.Pop()
-		s.step = func(s *Scanner, c byte) state {
-			if s.isAnnotationStart(c) {
-				panic(s.newDocumentErrorAtCharacter("after inline annotation"))
-			}
-			return fn(s, c)
-		}
-		if s.isInsideMultiLineAnnotation() {
-			s.annotation = annotationMultiLine
-		} else {
-			s.annotation = annotationNone
-		}
-
-	case '#':
-		if !s.isInsideMultiLineAnnotation() {
-			s.found(lexeme.InlineAnnotationTextEnd)
-			s.found(lexeme.InlineAnnotationEnd)
-			s.step = stateInlineAnnotationTextSkip
-		}
-	}
-	return scanContinue
-}
-
-func stateInlineAnnotationTextSkip(s *Scanner, c byte) state {
-	if !bytes.IsNewLine(c) {
-		return scanContinue
-	}
-
-	s.found(lexeme.NewLine)
-	fn := s.returnToStep.Pop()
-	s.step = func(s *Scanner, c byte) state {
-		if s.isAnnotationStart(c) {
-			panic(s.newDocumentErrorAtCharacter("after inline annotation"))
-		}
-		return fn(s, c)
-	}
-	if s.isInsideMultiLineAnnotation() {
-		s.annotation = annotationMultiLine
-	} else {
-		s.annotation = annotationNone
-	}
-	return scanContinue
-}
-
-func stateBeginAnnotationObjectKeyOrEmpty(s *Scanner, c byte) state {
-	if c == '}' {
-		return stateFoundObjectEnd(s)
-	}
-	s.found(lexeme.ObjectKeyBegin)
-	return stateBeginAnnotationObjectKey(s, c)
-}
-
-func stateBeginAnnotationObjectKey(s *Scanner, c byte) state {
-	if c == '"' {
-		s.boundary = '"'
-		s.step = stateInString
-		return scanBeginLiteral
-	}
-
-	s.boundary = 0 // default value
-	s.step = stateInAnnotationObjectKeyFirstLetter
-	return s.step(s, c)
-}
-
-func stateInAnnotationObjectKeyFirstLetter(s *Scanner, c byte) state {
-	if (s.boundary == 0 && (c == ':' || bytes.IsNewLine(c) || c == '\\')) || c == s.boundary || c < 0x20 {
-		panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
-	}
-	s.step = stateInAnnotationObjectKey
-	return scanContinue
-}
-
-func stateInAnnotationObjectKey(s *Scanner, c byte) state {
-	switch {
-	case s.boundary == 0 && c == ':':
-		return stateEndValue(s, c)
-
-	case c == s.boundary:
-		s.step = stateEndValue
-
-	case c == ' ':
-		s.step = stateInAnnotationObjectKeyAfter
-
-	case c < 0x20 || (c == '"' || bytes.IsNewLine(c)):
-		panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
-	}
-	return scanContinue
-}
-
-func stateInAnnotationObjectKeyAfter(s *Scanner, c byte) state {
-	switch {
-	case s.boundary == 0 && c == ':':
-		return stateEndValue(s, c)
-
-	case c == s.boundary:
-		s.step = stateEndValue
-
-	case c == ' ':
-		return scanContinue
-	}
-	panic(s.newDocumentError(errors.ErrInvalidCharacterInAnnotationObjectKey, c))
-}
-
-func stateMultiLineAnnotationText(s *Scanner, c byte) state {
-	if c == '*' && s.data[s.index] == '/' {
-		s.found(lexeme.MultiLineAnnotationTextEnd)
-		s.step = stateMultiLineAnnotationEnd
 	}
 	return scanContinue
 }

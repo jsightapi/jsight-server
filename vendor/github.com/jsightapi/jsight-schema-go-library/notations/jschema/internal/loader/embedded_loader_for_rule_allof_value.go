@@ -6,10 +6,9 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
-// Loader for "allOf" rule value (string or array)
+// allOfValueLoader loader for "allOf" rule value (string or array).
 // example: "@name"
 // example: ["@name1", "@name2"]
-
 type allOfValueLoader struct {
 	allOfConstraint *constraint.AllOf
 
@@ -21,22 +20,24 @@ type allOfValueLoader struct {
 	inProgress bool
 }
 
-func newAllOfValueLoader(allOfConstraint *constraint.AllOf) embeddedLoader {
-	l := new(allOfValueLoader)
-	l.allOfConstraint = allOfConstraint
+var _ embeddedLoader = (*allOfValueLoader)(nil)
+
+func newAllOfValueLoader(allOfConstraint *constraint.AllOf) *allOfValueLoader {
+	l := &allOfValueLoader{
+		allOfConstraint: allOfConstraint,
+		inProgress:      true,
+	}
 	l.stateFunc = l.begin
-	l.inProgress = true
 	return l
 }
 
-// Returns false when the load is complete.
-func (l *allOfValueLoader) load(lex lexeme.LexEvent) bool {
+func (l *allOfValueLoader) Load(lex lexeme.LexEvent) bool {
 	defer lexeme.CatchLexEventError(lex)
 	l.stateFunc(lex)
 	return l.inProgress
 }
 
-// begin of array "[" or scalar '"'
+// begin of array "[" or scalar '"'.
 func (l *allOfValueLoader) begin(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ArrayBegin:
@@ -48,7 +49,7 @@ func (l *allOfValueLoader) begin(lex lexeme.LexEvent) {
 	}
 }
 
-// begin of array item or array end
+// arrayItemBeginOrArrayEnd begin of array item or array end.
 func (l *allOfValueLoader) arrayItemBeginOrArrayEnd(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ArrayItemBegin:
@@ -61,7 +62,6 @@ func (l *allOfValueLoader) arrayItemBeginOrArrayEnd(lex lexeme.LexEvent) {
 	}
 }
 
-// array item value
 func (l *allOfValueLoader) arrayItemValue(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.LiteralBegin:
@@ -74,29 +74,24 @@ func (l *allOfValueLoader) arrayItemValue(lex lexeme.LexEvent) {
 	}
 }
 
-// array item end
 func (l *allOfValueLoader) arrayItemEnd(lex lexeme.LexEvent) {
-	switch lex.Type() {
-	case lexeme.ArrayItemEnd:
-		l.stateFunc = l.arrayItemBeginOrArrayEnd
-	default:
+	if lex.Type() != lexeme.ArrayItemEnd {
 		panic(errors.ErrLoader)
 	}
+	l.stateFunc = l.arrayItemBeginOrArrayEnd
 }
 
-// scalar value
 func (l *allOfValueLoader) scalarValue(lex lexeme.LexEvent) {
-	switch lex.Type() {
-	case lexeme.LiteralEnd:
-		l.allOfConstraint.Append(lex.Value())
-		l.stateFunc = l.endOfLoading
-		l.inProgress = false
-	default:
+	if lex.Type() != lexeme.LiteralEnd {
 		panic(errors.ErrUnacceptableValueInAllOfRule)
 	}
+	l.allOfConstraint.Append(lex.Value())
+	l.stateFunc = l.endOfLoading
+	l.inProgress = false
 }
 
-// The method should not be called during normal operation. Ensures that the loader will not continue to work after the load is complete.
+// endOfLoading the method should not be called during normal operation. Ensures
+// that the loader will not continue to work after the load is complete.
 func (*allOfValueLoader) endOfLoading(lexeme.LexEvent) {
 	panic(errors.ErrLoader)
 }

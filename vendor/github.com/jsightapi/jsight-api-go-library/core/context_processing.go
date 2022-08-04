@@ -21,7 +21,7 @@ func (core *JApiCore) processContext(d *directive.Directive, root *[]*directive.
 
 		// not the root context
 		if core.currentContextDirective.Type().IsAllowedForDirectiveContext(d.Type()) {
-			if d.Type().IsHTTPRequestMethod() && d.Parameter("Path") != "" && core.currentContextDirective.Type() == directive.Url {
+			if d.Type().IsHTTPRequestMethod() && d.NamedParameter("Path") != "" && core.currentContextDirective.Type() == directive.Url {
 				if core.currentContextDirective.HasExplicitContext {
 					return d.KeywordError(fmt.Sprintf("%s %q with the \"Path\" parameter", jerr.IncorrectContextOfDirective, d.String()))
 				}

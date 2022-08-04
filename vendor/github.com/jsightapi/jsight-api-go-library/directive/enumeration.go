@@ -44,6 +44,8 @@ const (
 	Method
 	Params
 	Result
+	TAG
+	Tags
 )
 
 var (
@@ -76,6 +78,8 @@ var (
 		"Method",
 		"Params",
 		"Result",
+		"TAG",
+		"Tags",
 	}
 	eeOnce sync.Once
 	ee     map[string]Enumeration
@@ -117,7 +121,7 @@ func (de Enumeration) IsHTTPRequestMethod() bool {
 func (de Enumeration) IsAllowedForRootContext() bool {
 	switch de { //nolint:exhaustive // False-positive.
 	case Jsight, Info, Server, Url, Get, Post, Put, Patch, Delete, Type, Enum,
-		Macro, Paste:
+		Macro, Paste, TAG:
 		return true
 	}
 	return false
@@ -136,17 +140,18 @@ func (de Enumeration) IsAllowedForDirectiveContext(child Enumeration) bool {
 // directiveAllowedToDirectiveContext a map between directive type and directive
 // types which can be placed into this directive context.
 var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{}{
-	Url:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method),
-	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
-	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
-	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
-	Patch:            createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
-	Delete:           createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste),
+	Url:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method, Tags),
+	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
+	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
+	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
+	Patch:            createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
+	Delete:           createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
 	HTTPResponseCode: createEnumerationSet(Body, Headers, Paste),
 	Request:          createEnumerationSet(Body, Headers, Paste),
 	Info:             createEnumerationSet(Title, Version, Description, Paste),
 	Server:           createEnumerationSet(BaseUrl, Paste),
-	Method:           createEnumerationSet(Description, Params, Result),
+	Method:           createEnumerationSet(Description, Params, Result, Tags),
+	TAG:              createEnumerationSet(Description),
 	Macro: createEnumerationSet(
 		Info,
 		Title,

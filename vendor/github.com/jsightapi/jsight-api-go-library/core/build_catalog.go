@@ -41,7 +41,7 @@ func (core *JApiCore) compileUserTypes() *jerr.JApiError {
 
 func (core *JApiCore) buildUserTypes() *jerr.JApiError {
 	core.Catalog().GetRawUserTypes().EachSafe(func(k string, v *directive.Directive) {
-		switch notation.SchemaNotation(v.Parameter("SchemaNotation")) {
+		switch notation.SchemaNotation(v.NamedParameter("SchemaNotation")) {
 		case "", notation.SchemaNotationJSight:
 			if v.BodyCoords.IsSet() {
 				core.userTypes.Set(k, jschema.New(k, v.BodyCoords.Read()))
@@ -92,7 +92,7 @@ func (core *JApiCore) compileUserTypeWithAllDependencies(name string) error {
 		}
 	}
 
-	tt, err := core.getUsedUserTypes(currUT)
+	tt, err := fetchUsedUserTypes(currUT, core.userTypes)
 	if err != nil {
 		return jschemaToJAPIError(err, dd.GetValue(name))
 	}
@@ -145,50 +145,6 @@ func safeAddType(curr jschemaLib.Schema, n string, ut jschemaLib.Schema) error {
 		err = nil
 	}
 	return err
-}
-
-func (core *JApiCore) getUsedUserTypes(ut jschemaLib.Schema) ([]string, error) {
-	alreadyProcessed := map[string]struct{}{}
-	if err := core.fetchUsedUserTypes(ut, alreadyProcessed); err != nil {
-		return nil, err
-	}
-
-	ss := make([]string, 0, len(alreadyProcessed))
-	for s := range alreadyProcessed {
-		ss = append(ss, s)
-	}
-
-	return ss, nil
-}
-
-func (core *JApiCore) fetchUsedUserTypes(
-	ut jschemaLib.Schema,
-	alreadyProcessed map[string]struct{},
-) error {
-	if ut == nil {
-		return nil
-	}
-
-	tt, err := ut.UsedUserTypes()
-	if err != nil {
-		return err
-	}
-
-	if len(tt) == 0 {
-		return nil
-	}
-
-	for _, t := range tt {
-		if _, ok := alreadyProcessed[t]; ok {
-			continue
-		}
-
-		alreadyProcessed[t] = struct{}{}
-		if err := core.fetchUsedUserTypes(core.userTypes.GetValue(t), alreadyProcessed); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (core *JApiCore) checkUserType(name string) *jerr.JApiError {

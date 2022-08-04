@@ -11,14 +11,20 @@ func (core *JApiCore) compileCore() *jerr.JApiError {
 	if je := core.collectMacro(); je != nil {
 		return je
 	}
+
 	if je := core.checkMacroForRecursion(); je != nil {
 		return je
 	}
+
 	if je := core.processPaste(); je != nil {
 		return je
 	}
 
 	if je := core.collectRules(); je != nil {
+		return je
+	}
+
+	if je := core.collectTags(); je != nil {
 		return je
 	}
 
@@ -42,7 +48,7 @@ func (core *JApiCore) checkMacroForRecursion() *jerr.JApiError {
 
 func findPaste(macroName string, d *directive.Directive) *jerr.JApiError {
 	if d.Type() == directive.Paste {
-		switch d.Parameter("Name") {
+		switch d.NamedParameter("Name") {
 		case "":
 			return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
 

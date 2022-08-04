@@ -23,7 +23,10 @@ type TypesList struct {
 	hasUserTypes bool
 }
 
-var _ Constraint = TypesList{}
+var (
+	_ Constraint = TypesList{}
+	_ Constraint = (*TypesList)(nil)
+)
 
 func NewTypesList(s jschema.RuleASTNodeSource) *TypesList {
 	return &TypesList{
@@ -32,7 +35,9 @@ func NewTypesList(s jschema.RuleASTNodeSource) *TypesList {
 	}
 }
 
-func (c TypesList) HasUserTypes() bool { return c.hasUserTypes }
+func (c TypesList) HasUserTypes() bool {
+	return c.hasUserTypes
+}
 
 func (TypesList) IsJsonTypeCompatible(json.Type) bool {
 	return true

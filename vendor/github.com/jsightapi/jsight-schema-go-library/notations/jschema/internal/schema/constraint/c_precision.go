@@ -13,11 +13,14 @@ type Precision struct {
 	value uint
 }
 
-var _ Constraint = Precision{}
+var (
+	_ Constraint       = Precision{}
+	_ Constraint       = (*Precision)(nil)
+	_ LiteralValidator = Precision{}
+	_ LiteralValidator = (*Precision)(nil)
+)
 
 func NewPrecision(ruleValue bytes.Bytes) *Precision {
-	c := Precision{}
-
 	u, err := ruleValue.ParseUint()
 	if err != nil {
 		panic(errors.Format(errors.ErrInvalidValueOfConstraint, PrecisionConstraintType.String()))
@@ -27,8 +30,9 @@ func NewPrecision(ruleValue bytes.Bytes) *Precision {
 		panic(errors.ErrZeroPrecision)
 	}
 
-	c.value = u
-	return &c
+	return &Precision{
+		value: u,
+	}
 }
 
 func (Precision) IsJsonTypeCompatible(t json.Type) bool {
@@ -59,5 +63,9 @@ func (c Precision) Validate(value bytes.Bytes) {
 }
 
 func (c Precision) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, strconv.FormatUint(uint64(c.value), 10), jschema.RuleASTNodeSourceManual) //nolint:lll
+	return newRuleASTNode(
+		jschema.JSONTypeNumber,
+		strconv.FormatUint(uint64(c.value), 10),
+		jschema.RuleASTNodeSourceManual,
+	)
 }

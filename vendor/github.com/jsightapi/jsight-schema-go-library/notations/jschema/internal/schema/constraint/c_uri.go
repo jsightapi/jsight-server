@@ -11,7 +11,12 @@ import (
 
 type Uri struct{}
 
-var _ Constraint = Uri{}
+var (
+	_ Constraint       = Uri{}
+	_ Constraint       = (*Uri)(nil)
+	_ LiteralValidator = Uri{}
+	_ LiteralValidator = (*Uri)(nil)
+)
 
 func NewUri() *Uri {
 	return &Uri{}
@@ -30,15 +35,10 @@ func (Uri) String() string {
 }
 
 func (Uri) Validate(value bytes.Bytes) {
-	u, err := url.ParseRequestURI(value.Unquote().String())
-	if err != nil {
-		panic(errors.Format(errors.ErrInvalidUri, value.Unquote().String()))
-	}
-	if !u.IsAbs() {
-		panic(errors.Format(errors.ErrInvalidUri, value.Unquote().String()))
-	}
-	if u.Hostname() == "" {
-		panic(errors.Format(errors.ErrInvalidUri, value.Unquote().String()))
+	val := value.Unquote().String()
+	u, err := url.ParseRequestURI(val)
+	if err != nil || !u.IsAbs() || u.Hostname() == "" {
+		panic(errors.Format(errors.ErrInvalidUri, val))
 	}
 }
 

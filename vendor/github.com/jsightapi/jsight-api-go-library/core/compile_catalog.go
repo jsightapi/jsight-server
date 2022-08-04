@@ -337,7 +337,7 @@ func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJ
 					return err
 				}
 			}
-		case catalog.RuleTokenTypeString:
+		case catalog.RuleTokenTypeReference:
 			if err := core.inheritPropertiesFromUserType(sc, uut, rule.ScalarValue); err != nil {
 				return err
 			}

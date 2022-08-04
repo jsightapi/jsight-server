@@ -14,7 +14,14 @@ type Const struct {
 	apply     bool
 }
 
-var _ Constraint = Const{}
+var (
+	_ Constraint       = Const{}
+	_ Constraint       = (*Const)(nil)
+	_ BoolKeeper       = Const{}
+	_ BoolKeeper       = (*Const)(nil)
+	_ LiteralValidator = Const{}
+	_ LiteralValidator = (*Const)(nil)
+)
 
 func NewConst(value, nodeValue bytes.Bytes) *Const {
 	c := Const{

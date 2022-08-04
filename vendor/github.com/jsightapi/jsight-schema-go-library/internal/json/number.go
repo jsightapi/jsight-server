@@ -89,15 +89,18 @@ func NewNumber(b bytes.Bytes) (*Number, error) { //nolint:gocyclo // todo try to
 	for i, c := range b {
 		switch state {
 		case stateOnSearchStart:
-			if c == '-' { //nolint:gocritic // todo rewrite this logic to switch
+			switch c {
+			case '-':
 				negative = true
 				state = stateMinusFound
 				continue
-			} else if c == '0' {
+
+			case '0':
 				intLen++
 				state = stateFirstZeroFound
 				continue
-			} else if '1' <= c && c <= '9' {
+
+			case '1', '2', '3', '4', '5', '6', '7', '8', '9':
 				intLen++
 				state = stateIntegerNumberFound
 				continue
@@ -118,13 +121,16 @@ func NewNumber(b bytes.Bytes) (*Number, error) { //nolint:gocyclo // todo try to
 				continue
 			}
 		case stateIntegerNumberFound:
-			if '0' <= c && c <= '9' { //nolint:gocritic // todo rewrite this logic to switch
+			switch c {
+			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 				intLen++
 				continue
-			} else if c == '.' {
+
+			case '.':
 				state = statePointFound
 				continue
-			} else if c == 'e' || c == 'E' {
+
+			case 'e', 'E':
 				state = stateExpFound
 				continue
 			}
@@ -143,16 +149,19 @@ func NewNumber(b bytes.Bytes) (*Number, error) { //nolint:gocyclo // todo try to
 				continue
 			}
 		case stateExpFound:
-			if c == '+' { //nolint:gocritic // todo rewrite this logic to switch
+			switch c {
+			case '+':
 				state = stateExpSignFound
 				continue
-			} else if c == '-' {
+
+			case '-':
 				if expBegin == 0 {
 					expBegin = i
 				}
 				state = stateExpSignFound
 				continue
-			} else if '0' <= c && c <= '9' {
+
+			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 				if expBegin == 0 {
 					expBegin = i
 				}
@@ -191,17 +200,19 @@ func NewNumber(b bytes.Bytes) (*Number, error) { //nolint:gocyclo // todo try to
 
 	var natural bytes.Bytes
 
-	// example 1.2E-2 = .012
-	if intLen < 0 { //nolint:gocritic // todo rewrite this logic to switch
+	switch {
+	case intLen < 0: // example 1.2E-2 = .012
 		natural = make(bytes.Bytes, 0, fraLen)
 		natural = appendZeros(natural, -intLen)
 		natural = appendDigits(b, natural)
-	} else if fraLen < 0 { // example 1.2E+2 = 120
+
+	case fraLen < 0: // example 1.2E+2 = 120
 		natural = make(bytes.Bytes, 0, intLen)
 		natural = appendDigits(b, natural)
 		natural = appendZeros(natural, -fraLen)
 		fraLen = 0
-	} else { // example 12.3E-1 = 1.23
+
+	default: // example 12.3E-1 = 1.23
 		natural = make(bytes.Bytes, 0, intLen+fraLen)
 		natural = appendDigits(b, natural)
 	}
@@ -212,9 +223,7 @@ func NewNumber(b bytes.Bytes) (*Number, error) { //nolint:gocyclo // todo try to
 		exp: fraLen,
 	}
 
-	var err error
-
-	err = n.trimLeadingZerosInTheIntegerPart()
+	err := n.trimLeadingZerosInTheIntegerPart()
 	if err != nil {
 		return nil, err
 	}
@@ -235,13 +244,15 @@ func appendZeros(to bytes.Bytes, n int) bytes.Bytes {
 }
 
 func appendDigits(from bytes.Bytes, to bytes.Bytes) bytes.Bytes {
+loop:
 	for _, c := range from {
-		if c == '-' || c == '.' { //nolint:gocritic // todo rewrite this logic to switch
+		switch c {
+		case '-', '.':
 			continue
-		} else if '0' <= c && c <= '9' {
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			to = append(to, c)
-		} else { // c == 'e' || c == 'E'
-			break
+		default:
+			break loop
 		}
 	}
 	return to
@@ -297,17 +308,18 @@ func (n Number) LengthOfFractionalPart() uint {
 //  +1 if n >  nn
 //
 func (n Number) Cmp(nn *Number) int {
-	if n.neg == nn.neg { //nolint:gocritic // todo rewrite this logic to switch
+	if n.neg == nn.neg {
 		b := n.cmpAbs(nn)
 		if n.neg {
 			return n.not(b)
 		}
 		return b
-	} else if n.neg {
-		return -1
-	} else {
-		return 1
 	}
+
+	if n.neg {
+		return -1
+	}
+	return 1
 }
 
 func (Number) not(cmp int) int {

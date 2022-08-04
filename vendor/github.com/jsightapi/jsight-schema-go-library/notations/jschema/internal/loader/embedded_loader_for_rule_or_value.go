@@ -16,6 +16,9 @@ type orValueLoader struct {
 	// A rootSchema into which types can be added from the "or" rule.
 	rootSchema *schema.Schema
 
+	// rules all available rules.
+	rules map[string]jschema.Rule
+
 	// stateFunc a function for running a state machine (the current state of the
 	// state machine).
 	stateFunc func(lexeme.LexEvent)
@@ -27,23 +30,29 @@ type orValueLoader struct {
 	inProgress bool
 }
 
+var _ embeddedLoader = (*orValueLoader)(nil)
+
 // newOrValueLoader creates loader for "or" rule value (array of rule-sets).
 // Ex: [{type: "@typeName-1"}, "@typeName-2", {type: "integer", min: 0}]
-func newOrValueLoader(node schema.Node, rootSchema *schema.Schema) embeddedLoader {
+func newOrValueLoader(
+	node schema.Node,
+	rootSchema *schema.Schema,
+	rules map[string]jschema.Rule,
+) *orValueLoader {
 	a := &orValueLoader{
 		node:       node,
 		rootSchema: rootSchema,
+		rules:      rules,
 		inProgress: true,
 	}
 	a.stateFunc = a.begin
 	return a
 }
 
-// Returns false when the load is complete.
-func (a *orValueLoader) load(lex lexeme.LexEvent) bool {
+func (a *orValueLoader) Load(lex lexeme.LexEvent) bool {
 	defer lexeme.CatchLexEventError(lex)
 	if a.ruleSetLoader != nil {
-		if !a.ruleSetLoader.load(lex) {
+		if !a.ruleSetLoader.Load(lex) {
 			a.ruleSetLoader = nil
 		}
 	} else {
@@ -52,7 +61,7 @@ func (a *orValueLoader) load(lex lexeme.LexEvent) bool {
 	return a.inProgress
 }
 
-// return TypesList constraint for node
+// nodeTypesListConstraint returns TypesList constraint for node.
 func (a *orValueLoader) nodeTypesListConstraint() *constraint.TypesList {
 	c := a.node.Constraint(constraint.TypesListConstraintType)
 	if c == nil {
@@ -69,7 +78,7 @@ func (a *orValueLoader) begin(lex lexeme.LexEvent) {
 	a.stateFunc = a.itemBeginOrArrayEnd
 }
 
-// begin of array item or array end
+// itemBeginOrArrayEnd begin of array item or array end
 // ex: [{ <--
 // ex: [" <--
 // ex: ] <--
@@ -91,7 +100,7 @@ func (a *orValueLoader) itemBeginOrArrayEnd(lex lexeme.LexEvent) {
 	}
 }
 
-// array item value (literal begin or object begin)
+// itemInner array item value (literal begin or object begin)
 // ex: [{ <--
 // ex: [" <--
 func (a *orValueLoader) itemInner(lex lexeme.LexEvent) {
@@ -99,8 +108,8 @@ func (a *orValueLoader) itemInner(lex lexeme.LexEvent) {
 	case lexeme.LiteralBegin:
 		a.stateFunc = a.literal
 	case lexeme.ObjectBegin:
-		a.ruleSetLoader = newOrRuleSetLoader(a.node, a.rootSchema)
-		a.ruleSetLoader.load(lex)
+		a.ruleSetLoader = newOrRuleSetLoader(a.node, a.rootSchema, a.rules)
+		a.ruleSetLoader.Load(lex)
 		a.stateFunc = a.itemEnd
 	default:
 		panic(errors.ErrIncorrectArrayItemTypeInOrRule) // ex: array
@@ -144,7 +153,7 @@ func (a *orValueLoader) literal(lex lexeme.LexEvent) {
 	a.stateFunc = a.itemEnd
 }
 
-// array item end
+// itemEnd array item end
 // ex: ["@type" <--
 // ex: [{...} <--
 func (a *orValueLoader) itemEnd(lex lexeme.LexEvent) {

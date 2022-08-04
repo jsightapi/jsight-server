@@ -12,7 +12,12 @@ type MinLength struct {
 	rawValue bytes.Bytes
 }
 
-var _ Constraint = MinLength{}
+var (
+	_ Constraint       = MinLength{}
+	_ Constraint       = (*MinLength)(nil)
+	_ LiteralValidator = MinLength{}
+	_ LiteralValidator = (*MinLength)(nil)
+)
 
 func NewMinLength(ruleValue bytes.Bytes) *MinLength {
 	number, err := json.NewIntegerNumber(ruleValue)

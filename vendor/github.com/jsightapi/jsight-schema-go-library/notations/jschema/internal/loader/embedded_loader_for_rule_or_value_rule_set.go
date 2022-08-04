@@ -17,6 +17,12 @@ type orRuleSetLoader struct {
 	// A rootSchema to which the type from the "or" rule will be added.
 	rootSchema *schema.Schema
 
+	// embeddedValueLoader a loader for "enum" value.
+	embeddedValueLoader embeddedLoader
+
+	// rules all available rules.
+	rules map[string]jschema.Rule
+
 	// stateFunc a function for running a state machine (the current state of the
 	// state machine).
 	stateFunc func(lexeme.LexEvent)
@@ -33,8 +39,14 @@ type orRuleSetLoader struct {
 	inProgress bool
 }
 
+var _ embeddedLoader = (*orRuleSetLoader)(nil)
+
 // Loader for rule-set value. Ex: {type: "integer", min: 0}
-func newOrRuleSetLoader(node schema.Node, rootSchema *schema.Schema) *orRuleSetLoader {
+func newOrRuleSetLoader(
+	node schema.Node,
+	rootSchema *schema.Schema,
+	rules map[string]jschema.Rule,
+) *orRuleSetLoader {
 	if _, ok := node.(*schema.MixedValueNode); ok {
 		panic(errors.ErrCannotSpecifyOtherRulesWithTypeReference)
 	}
@@ -42,6 +54,7 @@ func newOrRuleSetLoader(node schema.Node, rootSchema *schema.Schema) *orRuleSetL
 	s := &orRuleSetLoader{
 		node:       node,
 		rootSchema: rootSchema,
+		rules:      rules,
 		typeRoot:   schema.NewMixedNode(node.BasisLexEventOfSchemaForNode()),
 		inProgress: true,
 	}
@@ -49,14 +62,30 @@ func newOrRuleSetLoader(node schema.Node, rootSchema *schema.Schema) *orRuleSetL
 	return s
 }
 
-// Returns false when the load is complete.
-func (s *orRuleSetLoader) load(lex lexeme.LexEvent) bool {
+func (s *orRuleSetLoader) Load(lex lexeme.LexEvent) bool {
 	defer lexeme.CatchLexEventError(lex)
 	s.stateFunc(lex)
 	return s.inProgress
 }
 
-// begin of object "{"
+func (s *orRuleSetLoader) embeddedLoad(lex lexeme.LexEvent) {
+	if !s.embeddedValueLoader.Load(lex) {
+		s.embeddedValueLoader = nil
+		s.stateFunc = s.valueEnd
+		if lex.Type() == lexeme.TypesShortcutEnd {
+			s.stateFunc = s.afterShortcutEnd
+		}
+	}
+}
+
+func (s *orRuleSetLoader) afterShortcutEnd(lex lexeme.LexEvent) {
+	if lex.Type() != lexeme.MixedValueEnd {
+		panic(errors.ErrLoader)
+	}
+	s.stateFunc = s.valueEnd
+}
+
+// objectBegin begin of object "{"
 func (s *orRuleSetLoader) objectBegin(lex lexeme.LexEvent) {
 	if lex.Type() != lexeme.ObjectBegin {
 		panic(errors.ErrLoader)
@@ -64,7 +93,7 @@ func (s *orRuleSetLoader) objectBegin(lex lexeme.LexEvent) {
 	s.stateFunc = s.keyOrObjectEnd
 }
 
-// object key or object end
+// keyOrObjectEnd object key or object end
 // ex: {"key" <--
 // ex: {...} <--
 func (s *orRuleSetLoader) keyOrObjectEnd(lex lexeme.LexEvent) {
@@ -74,6 +103,9 @@ func (s *orRuleSetLoader) keyOrObjectEnd(lex lexeme.LexEvent) {
 	case lexeme.ObjectKeyEnd:
 		s.ruleNameLex = lex
 		s.stateFunc = s.valueBegin
+		if s.ruleNameLex.Value().String() == "enum" {
+			s.stateFunc = s.enumValueBegin
+		}
 	case lexeme.ObjectEnd:
 		s.stateFunc = s.endOfLoading
 		s.inProgress = false
@@ -83,7 +115,7 @@ func (s *orRuleSetLoader) keyOrObjectEnd(lex lexeme.LexEvent) {
 	}
 }
 
-// object value begin
+// valueBegin object value begin
 // ex: {"key": <--
 func (s *orRuleSetLoader) valueBegin(lex lexeme.LexEvent) {
 	if lex.Type() != lexeme.ObjectValueBegin {
@@ -92,7 +124,17 @@ func (s *orRuleSetLoader) valueBegin(lex lexeme.LexEvent) {
 	s.stateFunc = s.valueLiteral
 }
 
-// literal value
+func (s *orRuleSetLoader) enumValueBegin(lex lexeme.LexEvent) {
+	if lex.Type() != lexeme.ObjectValueBegin {
+		panic(errors.ErrLoader)
+	}
+	enumConstraint := constraint.NewEnum()
+	s.typeRoot.AddConstraint(enumConstraint)
+	s.embeddedValueLoader = newEnumValueLoader(enumConstraint, s.rules)
+	s.stateFunc = s.embeddedLoad
+}
+
+// valueLiteral literal value
 // ex: {"key": ... <--
 func (s *orRuleSetLoader) valueLiteral(lex lexeme.LexEvent) {
 	switch lex.Type() {
@@ -107,7 +149,7 @@ func (s *orRuleSetLoader) valueLiteral(lex lexeme.LexEvent) {
 	}
 }
 
-// object value end
+// valueEnd object value end
 // ex: {"key": "value" <--
 func (s *orRuleSetLoader) valueEnd(lex lexeme.LexEvent) {
 	if lex.Type() != lexeme.ObjectValueEnd {

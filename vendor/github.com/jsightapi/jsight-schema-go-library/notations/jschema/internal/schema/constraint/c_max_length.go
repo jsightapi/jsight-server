@@ -12,7 +12,12 @@ type MaxLength struct {
 	rawValue bytes.Bytes
 }
 
-var _ Constraint = MaxLength{}
+var (
+	_ Constraint       = MaxLength{}
+	_ Constraint       = (*MaxLength)(nil)
+	_ LiteralValidator = MaxLength{}
+	_ LiteralValidator = (*MaxLength)(nil)
+)
 
 func NewMaxLength(ruleValue bytes.Bytes) *MaxLength {
 	number, err := json.NewIntegerNumber(ruleValue)

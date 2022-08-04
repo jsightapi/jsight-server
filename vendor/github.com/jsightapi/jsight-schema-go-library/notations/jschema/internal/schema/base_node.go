@@ -68,7 +68,7 @@ func (n baseNode) BasisLexEventOfSchemaForNode() lexeme.LexEvent {
 	return n.schemaLexEvent
 }
 
-// return *Constraint or nil (if not found)
+// Constraint returns requested Constraint if found.
 func (n baseNode) Constraint(t constraint.Type) constraint.Constraint {
 	if n.constraints == nil {
 		return nil
@@ -98,7 +98,7 @@ func (n *baseNode) DeleteConstraint(t constraint.Type) {
 	n.constraints.Delete(t)
 }
 
-// return map or nil
+// ConstraintMap returns all constraints.
 func (n baseNode) ConstraintMap() *Constraints {
 	return n.constraints
 }

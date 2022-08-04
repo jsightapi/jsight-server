@@ -80,6 +80,8 @@ func (t SchemaType) ToTokenType() string {
 		return "null"
 	case SchemaTypeMixed:
 		return "reference"
+	case SchemaTypeComment:
+		return "annotation"
 	}
 	return ""
 }

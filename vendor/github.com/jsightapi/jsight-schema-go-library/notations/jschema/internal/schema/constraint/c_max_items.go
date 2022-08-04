@@ -12,7 +12,12 @@ type MaxItems struct {
 	rawValue bytes.Bytes
 }
 
-var _ Constraint = MaxItems{}
+var (
+	_ Constraint     = MaxItems{}
+	_ Constraint     = (*MaxItems)(nil)
+	_ ArrayValidator = MaxItems{}
+	_ ArrayValidator = (*MaxItems)(nil)
+)
 
 func NewMaxItems(ruleValue bytes.Bytes) *MaxItems {
 	number, err := json.NewIntegerNumber(ruleValue)

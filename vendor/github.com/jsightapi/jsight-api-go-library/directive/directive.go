@@ -8,21 +8,16 @@ import (
 
 // Directive represents all info about some Directive
 type Directive struct {
-	Annotation string
-
-	includeTracer IncludeTracer
-
-	// Keyword only for Responses (have multiple keywords), for others should match
-	// type.
-	Keyword       string
-	parameters    map[string]string
-	keywordCoords Coords
-	BodyCoords    Coords
-	Parent        *Directive
-	Children      []*Directive
-
-	type_ Enumeration
-
+	Annotation        string
+	includeTracer     IncludeTracer
+	Keyword           string // only for Responses (have multiple keywords), for others should match type.
+	namedParameters   map[string]string
+	unnamedParameters []string
+	keywordCoords     Coords
+	BodyCoords        Coords
+	Parent            *Directive
+	Children          []*Directive
+	type_             Enumeration
 	// HasExplicitContext true if directive's context is opened explicitly with parentheses.
 	HasExplicitContext bool
 }
@@ -33,11 +28,12 @@ func New(e Enumeration, keywordCoords Coords) *Directive {
 
 func NewWithCallStack(e Enumeration, keywordCoords Coords, includeTracer IncludeTracer) *Directive {
 	return &Directive{
-		type_:         e,
-		parameters:    make(map[string]string),
-		Keyword:       e.String(),
-		keywordCoords: keywordCoords,
-		includeTracer: includeTracer,
+		type_:             e,
+		namedParameters:   make(map[string]string),
+		unnamedParameters: make([]string, 0, 2),
+		Keyword:           e.String(),
+		keywordCoords:     keywordCoords,
+		includeTracer:     includeTracer,
 	}
 }
 
@@ -54,23 +50,39 @@ func (d Directive) Type() Enumeration {
 	return d.type_
 }
 
-func (d Directive) HasAnyParameters() bool {
-	return len(d.parameters) != 0
+func (d Directive) HasNamedParameter() bool {
+	return len(d.namedParameters) != 0
 }
 
-func (d Directive) Parameter(k string) string {
-	if v, ok := d.parameters[k]; ok {
+func (d Directive) NamedParameter(k string) string {
+	if v, ok := d.namedParameters[k]; ok {
 		return v
 	}
 	return ""
 }
 
-func (d *Directive) SetParameter(k string, v string) error {
-	if _, ok := d.parameters[k]; ok {
+func (d *Directive) SetNamedParameter(k string, v string) error {
+	if _, ok := d.namedParameters[k]; ok {
 		return fmt.Errorf("the %q parameter is already defined for the %q directive", k, d)
 	}
-	d.parameters[k] = v
+	d.namedParameters[k] = v
 	return nil
+}
+
+func (d Directive) HasUnnamedParameter() bool {
+	return len(d.unnamedParameters) != 0
+}
+
+func (d Directive) UnnamedParametersLen() int {
+	return len(d.unnamedParameters)
+}
+
+func (d Directive) UnnamedParameter() []string {
+	return d.unnamedParameters
+}
+
+func (d *Directive) AppendUnnamedParameter(v string) {
+	d.unnamedParameters = append(d.unnamedParameters, v)
 }
 
 func (d *Directive) AppendChild(child *Directive) {
@@ -81,16 +93,9 @@ func (d *Directive) AppendChild(child *Directive) {
 }
 
 func (d Directive) CopyWoParentAndChildren() Directive {
-	return Directive{
-		type_:              d.type_,
-		Annotation:         d.Annotation,
-		Keyword:            d.Keyword,
-		HasExplicitContext: d.HasExplicitContext,
-		parameters:         d.parameters,
-		keywordCoords:      d.keywordCoords,
-		BodyCoords:         d.BodyCoords,
-		includeTracer:      d.includeTracer,
-	}
+	d.Parent = nil
+	d.Children = nil
+	return d
 }
 
 // IncludeTracer represent the directive's call stack.

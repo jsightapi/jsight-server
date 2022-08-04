@@ -13,7 +13,10 @@ type AllOf struct {
 	schemaName []string
 }
 
-var _ Constraint = AllOf{}
+var (
+	_ Constraint = AllOf{}
+	_ Constraint = (*AllOf)(nil)
+)
 
 func NewAllOf() *AllOf {
 	return &AllOf{
@@ -40,11 +43,10 @@ func (c *AllOf) Append(scalar bytes.Bytes) {
 
 	s := scalar.Unquote()
 
-	if s.IsUserTypeName() {
-		c.schemaName = append(c.schemaName, s.String())
-	} else {
+	if !s.IsUserTypeName() {
 		panic(errors.Format(errors.ErrInvalidSchemaNameInAllOfRule, s))
 	}
+	c.schemaName = append(c.schemaName, s.String())
 }
 
 func (c AllOf) SchemaNames() []string {
@@ -55,14 +57,14 @@ func (c AllOf) ASTNode() jschema.RuleASTNode {
 	const source = jschema.RuleASTNodeSourceManual
 
 	if len(c.schemaName) == 1 {
-		return newRuleASTNode(jschema.JSONTypeString, c.schemaName[0], source)
+		return newRuleASTNode(jschema.JSONTypeShortcut, c.schemaName[0], source)
 	}
 
 	n := newRuleASTNode(jschema.JSONTypeArray, "", source)
 	n.Items = make([]jschema.RuleASTNode, 0, len(c.schemaName))
 
 	for _, sn := range c.schemaName {
-		n.Items = append(n.Items, newRuleASTNode(jschema.JSONTypeString, sn, source))
+		n.Items = append(n.Items, newRuleASTNode(jschema.JSONTypeShortcut, sn, source))
 	}
 
 	return n

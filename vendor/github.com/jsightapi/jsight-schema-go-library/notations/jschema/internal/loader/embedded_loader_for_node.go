@@ -5,8 +5,8 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 )
 
-// This class is responsible for loading the JSON elements in the nodes of the internal representation of the SCHEMA.
-
+// nodeLoader is responsible for loading the JSON elements in the nodes of the
+// internal representation of the SCHEMA.
 type nodeLoader struct {
 	// The schema.
 	// Parameter from the main loader.
@@ -34,8 +34,8 @@ func newNodeLoader(
 	}
 }
 
-// returns the newly added node or nil
-func (nl *nodeLoader) load(lex lexeme.LexEvent) schema.Node {
+// Load returns the newly added node or nil.
+func (nl *nodeLoader) Load(lex lexeme.LexEvent) schema.Node {
 	defer lexeme.CatchLexEventError(lex)
 
 	switch lex.Type() {

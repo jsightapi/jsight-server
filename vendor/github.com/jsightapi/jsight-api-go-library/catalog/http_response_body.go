@@ -19,7 +19,6 @@ type HTTPResponseBody struct {
 }
 
 func NewHTTPResponseBody(
-	name string,
 	b bytes.Bytes,
 	f SerializeFormat,
 	sn notation.SchemaNotation,
@@ -37,7 +36,7 @@ func NewHTTPResponseBody(
 	switch f {
 	case SerializeFormatJSON:
 		var err error
-		s, err = UnmarshalSchema(name, b, tt, rr)
+		s, err = UnmarshalSchema("", b, tt, rr)
 		if err != nil {
 			var e kit.Error
 			if errors.As(err, &e) {

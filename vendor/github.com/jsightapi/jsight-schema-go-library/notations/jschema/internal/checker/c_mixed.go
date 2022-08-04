@@ -19,7 +19,7 @@ func newMixedChecker(node schema.Node) mixedChecker {
 	}
 }
 
-func (c mixedChecker) check(nodeLex lexeme.LexEvent) (err errors.Error) {
+func (c mixedChecker) Check(nodeLex lexeme.LexEvent) (err errors.Error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch val := r.(type) {
@@ -38,8 +38,4 @@ func (c mixedChecker) check(nodeLex lexeme.LexEvent) (err errors.Error) {
 	}
 
 	return nil
-}
-
-func (c mixedChecker) indentedString(depth int) string {
-	return c.node.IndentedNodeString(depth)
 }

@@ -1,8 +1,12 @@
 .PHONY: all
 all: generate fmt lint test
 
+.PHONY: deps
+deps:
+	go install github.com/vektra/mockery/v2@v2.12.3
+
 .PHONY: generate
-generate:
+generate: deps
 	go generate $$(go list ./... | grep -v vendor)
 
 .PHONY: fmt
@@ -19,4 +23,4 @@ test:
 
 .PHONY: bench
 bench:
-	go test -run XXXX -bench . -benchmem ./...
+	go test -run XXX -bench . -benchmem ./...

@@ -202,6 +202,12 @@ func (s *scanner) processTail() (lexeme.LexEvent, error) {
 
 	case lexeme.InlineAnnotationTextBegin:
 		return s.processingFoundLexeme(lexeme.InlineAnnotationTextEnd)
+
+	case lexeme.MultiLineAnnotationBegin:
+		return s.processingFoundLexeme(lexeme.MultiLineAnnotationEnd)
+
+	case lexeme.MultiLineAnnotationTextBegin:
+		return s.processingFoundLexeme(lexeme.MultiLineAnnotationTextEnd)
 	}
 
 	err := errors.NewDocumentError(s.file, errors.ErrUnexpectedEOF)
@@ -644,14 +650,20 @@ func (s *scanner) stateNul(c byte) (state, error) {
 	return scanSkip, s.newDocumentErrorAtCharacter("in literal null (expecting 'l')")
 }
 
-func (s *scanner) stateAnyAnnotationStart(c byte) (state, error) {
-	if c != '/' {
-		return scanSkip, s.newDocumentErrorAtCharacter("after first slash")
+func (s *scanner) stateAnyAnnotationStart(c byte) (st state, err error) {
+	switch c {
+	case '/':
+		s.annotation = true
+		s.found(lexeme.InlineAnnotationBegin)
+		s.step = s.stateInlineAnnotation
+	case '*':
+		s.annotation = true
+		s.found(lexeme.MultiLineAnnotationBegin)
+		s.step = s.stateMultiLineAnnotation
+	default:
+		err = s.newDocumentErrorAtCharacter("after first slash")
 	}
-	s.annotation = true
-	s.found(lexeme.InlineAnnotationBegin)
-	s.step = s.stateInlineAnnotation
-	return scanSkip, nil
+	return scanSkip, err
 }
 
 func (s *scanner) stateInlineAnnotation(c byte) (state, error) {
@@ -662,6 +674,38 @@ func (s *scanner) stateInlineAnnotation(c byte) (state, error) {
 	s.found(lexeme.InlineAnnotationTextBegin)
 	s.step = s.stateInlineAnnotationText
 	return s.step(c)
+}
+
+func (s *scanner) stateMultiLineAnnotation(c byte) (state, error) {
+	if bytes.IsNewLine(c) {
+		s.found(lexeme.NewLine)
+		return scanSkip, nil
+	}
+	if bytes.IsBlank(c) {
+		return scanSkip, nil
+	}
+	s.found(lexeme.MultiLineAnnotationTextBegin)
+	s.step = s.stateMultiLineAnnotationText
+	return s.step(c)
+}
+
+func (s *scanner) stateMultiLineAnnotationText(c byte) (state, error) {
+	if c == '*' && s.data[s.index] == '/' {
+		s.found(lexeme.MultiLineAnnotationTextEnd)
+		s.step = s.stateMultiLineAnnotationEnd
+	}
+	return scanSkip, nil
+}
+
+func (s *scanner) stateMultiLineAnnotationEnd(c byte) (state, error) {
+	if c != '/' {
+		return scanSkip, s.newDocumentErrorAtCharacter("in multi-line annotation after \"*\" character")
+	}
+	// after *
+	s.found(lexeme.MultiLineAnnotationEnd)
+	s.step = s.returnToStep.Pop()
+	s.annotation = false
+	return scanSkip, nil
 }
 
 func (s *scanner) stateInlineAnnotationText(c byte) (state, error) {
@@ -720,11 +764,13 @@ func (s *scanner) processingFoundLexeme(lexType lexeme.LexEventType) (lexeme.Lex
 	pairType := pair.Type()
 
 	switch {
-	case pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd:
+	case pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd,
+		pairType == lexeme.MultiLineAnnotationBegin && lexType == lexeme.MultiLineAnnotationEnd:
 		return lexeme.NewLexEvent(lexType, pair.Begin(), i, s.file), nil
 
 	case pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd,
 		pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd,
+		pairType == lexeme.MultiLineAnnotationTextBegin && lexType == lexeme.MultiLineAnnotationTextEnd,
 		pairType == lexeme.InlineAnnotationTextBegin && lexType == lexeme.InlineAnnotationTextEnd,
 		pairType == lexeme.InlineAnnotationBegin && lexType == lexeme.InlineAnnotationEnd,
 		pairType == lexeme.MixedValueBegin && lexType == lexeme.MixedValueEnd:

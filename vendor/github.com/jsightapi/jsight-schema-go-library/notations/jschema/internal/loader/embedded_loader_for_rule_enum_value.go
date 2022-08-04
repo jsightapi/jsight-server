@@ -12,8 +12,8 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/rules/enum"
 )
 
-// Loader for "enum" rule value (array of literals). Ex: [123, 45.67, "abc", true, null]
-
+// enumValueLoader loader for "enum" rule value (array of literals).
+// Ex: [123, 45.67, "abc", true, null]
 type enumValueLoader struct {
 	enumConstraint *constraint.Enum
 
@@ -25,16 +25,19 @@ type enumValueLoader struct {
 	// Will be used for creating enum from one of rule.
 	rules map[string]jschemaLib.Rule
 
+	// lastIdx index of last added enum value.
 	lastIdx int
 
 	// inProgress true - if loading in progress, false - if loading finisher.
 	inProgress bool
 }
 
+var _ embeddedLoader = (*enumValueLoader)(nil)
+
 func newEnumValueLoader(
 	enumConstraint *constraint.Enum,
 	rules map[string]jschemaLib.Rule,
-) embeddedLoader {
+) *enumValueLoader {
 	l := &enumValueLoader{
 		enumConstraint: enumConstraint,
 		inProgress:     true,
@@ -44,8 +47,7 @@ func newEnumValueLoader(
 	return l
 }
 
-// Returns false when the load is complete.
-func (l *enumValueLoader) load(lex lexeme.LexEvent) bool {
+func (l *enumValueLoader) Load(lex lexeme.LexEvent) bool {
 	defer lexeme.CatchLexEventError(lex)
 	l.stateFunc(lex)
 	return l.inProgress
@@ -63,7 +65,7 @@ func (l *enumValueLoader) begin(lex lexeme.LexEvent) {
 	}
 }
 
-// begin of array item begin or array end
+// arrayItemBeginOrArrayEnd begin of array item begin or array end
 // ex: [1 <--
 // ex: [" <--
 // ex: ] <--
@@ -108,7 +110,6 @@ func (l *enumValueLoader) annotationEnd(lex lexeme.LexEvent) {
 func (l *enumValueLoader) literal(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.LiteralBegin:
-		return
 	case lexeme.LiteralEnd:
 		l.lastIdx = l.enumConstraint.Append(lex.Value())
 		l.stateFunc = l.arrayItemEnd
@@ -117,7 +118,6 @@ func (l *enumValueLoader) literal(lex lexeme.LexEvent) {
 	}
 }
 
-// array item end
 func (l *enumValueLoader) arrayItemEnd(lex lexeme.LexEvent) {
 	if lex.Type() != lexeme.ArrayItemEnd {
 		panic(errors.ErrLoader)
@@ -125,7 +125,7 @@ func (l *enumValueLoader) arrayItemEnd(lex lexeme.LexEvent) {
 	l.stateFunc = l.arrayItemBeginOrArrayEnd
 }
 
-// shortcutBeginOrArrayEnd process expected rule name.
+// ruleNameBegin process expected rule name.
 // ex: @ <--
 func (l *enumValueLoader) ruleNameBegin(lex lexeme.LexEvent) {
 	if lex.Type() != lexeme.TypesShortcutBegin {

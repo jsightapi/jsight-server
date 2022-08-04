@@ -15,7 +15,9 @@ type Nullable struct {
 
 var (
 	_ Constraint = Nullable{}
+	_ Constraint = (*Nullable)(nil)
 	_ BoolKeeper = Nullable{}
+	_ BoolKeeper = (*Nullable)(nil)
 )
 
 func NewNullable(ruleValue bytes.Bytes) *Nullable {

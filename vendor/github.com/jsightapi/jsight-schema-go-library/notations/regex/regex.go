@@ -2,7 +2,6 @@ package regex
 
 import (
 	stdErrors "errors"
-	"sync"
 
 	"github.com/lucasjones/reggen"
 
@@ -10,20 +9,20 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-schema-go-library/internal/sync"
 )
 
 type Schema struct {
 	file *fs.File
 
-	compileErr  error
 	pattern     string
-	compileOnce sync.Once
+	compileOnce sync.ErrOnce
 }
 
 var _ jschema.Schema = &Schema{}
 
 // New creates a Regex schema with specified name and content.
-func New(name string, content []byte) *Schema {
+func New[T fs.FileContent](name string, content T) *Schema {
 	return FromFile(fs.NewFile(name, content))
 }
 
@@ -93,10 +92,9 @@ func (*Schema) UsedUserTypes() ([]string, error) {
 }
 
 func (s *Schema) compile() error {
-	s.compileOnce.Do(func() {
-		s.compileErr = s.doCompile()
+	return s.compileOnce.Do(func() error {
+		return s.doCompile()
 	})
-	return s.compileErr
 }
 
 func (s *Schema) doCompile() error {

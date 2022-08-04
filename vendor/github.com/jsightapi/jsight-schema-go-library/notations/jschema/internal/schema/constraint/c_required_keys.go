@@ -10,12 +10,14 @@ import (
 // RequiredKeys constraint is specific constraint. It cannot be created directly by jSchema language rule.
 // It is indirectly influenced by rule "optional" in object's children. All the children keys, that are not marked as
 // "optional"=true, are treated as required and go to the RequiredKeys constraint of the parent object.
-
 type RequiredKeys struct {
 	keys []string
 }
 
-var _ Constraint = RequiredKeys{}
+var (
+	_ Constraint = RequiredKeys{}
+	_ Constraint = (*RequiredKeys)(nil)
+)
 
 func NewRequiredKeys() *RequiredKeys {
 	return &RequiredKeys{

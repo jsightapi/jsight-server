@@ -8,7 +8,11 @@ import (
 )
 
 func (core *JApiCore) collectRules() *jerr.JApiError {
-	for _, d := range core.directives {
+	return core.collectRulesFromDirectives(core.directives)
+}
+
+func (core *JApiCore) collectRulesFromDirectives(dd []*directive.Directive) *jerr.JApiError {
+	for _, d := range dd {
 		if je := core.buildRule(d); je != nil {
 			return je
 		}
@@ -25,7 +29,7 @@ func (core *JApiCore) buildRule(d *directive.Directive) *jerr.JApiError {
 		return nil
 	}
 
-	name := d.Parameter("Name")
+	name := d.NamedParameter("Name")
 
 	r := enum.New(name, d.BodyCoords.Read())
 	if err := r.Check(); err != nil {

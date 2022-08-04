@@ -41,16 +41,6 @@ const (
 	EndTop // character after the last closing JSON or SCHEMA lexeme event
 )
 
-// IsOneOf returns true if given lexeme type is equal to at least one of specified.
-func (e LexEventType) IsOneOf(ll ...LexEventType) bool {
-	for _, l := range ll {
-		if l == e {
-			return true
-		}
-	}
-	return false
-}
-
 func (e LexEventType) IsOpening() bool {
 	switch e { //nolint:exhaustive // It's okay.
 	case LiteralBegin,

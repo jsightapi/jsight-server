@@ -9,10 +9,14 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 )
 
-type Date struct {
-}
+type Date struct{}
 
-var _ Constraint = Date{}
+var (
+	_ Constraint       = Date{}
+	_ Constraint       = (*Date)(nil)
+	_ LiteralValidator = Date{}
+	_ LiteralValidator = (*Date)(nil)
+)
 
 func NewDate() *Date {
 	return &Date{}

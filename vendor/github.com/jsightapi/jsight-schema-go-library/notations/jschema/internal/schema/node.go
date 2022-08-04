@@ -12,10 +12,9 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
-// The node of the internal representation of the scheme.
+// The Node of the internal representation of the scheme.
 // Roughly corresponds to the JSON element in the EXAMPLE of schema.
 // Contains information about the constraints imposed on the node.
-
 type Node interface {
 	// Type returns type of this node.
 	Type() json.Type
@@ -54,16 +53,6 @@ type Node interface {
 
 	// NumberOfConstraints returns the number of constraints.
 	NumberOfConstraints() int
-
-	// IndentedTreeString returns the text representation of the node and recursively
-	// all children. You can specify the indent (number of tabs) that is placed
-	// before each line in the text view.
-	IndentedTreeString(int) string
-
-	// IndentedNodeString returns the text representation of the node without children.
-	// You can specify the indent (number of tabs) that is placed before each line
-	// in the text view.
-	IndentedNodeString(int) string
 
 	// Value returns this node's value.
 	Value() bytes.Bytes
@@ -104,4 +93,19 @@ func NewNode(lex lexeme.LexEvent) Node {
 		return NewMixedValueNode(lex)
 	}
 	panic(`Can not create node from the lexical event "` + lex.Type().String() + `"`)
+}
+
+// IsOptionalNode returns true is node is optional.
+func IsOptionalNode(n Node) bool {
+	c := n.Constraint(constraint.OptionalConstraintType)
+	if c == nil {
+		return false
+	}
+
+	bk, ok := c.(constraint.BoolKeeper)
+	if !ok {
+		return false
+	}
+
+	return bk.Bool()
 }

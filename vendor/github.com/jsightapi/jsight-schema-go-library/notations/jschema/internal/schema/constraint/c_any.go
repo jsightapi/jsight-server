@@ -7,7 +7,10 @@ import (
 
 type AnyConstraint struct{}
 
-var _ Constraint = AnyConstraint{}
+var (
+	_ Constraint = AnyConstraint{}
+	_ Constraint = (*AnyConstraint)(nil)
+)
 
 func NewAny() *AnyConstraint {
 	return &AnyConstraint{}

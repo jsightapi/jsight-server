@@ -8,8 +8,10 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 )
 
-type state uint8
-type stepFunc func(*scanner, byte) state
+type (
+	state    uint8
+	stepFunc func(*scanner, byte) state
+)
 
 // These values are returned by the state transition functions
 // assigned to scanner.state and the method scanner.eof.

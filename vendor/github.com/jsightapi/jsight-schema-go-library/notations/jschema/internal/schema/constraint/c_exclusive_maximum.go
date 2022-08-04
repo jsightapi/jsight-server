@@ -13,7 +13,10 @@ type ExclusiveMaximum struct {
 	exclusive bool
 }
 
-var _ Constraint = ExclusiveMaximum{}
+var (
+	_ Constraint = ExclusiveMaximum{}
+	_ Constraint = (*ExclusiveMaximum)(nil)
+)
 
 func NewExclusiveMaximum(ruleValue bytes.Bytes) *ExclusiveMaximum {
 	c := ExclusiveMaximum{}
@@ -25,10 +28,7 @@ func NewExclusiveMaximum(ruleValue bytes.Bytes) *ExclusiveMaximum {
 }
 
 func (ExclusiveMaximum) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (ExclusiveMaximum) Type() Type {
@@ -36,7 +36,7 @@ func (ExclusiveMaximum) Type() Type {
 }
 
 func (c ExclusiveMaximum) String() string {
-	str := "UNVERIFIABLE CONSTRAINT " + ExclusiveMaximumConstraintType.String()
+	str := "[ UNVERIFIABLE CONSTRAINT ] " + ExclusiveMaximumConstraintType.String()
 	if c.exclusive {
 		str += ": true"
 	} else {

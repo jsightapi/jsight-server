@@ -26,7 +26,7 @@ func (core *JApiCore) addMacro(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
 
-	name := d.Parameter("Name")
+	name := d.NamedParameter("Name")
 
 	if name == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
@@ -36,7 +36,7 @@ func (core *JApiCore) addMacro(d *directive.Directive) *jerr.JApiError {
 	}
 
 	if _, ok := core.macro[name]; ok {
-		return d.KeywordError(fmt.Sprintf("duplicate macro name %q", name))
+		return d.KeywordError(fmt.Sprintf("%s (%q)", jerr.DuplicateNames, name))
 	}
 
 	core.macro[name] = d

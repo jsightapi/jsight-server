@@ -12,7 +12,12 @@ type MinItems struct {
 	rawValue bytes.Bytes
 }
 
-var _ Constraint = MinItems{}
+var (
+	_ Constraint     = MinItems{}
+	_ Constraint     = (*MinItems)(nil)
+	_ ArrayValidator = MinItems{}
+	_ ArrayValidator = (*MinItems)(nil)
+)
 
 func NewMinItems(ruleValue bytes.Bytes) *MinItems {
 	number, err := json.NewIntegerNumber(ruleValue)

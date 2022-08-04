@@ -13,7 +13,12 @@ type Optional struct {
 	value bool
 }
 
-var _ Constraint = Optional{}
+var (
+	_ Constraint = Optional{}
+	_ Constraint = (*Optional)(nil)
+	_ BoolKeeper = Optional{}
+	_ BoolKeeper = (*Optional)(nil)
+)
 
 func NewOptional(ruleValue bytes.Bytes) *Optional {
 	c := Optional{}

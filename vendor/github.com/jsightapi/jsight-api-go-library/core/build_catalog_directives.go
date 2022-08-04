@@ -50,7 +50,7 @@ func (core *JApiCore) addDirective(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addJSight(d *directive.Directive) *jerr.JApiError {
-	version := d.Parameter("Version")
+	version := d.NamedParameter("Version")
 	if version == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Version"))
 	}
@@ -68,7 +68,7 @@ func (core JApiCore) addJSight(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addInfo(d *directive.Directive) *jerr.JApiError {
-	if d.HasAnyParameters() {
+	if d.HasNamedParameter() {
 		return d.KeywordError(jerr.ParametersAreForbiddenForTheDirective)
 	}
 	if d.Annotation != "" {
@@ -81,7 +81,7 @@ func (core JApiCore) addInfo(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addTitle(d *directive.Directive) *jerr.JApiError {
-	title := d.Parameter("Title")
+	title := d.NamedParameter("Title")
 	if title == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Title"))
 	}
@@ -95,7 +95,7 @@ func (core JApiCore) addTitle(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addVersion(d *directive.Directive) *jerr.JApiError {
-	version := d.Parameter("Version")
+	version := d.NamedParameter("Version")
 	if version == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Version"))
 	}
@@ -132,33 +132,44 @@ func (core JApiCore) addDescription(d *directive.Directive) *jerr.JApiError {
 	case directive.Get, directive.Post, directive.Put, directive.Patch, directive.Delete:
 		return core.addHTTPMethodDescription(d, text)
 	case directive.Method:
-		return core.addMethodDescription(d, text)
+		return core.addJsonRpcMethodDescription(d, text)
+	case directive.TAG:
+		return core.addTagDescription(d, d.Parent.NamedParameter("TagName"), text)
 	default:
 		return d.KeywordError("wrong description context")
 	}
 }
 
-func (core JApiCore) addInfoDescription(d *directive.Directive, text string) *jerr.JApiError {
-	if err := core.catalog.AddDescriptionToInfo(text); err != nil {
+func (core JApiCore) addInfoDescription(d *directive.Directive, description string) *jerr.JApiError {
+	if err := core.catalog.AddDescriptionToInfo(description); err != nil {
 		return d.KeywordError(err.Error())
 	}
 	return nil
 }
 
-func (core JApiCore) addHTTPMethodDescription(d *directive.Directive, text string) *jerr.JApiError {
-	if err := core.catalog.AddDescriptionToHttpMethod(*d, text); err != nil {
+func (core JApiCore) addHTTPMethodDescription(d *directive.Directive, description string) *jerr.JApiError {
+	if err := core.catalog.AddDescriptionToHttpMethod(*d, description); err != nil {
 		return d.KeywordError(err.Error())
 	}
 	return nil
 }
 
-func (_ JApiCore) addMethodDescription(_ *directive.Directive, _ string) *jerr.JApiError {
-	// TODO
+func (core JApiCore) addJsonRpcMethodDescription(d *directive.Directive, description string) *jerr.JApiError {
+	if err := core.catalog.AddDescriptionToJsonRpcMethod(*d, description); err != nil {
+		return d.KeywordError(err.Error())
+	}
+	return nil
+}
+
+func (core JApiCore) addTagDescription(d *directive.Directive, name, description string) *jerr.JApiError {
+	if err := core.catalog.AddDescriptionToTag(name, description); err != nil {
+		return d.KeywordError(err.Error())
+	}
 	return nil
 }
 
 func (core JApiCore) addServer(d *directive.Directive) *jerr.JApiError {
-	name := d.Parameter("Name")
+	name := d.NamedParameter("Name")
 	if name == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
 	}
@@ -169,7 +180,7 @@ func (core JApiCore) addServer(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addBaseUrl(d *directive.Directive) *jerr.JApiError {
-	path := d.Parameter("Path")
+	path := d.NamedParameter("Path")
 	if path == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Path"))
 	}
@@ -178,14 +189,14 @@ func (core JApiCore) addBaseUrl(d *directive.Directive) *jerr.JApiError {
 	}
 
 	server := d.Parent
-	if err := core.catalog.AddBaseUrl(server.Parameter("Name"), path); err != nil {
+	if err := core.catalog.AddBaseUrl(server.NamedParameter("Name"), path); err != nil {
 		return d.KeywordError(err.Error())
 	}
 	return nil
 }
 
 func (core JApiCore) addType(d *directive.Directive) *jerr.JApiError {
-	if d.Parameter("Name") == "" {
+	if d.NamedParameter("Name") == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
 	}
 	return core.catalog.AddType(*d, core.userTypes, core.rules)
@@ -273,11 +284,7 @@ func (core JApiCore) addHTTPMethod(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(err.Error())
 	}
 
-	if err = core.catalog.AddHTTPMethod(*d); err != nil {
-		return d.KeywordError(err.Error())
-	}
-
-	return nil
+	return core.catalog.AddHTTPMethod(*d)
 }
 
 func (core JApiCore) addQuery(d *directive.Directive) *jerr.JApiError {
@@ -290,12 +297,12 @@ func (core JApiCore) addQuery(d *directive.Directive) *jerr.JApiError {
 
 	q := catalog.NewQuery(*d)
 
-	q.Format = d.Parameter("Format")
+	q.Format = d.NamedParameter("Format")
 	if q.Format == "" {
 		q.Format = "htmlFormEncoded"
 	}
 
-	example := d.Parameter("QueryExample")
+	example := d.NamedParameter("QueryExample")
 	if example != "" {
 		q.Example = example
 	}
@@ -323,8 +330,8 @@ func (core JApiCore) addRequest(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
 
-	schemaNotation := d.Parameter("SchemaNotation")
-	typ := d.Parameter("Type")
+	schemaNotation := d.NamedParameter("SchemaNotation")
+	typ := d.NamedParameter("Type")
 
 	if schemaNotation != "" && typ != "" {
 		return d.KeywordError(jerr.CannotUseTheTypeAndSchemaNotationParametersTogether)
@@ -350,7 +357,7 @@ func (core JApiCore) addRequest(d *directive.Directive) *jerr.JApiError {
 
 	switch {
 	case sn == notation.SchemaNotationJSight && typ != "" && !d.BodyCoords.IsSet():
-		if s, err = catalog.UnmarshalSchema(typ, bytes.Bytes(typ), core.userTypes, core.rules); err == nil {
+		if s, err = catalog.UnmarshalSchema("", bytes.Bytes(typ), core.userTypes, core.rules); err == nil {
 			err = core.catalog.AddRequestBody(s, bodyFormat, *d)
 		}
 
@@ -383,8 +390,8 @@ func (core JApiCore) addRequest(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addResponse(d *directive.Directive) *jerr.JApiError {
-	schemaNotationParam := d.Parameter("SchemaNotation")
-	typeParam := d.Parameter("Type")
+	schemaNotationParam := d.NamedParameter("SchemaNotation")
+	typeParam := d.NamedParameter("Type")
 
 	if schemaNotationParam != "" && typeParam != "" {
 		return d.KeywordError(jerr.CannotUseTheTypeAndSchemaNotationParametersTogether)
@@ -402,7 +409,7 @@ func (core JApiCore) addResponse(d *directive.Directive) *jerr.JApiError {
 
 	if d.Type() == directive.Body {
 		d1 := d.Parent
-		if d1.Type() == directive.HTTPResponseCode && typeParam != "" && d1.Parameter("Type") != "" {
+		if d1.Type() == directive.HTTPResponseCode && typeParam != "" && d1.NamedParameter("Type") != "" {
 			return d.KeywordError("You cannot specify User Type in the response directive if it has a child Body directive.")
 		}
 	}
@@ -417,13 +424,13 @@ func (core JApiCore) addResponse(d *directive.Directive) *jerr.JApiError {
 
 	switch {
 	case typeParam != "":
-		je = core.catalog.AddResponseBody(typeParam, bytes.Bytes(typeParam), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(bytes.Bytes(typeParam), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
 
 	case d.BodyCoords.IsSet():
-		je = core.catalog.AddResponseBody("", d.BodyCoords.Read(), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(d.BodyCoords.Read(), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
 
 	case schemaNotation.IsAnyOrEmpty():
-		je = core.catalog.AddResponseBody("", bytes.Bytes{}, bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(nil, bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
 
 	case d.Type() == directive.Body:
 		je = d.KeywordError("body is empty")
@@ -469,7 +476,7 @@ func (core JApiCore) addHeaders(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addBody(d *directive.Directive) *jerr.JApiError {
-	if d.Parent.HasAnyParameters() && d.Parent.Type() != directive.Macro {
+	if d.Parent.HasNamedParameter() && d.Parent.Type() != directive.Macro {
 		return d.Parent.KeywordError("parameters are unacceptable, according to the Body directive")
 	}
 
@@ -488,11 +495,11 @@ func (core JApiCore) addProtocol(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}
 
-	if d.Parameter("ProtocolName") == "" {
+	if d.NamedParameter("ProtocolName") == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "ProtocolName"))
 	}
 
-	if d.Parameter("ProtocolName") != "json-rpc-2.0" {
+	if d.NamedParameter("ProtocolName") != "json-rpc-2.0" {
 		return d.KeywordError("the parameter value have to be \"json-rpc-2.0\"")
 	}
 
@@ -505,7 +512,7 @@ func (core JApiCore) addProtocol(d *directive.Directive) *jerr.JApiError {
 }
 
 func (core JApiCore) addJsonRpcMethod(d *directive.Directive) *jerr.JApiError {
-	if d.Parameter("MethodName") == "" {
+	if d.NamedParameter("MethodName") == "" {
 		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "MethodName"))
 	}
 
@@ -513,11 +520,7 @@ func (core JApiCore) addJsonRpcMethod(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError("the directive \"Protocol\" was not found")
 	}
 
-	if err := core.catalog.AddJsonRpcMethod(*d); err != nil {
-		return d.KeywordError(err.Error())
-	}
-
-	return nil
+	return core.catalog.AddJsonRpcMethod(*d)
 }
 
 func isProtocolExists(d *directive.Directive) bool {

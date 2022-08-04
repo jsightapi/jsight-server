@@ -11,7 +11,10 @@ import (
 
 type Email struct{}
 
-var _ Constraint = Email{}
+var (
+	_ Constraint = Email{}
+	_ Constraint = (*Email)(nil)
+)
 
 func NewEmail() *Email {
 	return &Email{}

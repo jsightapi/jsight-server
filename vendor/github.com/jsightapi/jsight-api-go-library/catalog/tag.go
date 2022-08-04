@@ -5,18 +5,27 @@ import (
 	"strings"
 )
 
-type Tag struct {
+type Tag struct { //nolint:govet
 	InteractionGroups map[Protocol]TagInteractionGroup
 	Children          *Tags
 	Name              TagName
 	Title             string
-	Description       string
+	Description       *string
 }
 
 var _ json.Marshaler = &Tags{}
 
-func newEmptyTag(r InteractionId) *Tag {
-	title := tagTitle(r.Path().String())
+func NewTag(name, title string) *Tag {
+	return &Tag{
+		InteractionGroups: make(map[Protocol]TagInteractionGroup),
+		Children:          &Tags{},
+		Title:             title,
+		Name:              TagName(name),
+	}
+}
+
+func newPathTag(r InteractionId) *Tag {
+	title := pathTagTitle(r.Path().String())
 	return &Tag{
 		InteractionGroups: make(map[Protocol]TagInteractionGroup),
 		Children:          &Tags{},
@@ -25,7 +34,7 @@ func newEmptyTag(r InteractionId) *Tag {
 	}
 }
 
-func tagTitle(path string) string {
+func pathTagTitle(path string) string {
 	p := strings.Split(path, "/")
 	for len(p) != 0 {
 		if p[0] != "" && p[0] != "." {
@@ -53,7 +62,7 @@ func (t *Tag) MarshalJSON() ([]byte, error) {
 		Children          *Tags                 `json:"children,omitempty"`
 		Name              TagName               `json:"name"`
 		Title             string                `json:"title"`
-		Description       string                `json:"description,omitempty"`
+		Description       *string               `json:"description,omitempty"`
 		InteractionGroups []TagInteractionGroup `json:"interactionGroups"`
 	}
 

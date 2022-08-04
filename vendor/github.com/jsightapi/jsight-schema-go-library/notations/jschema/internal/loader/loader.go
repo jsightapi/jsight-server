@@ -9,9 +9,9 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 )
 
-// Contains information about the mode in which the loader is located.
-// It affects how the received lexical events will be interpreted depending on whether they are in the comments or not.
-
+// mode contains information about the mode in which the loader is located.
+// It affects how the received lexical events will be interpreted depending on
+// whether they are in the comments or not.
 type mode int
 
 const (
@@ -20,7 +20,7 @@ const (
 	readMultiLineComment
 )
 
-// Loads the schema from the scanner into the internal view.
+// loader loads the schema from the scanner into the internal view.
 // Does not check for the correctness of the branch because it deals with the scanner.
 type loader struct {
 	// The schema resulting.
@@ -57,14 +57,9 @@ type loader struct {
 	nodesPerCurrentLineCount uint
 }
 
-func LoadSchema(
-	scan *scanner.Scanner,
-	rootSchema *schema.Schema,
-	areKeysOptionalByDefault bool,
-	rules map[string]jschema.Rule,
-) *schema.Schema {
-	s := LoadSchemaWithoutCompile(scan, rootSchema, rules)
-	CompileBasic(&s, areKeysOptionalByDefault)
+func LoadSchema(scan *scanner.Scanner, rootSchema *schema.Schema) *schema.Schema {
+	s := LoadSchemaWithoutCompile(scan, rootSchema, nil)
+	CompileBasic(&s, false)
 	return &s
 }
 
@@ -134,7 +129,7 @@ func (l *loader) doLoad() {
 		case readMultiLineComment, readInlineComment:
 			l.rule.load(lex)
 		default:
-			if node := l.node.load(lex); node != nil {
+			if node := l.node.Load(lex); node != nil {
 				l.lastAddedNode = node
 			}
 		}

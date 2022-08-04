@@ -11,7 +11,12 @@ import (
 
 type DateTime struct{}
 
-var _ Constraint = DateTime{}
+var (
+	_ Constraint       = DateTime{}
+	_ Constraint       = (*DateTime)(nil)
+	_ LiteralValidator = DateTime{}
+	_ LiteralValidator = (*DateTime)(nil)
+)
 
 func NewDateTime() *DateTime {
 	return &DateTime{}

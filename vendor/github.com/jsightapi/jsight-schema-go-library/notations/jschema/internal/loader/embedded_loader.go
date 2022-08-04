@@ -5,5 +5,5 @@ import (
 )
 
 type embeddedLoader interface {
-	load(lex lexeme.LexEvent) bool
+	Load(lex lexeme.LexEvent) bool
 }

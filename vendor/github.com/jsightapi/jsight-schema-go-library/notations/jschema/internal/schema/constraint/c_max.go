@@ -13,7 +13,12 @@ type Max struct {
 	exclusive bool
 }
 
-var _ Constraint = Max{}
+var (
+	_ Constraint       = Max{}
+	_ Constraint       = (*Max)(nil)
+	_ LiteralValidator = Max{}
+	_ LiteralValidator = (*Max)(nil)
+)
 
 func NewMax(ruleValue bytes.Bytes) *Max {
 	number, err := json.NewNumber(ruleValue)
@@ -22,17 +27,13 @@ func NewMax(ruleValue bytes.Bytes) *Max {
 	}
 
 	return &Max{
-		rawValue:  ruleValue,
-		max:       number,
-		exclusive: false,
+		rawValue: ruleValue,
+		max:      number,
 	}
 }
 
 func (Max) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (Max) Type() Type {

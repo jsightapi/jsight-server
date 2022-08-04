@@ -8,8 +8,6 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 )
 
-// TODO error interface as parameter functions. Wrap error.
-
 func (d Directive) KeywordError(msg string) *jerr.JApiError {
 	return d.makeError(msg, d.keywordCoords.File(), d.keywordCoords.begin)
 }

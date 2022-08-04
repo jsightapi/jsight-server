@@ -2,7 +2,7 @@ package jerr
 
 const (
 	InternalServerError                                 = "internal server error" // should not occur
-	RequiredParameterNotSpecified                       = "required parameter not specified"
+	RequiredParameterNotSpecified                       = "required parameter(s) not specified"
 	ParametersAreForbiddenForTheDirective               = "parameters are forbidden for the directive"
 	AnnotationIsForbiddenForTheDirective                = "annotation is forbidden for the directive"
 	EmptyDescription                                    = "empty description"
@@ -24,4 +24,6 @@ const (
 	JsonRpcMethodNotFound                               = "JSON-RPC method not found"
 	JsonRpcResourceNotFound                             = "resource not found"
 	ApartFromTheOpeningParenthesis                      = "apart from the opening parenthesis, there should be nothing else on this line"
+	DuplicateNames                                      = "duplicate names are not allowed"
+	TagNotFound                                         = "tag not found"
 )

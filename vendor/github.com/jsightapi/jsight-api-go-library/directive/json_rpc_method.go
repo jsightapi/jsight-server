@@ -8,7 +8,7 @@ import (
 
 func (d Directive) JsonRpcMethodName() (string, error) {
 	if d.Type() == Method {
-		return d.Parameter("MethodName"), nil
+		return d.NamedParameter("MethodName"), nil
 	} else if d.Parent != nil {
 		return d.Parent.JsonRpcMethodName()
 	}

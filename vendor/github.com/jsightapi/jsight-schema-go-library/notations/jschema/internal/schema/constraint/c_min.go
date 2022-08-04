@@ -13,7 +13,12 @@ type Min struct {
 	exclusive bool
 }
 
-var _ Constraint = Min{}
+var (
+	_ Constraint       = Min{}
+	_ Constraint       = (*Min)(nil)
+	_ LiteralValidator = Min{}
+	_ LiteralValidator = (*Min)(nil)
+)
 
 func NewMin(ruleValue bytes.Bytes) *Min {
 	number, err := json.NewNumber(ruleValue)
@@ -22,17 +27,13 @@ func NewMin(ruleValue bytes.Bytes) *Min {
 	}
 
 	return &Min{
-		rawValue:  ruleValue,
-		min:       number,
-		exclusive: false,
+		rawValue: ruleValue,
+		min:      number,
 	}
 }
 
 func (Min) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (Min) Type() Type {

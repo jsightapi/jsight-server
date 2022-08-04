@@ -9,12 +9,12 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
-// Schema compilation works with each node's constraints. This process adjust constraints so that they were in peace
-// with each other. For example, if node has "precision" constraint, we have to add to this node "decimal" constraint,
-// because only decimal can have precision. Another interesting example: if key-value node doesn't have an "optional"
-// constraint, we have to add to parent object "required key" constraint, because this node's key is required in the
-// object.
-
+// schemaCompiler works with each node's constraints. This process adjust constraints
+// so that they were in peace with each other. For example, if node has "precision"
+// constraint, we have to add to this node "decimal" constraint, because only
+// decimal can have precision. Another interesting example: if key-value node doesn't
+// have an "optional" constraint, we have to add to parent object "required key"
+// constraint, because this node's key is required in the object.
 type schemaCompiler struct {
 	rootSchema               *schema.Schema
 	areKeysOptionalByDefault bool
@@ -183,84 +183,86 @@ func (schemaCompiler) enumConstraint(node schema.Node) {
 
 func (schemaCompiler) typeConstraint(node schema.Node) { //nolint:gocyclo // todo try to make this more readable
 	c := node.Constraint(constraint.TypeConstraintType)
-	if c != nil {
-		typeConstraint := c.(*constraint.TypeConstraint) //nolint:errcheck // We sure about that.
-		val := typeConstraint.Bytes().Unquote()
+	if c == nil {
+		return
+	}
 
-		if val.IsUserTypeName() {
-			n := node.NumberOfConstraints()
-			if node.Constraint(constraint.OptionalConstraintType) != nil {
-				n--
-			}
-			if node.Constraint(constraint.NullableConstraintType) != nil {
-				n--
-			}
-			if n != 1 {
-				panic(errors.ErrCannotSpecifyOtherRulesWithTypeReference)
-			}
+	typeConstraint := c.(*constraint.TypeConstraint) //nolint:errcheck // We sure about that.
+	val := typeConstraint.Bytes().Unquote()
 
-			if _, ok := node.(schema.BranchNode); ok {
-				// Since "req.jschema.rules.type.reference 0.2" we didn't allow
-				// empty object and arrays as well for the type constraint.
-				panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
-			}
-
-			if _, ok := node.(*schema.MixedValueNode); ok && !typeConstraint.IsGenerated() {
-				// Since "req.jschema.rules.type.reference 0.2" we didn't allow
-				// empty object and arrays as well for the type constraint.
-				panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
-			}
-
-			c := constraint.NewTypesList(jschema.RuleASTNodeSourceManual)
-			c.AddName(val.String(), val.String(), jschema.RuleASTNodeSourceManual)
-
-			node.AddConstraint(c) // can panic: Unable to add constraint
-		} else {
-			valStr := val.String()
-
-			switch valStr {
-			case "mixed":
-				typesListConstraint := node.Constraint(constraint.TypesListConstraintType)
-				if typesListConstraint == nil {
-					panic(errors.ErrNotFoundRuleOr)
-				}
-
-				if typesListConstraint.(*constraint.TypesList).Len() < 2 {
-					panic(errors.ErrNotFoundRuleOr)
-				}
-			case "enum":
-				if node.Constraint(constraint.EnumConstraintType) == nil {
-					panic(errors.ErrNotFoundRuleEnum)
-				}
-			case "any":
-				node.AddConstraint(constraint.NewAny())
-			case "decimal":
-				if node.Constraint(constraint.PrecisionConstraintType) == nil {
-					panic(errors.ErrNotFoundRulePrecision)
-				}
-			case "email":
-				node.AddConstraint(constraint.NewEmail()) // can panic: Unable to add constraint
-			case "uri":
-				node.AddConstraint(constraint.NewUri())
-			case "uuid":
-				node.AddConstraint(constraint.NewUuid())
-			case "date":
-				node.AddConstraint(constraint.NewDate())
-			case "datetime":
-				node.AddConstraint(constraint.NewDateTime())
-			default: // object, array, string, integer, float, boolean or null
-				t := json.NewJsonType(val)                         // can panic
-				if mixedNode, ok := node.(*schema.MixedNode); ok { // defined json type for mixed node
-					mixedNode.SetJsonType(t)
-				} else if t != node.Type() { // check json type for non-mixed node
-					panic(errors.Format(errors.ErrIncompatibleTypes, t.String()))
-				}
-			}
-			node.SetRealType(valStr)
+	if val.IsUserTypeName() {
+		n := node.NumberOfConstraints()
+		if node.Constraint(constraint.OptionalConstraintType) != nil {
+			n--
+		}
+		if node.Constraint(constraint.NullableConstraintType) != nil {
+			n--
+		}
+		if n != 1 {
+			panic(errors.ErrCannotSpecifyOtherRulesWithTypeReference)
 		}
 
-		node.DeleteConstraint(constraint.TypeConstraintType)
+		if _, ok := node.(schema.BranchNode); ok {
+			// Since "req.jschema.rules.type.reference 0.2" we didn't allow
+			// empty object and arrays as well for the type constraint.
+			panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
+		}
+
+		if _, ok := node.(*schema.MixedValueNode); ok && !typeConstraint.IsGenerated() {
+			// Since "req.jschema.rules.type.reference 0.2" we didn't allow
+			// empty object and arrays as well for the type constraint.
+			panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
+		}
+
+		c := constraint.NewTypesList(jschema.RuleASTNodeSourceManual)
+		c.AddName(val.String(), val.String(), jschema.RuleASTNodeSourceManual)
+
+		node.AddConstraint(c) // can panic: Unable to add constraint
+	} else {
+		valStr := val.String()
+
+		switch valStr {
+		case "mixed":
+			typesListConstraint := node.Constraint(constraint.TypesListConstraintType)
+			if typesListConstraint == nil {
+				panic(errors.ErrNotFoundRuleOr)
+			}
+
+			if typesListConstraint.(*constraint.TypesList).Len() < 2 {
+				panic(errors.ErrNotFoundRuleOr)
+			}
+		case constraint.EnumConstraintType.String():
+			if node.Constraint(constraint.EnumConstraintType) == nil {
+				panic(errors.ErrNotFoundRuleEnum)
+			}
+		case "any":
+			node.AddConstraint(constraint.NewAny())
+		case "decimal":
+			if node.Constraint(constraint.PrecisionConstraintType) == nil {
+				panic(errors.ErrNotFoundRulePrecision)
+			}
+		case "email":
+			node.AddConstraint(constraint.NewEmail()) // can panic: Unable to add constraint
+		case "uri":
+			node.AddConstraint(constraint.NewUri())
+		case "uuid":
+			node.AddConstraint(constraint.NewUuid())
+		case "date":
+			node.AddConstraint(constraint.NewDate())
+		case "datetime":
+			node.AddConstraint(constraint.NewDateTime())
+		default: // object, array, string, integer, float, boolean or null
+			t := json.NewJsonType(val)                         // can panic
+			if mixedNode, ok := node.(*schema.MixedNode); ok { // defined json type for mixed node
+				mixedNode.SetJsonType(t)
+			} else if t != node.Type() { // check json type for non-mixed node
+				panic(errors.Format(errors.ErrIncompatibleTypes, t.String()))
+			}
+		}
+		node.SetRealType(valStr)
 	}
+
+	node.DeleteConstraint(constraint.TypeConstraintType)
 }
 
 func (schemaCompiler) allowedConstraintCheck(node schema.Node) (err error) {
@@ -314,27 +316,29 @@ func (schemaCompiler) allowedConstraintCheck(node schema.Node) (err error) {
 }
 
 func (schemaCompiler) anyConstraint(node schema.Node) {
-	if node.Constraint(constraint.AnyConstraintType) != nil {
-		// check for a permissible constraints
-		n := node.NumberOfConstraints()
-		n-- // AnyConstraintType - checked above
-		if node.Constraint(constraint.OptionalConstraintType) != nil {
-			n--
-		}
-		if node.Constraint(constraint.NullableConstraintType) != nil {
-			n--
-		}
-		if node.Constraint(constraint.ConstType) != nil {
-			n--
-		}
-		if n != 0 {
-			panic(errors.ErrShouldBeNoOtherRulesInSetWithAny)
-		}
+	if node.Constraint(constraint.AnyConstraintType) == nil {
+		return
+	}
 
-		if branchNode, ok := node.(schema.BranchNode); ok {
-			if branchNode.Len() != 0 {
-				panic(errors.ErrInvalidNestedElementsFoundForTypeAny)
-			}
+	// check for a permissible constraints
+	n := node.NumberOfConstraints()
+	n-- // AnyConstraintType - checked above
+	if node.Constraint(constraint.OptionalConstraintType) != nil {
+		n--
+	}
+	if node.Constraint(constraint.NullableConstraintType) != nil {
+		n--
+	}
+	if node.Constraint(constraint.ConstType) != nil {
+		n--
+	}
+	if n != 0 {
+		panic(errors.ErrShouldBeNoOtherRulesInSetWithAny)
+	}
+
+	if branchNode, ok := node.(schema.BranchNode); ok {
+		if branchNode.Len() != 0 {
+			panic(errors.ErrInvalidNestedElementsFoundForTypeAny)
 		}
 	}
 }
@@ -381,7 +385,6 @@ func (compile schemaCompiler) optionalConstraints(node schema.Node, indexOfNode 
 			if !optional.(constraint.BoolKeeper).Bool() {
 				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Key)
 			}
-			node.DeleteConstraint(constraint.OptionalConstraintType)
 		} else {
 			panic(errors.ErrRuleOptionalAppliesOnlyToObjectProperties)
 		}

@@ -11,7 +11,12 @@ type TypeConstraint struct {
 	source jschema.RuleASTNodeSource
 }
 
-var _ Constraint = TypeConstraint{}
+var (
+	_ Constraint  = TypeConstraint{}
+	_ Constraint  = (*TypeConstraint)(nil)
+	_ BytesKeeper = TypeConstraint{}
+	_ BytesKeeper = (*TypeConstraint)(nil)
+)
 
 func NewType(ruleValue bytes.Bytes, source jschema.RuleASTNodeSource) *TypeConstraint {
 	return &TypeConstraint{
@@ -41,7 +46,11 @@ func (c TypeConstraint) Bytes() bytes.Bytes {
 }
 
 func (c TypeConstraint) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeString, c.value.Unquote().String(), c.source)
+	t := jschema.JSONTypeString
+	if c.value.Unquote().IsUserTypeName() {
+		t = jschema.JSONTypeShortcut
+	}
+	return newRuleASTNode(t, c.value.Unquote().String(), c.source)
 }
 
 func (c TypeConstraint) Source() jschema.RuleASTNodeSource { return c.source }

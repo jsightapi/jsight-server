@@ -59,7 +59,7 @@ func NewCatalog() *Catalog {
 }
 
 func (c *Catalog) AddRawUserType(d *directive.Directive) {
-	c.rawUserTypes.Set(d.Parameter("Name"), d)
+	c.rawUserTypes.Set(d.NamedParameter("Name"), d)
 }
 
 func (c *Catalog) GetRawUserTypes() *directive.Directives {

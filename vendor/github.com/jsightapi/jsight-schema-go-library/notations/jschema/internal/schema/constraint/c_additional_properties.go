@@ -25,7 +25,10 @@ type AdditionalProperties struct {
 	mode       AdditionalPropertiesMode
 }
 
-var _ Constraint = AdditionalProperties{}
+var (
+	_ Constraint = AdditionalProperties{}
+	_ Constraint = (*AdditionalProperties)(nil)
+)
 
 // NewAdditionalProperties create an additional properties constraint.
 // Depends on `ruleValue` value, might return nil.
@@ -43,7 +46,7 @@ func NewAdditionalProperties(ruleValue bytes.Bytes) *AdditionalProperties {
 	c.astNode = newEmptyRuleASTNode()
 	c.astNode.Source = jschema.RuleASTNodeSourceManual
 
-	txt := ruleValue.Unquote() // must be type name or "any" or jschema type.
+	txt := ruleValue.Unquote()
 	txtStr := txt.String()
 	switch {
 	case txt.OneOf("any", "true"):
