@@ -328,19 +328,22 @@ func (core *JApiCore) processSchemaContentJSightAllOf(sc *catalog.SchemaContentJ
 		}
 	}
 
-	if rule, ok := sc.Rules.Get("allOf"); ok {
-		switch rule.TokenType { //nolint:exhaustive // We expects only this types.
-		case catalog.RuleTokenTypeArray:
-			for i := len(rule.Children) - 1; i >= 0; i-- {
-				r := rule.Children[i]
-				if err := core.inheritPropertiesFromUserType(sc, uut, r.ScalarValue); err != nil {
-					return err
-				}
-			}
-		case catalog.RuleTokenTypeReference:
-			if err := core.inheritPropertiesFromUserType(sc, uut, rule.ScalarValue); err != nil {
+	rule, ok := sc.Rules.Get("allOf")
+	if !ok {
+		return nil
+	}
+
+	switch rule.TokenType { //nolint:exhaustive // We expects only this types.
+	case catalog.RuleTokenTypeArray:
+		for i := len(rule.Children) - 1; i >= 0; i-- {
+			r := rule.Children[i]
+			if err := core.inheritPropertiesFromUserType(sc, uut, r.ScalarValue); err != nil {
 				return err
 			}
+		}
+	case catalog.RuleTokenTypeReference:
+		if err := core.inheritPropertiesFromUserType(sc, uut, rule.ScalarValue); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -356,6 +359,13 @@ func (core *JApiCore) inheritPropertiesFromUserType(sc *catalog.SchemaContentJSi
 		return fmt.Errorf(`the user type %q is not an object`, userTypeName)
 	}
 
+	if _, ok := core.processedByAllOf[userTypeName]; !ok {
+		core.processedByAllOf[userTypeName] = struct{}{}
+		if err := core.processSchemaContentJSightAllOf(ut.Schema.ContentJSight, uut); err != nil {
+			return err
+		}
+	}
+
 	if sc.Children == nil {
 		sc.Children = make([]*catalog.SchemaContentJSight, 0, 10)
 	}
@@ -367,9 +377,17 @@ func (core *JApiCore) inheritPropertiesFromUserType(sc *catalog.SchemaContentJSi
 			return fmt.Errorf(jerr.InternalServerError)
 		}
 
-		if sc.IsObjectHaveProperty(*(v.Key)) {
+		p := sc.ObjectProperty(*(v.Key))
+		if p != nil && p.InheritedFrom == "" {
+			// Don't allow to override original properties.
 			return fmt.Errorf(`it is not allowed to override the "%s" property from the user type "%s"`, *(v.Key), userTypeName)
 		}
+
+		if p != nil && p.InheritedFrom != "" {
+			// This property already defined, skip.
+			continue
+		}
+
 		vv := *v
 		if vv.InheritedFrom == "" {
 			uut.Add(userTypeName)

@@ -49,7 +49,6 @@ func (compile schemaCompiler) compileNode(node schema.Node, indexOfNode int) {
 	compile.exclusiveMinimumConstraint(node)       // can panic
 	compile.exclusiveMaximumConstraint(node)       // can panic
 	compile.optionalConstraints(node, indexOfNode) // can panic
-	compile.precisionConstraint(node)              // can panic
 
 	if branchingNode, ok := node.(schema.BranchNode); ok {
 		compile.emptyArray(node) // can panic
@@ -259,7 +258,9 @@ func (schemaCompiler) typeConstraint(node schema.Node) { //nolint:gocyclo // tod
 				panic(errors.Format(errors.ErrIncompatibleTypes, t.String()))
 			}
 		}
-		node.SetRealType(valStr)
+		if !node.SetRealType(valStr) {
+			panic(errors.Format(errors.ErrIncompatibleTypes, valStr))
+		}
 	}
 
 	node.DeleteConstraint(constraint.TypeConstraintType)
@@ -403,7 +404,7 @@ func (schemaCompiler) precisionConstraint(node schema.Node) {
 
 	t := c.(*constraint.TypeConstraint).Bytes().Unquote().String()
 	if t != "decimal" {
-		panic(errors.Format(errors.ErrUnexpectedConstraint, "precision", t))
+		panic(errors.Format(errors.ErrUnexpectedConstraint, constraint.PrecisionConstraintType, t))
 	}
 }
 

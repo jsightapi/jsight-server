@@ -41,8 +41,70 @@ func (n baseNode) Type() json.Type {
 	return n.jsonType
 }
 
-func (n *baseNode) SetRealType(s string) {
+func (n *baseNode) SetRealType(s string) bool {
+	// Make sure current real type is compatible with node type.
+	avail, ok := compatibleTypes[s]
+	if !ok {
+		return false
+	}
+
+	if _, ok := avail[n.jsonType]; !ok {
+		return false
+	}
+
 	n.realType = s
+	return true
+}
+
+var compatibleTypes = map[string]map[json.Type]struct{}{
+	"mixed": availableJSONTypes(
+		json.TypeObject,
+		json.TypeArray,
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+		json.TypeMixed,
+	),
+	"enum": availableJSONTypes(
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+	),
+	"any": availableJSONTypes(
+		json.TypeObject,
+		json.TypeArray,
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+		json.TypeMixed,
+	),
+	"decimal":  availableJSONTypes(json.TypeFloat),
+	"email":    availableJSONTypes(json.TypeString),
+	"uri":      availableJSONTypes(json.TypeString),
+	"uuid":     availableJSONTypes(json.TypeString),
+	"date":     availableJSONTypes(json.TypeString),
+	"datetime": availableJSONTypes(json.TypeString),
+	"object":   availableJSONTypes(json.TypeObject),
+	"array":    availableJSONTypes(json.TypeArray),
+	"string":   availableJSONTypes(json.TypeString),
+	"integer":  availableJSONTypes(json.TypeInteger),
+	"float":    availableJSONTypes(json.TypeFloat),
+	"boolean":  availableJSONTypes(json.TypeBoolean),
+	"null":     availableJSONTypes(json.TypeNull),
+}
+
+func availableJSONTypes(tt ...json.Type) map[json.Type]struct{} {
+	res := map[json.Type]struct{}{}
+	for _, t := range tt {
+		res[t] = struct{}{}
+	}
+	return res
 }
 
 func (n *baseNode) RealType() string {

@@ -21,6 +21,11 @@ func NewMixedNode(lex lexeme.LexEvent) *MixedNode {
 	return &n
 }
 
+func (*MixedNode) SetRealType(string) bool {
+	// Mixed value node is always have mixed type.
+	return true
+}
+
 // SetJsonType for mixed node n.baseNode.jsonType is an EXAMPLE type
 func (n *MixedNode) SetJsonType(t json.Type) {
 	n.setJsonType(t)

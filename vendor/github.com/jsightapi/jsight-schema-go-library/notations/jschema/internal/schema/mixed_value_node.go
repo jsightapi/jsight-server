@@ -20,14 +20,20 @@ type MixedValueNode struct {
 	baseNode
 }
 
-var _ Node = &MixedValueNode{}
+var _ Node = (*MixedValueNode)(nil)
 
 func NewMixedValueNode(lex lexeme.LexEvent) *MixedValueNode {
 	n := MixedValueNode{
 		baseNode: newBaseNode(lex),
 	}
 	n.setJsonType(json.TypeMixed)
+	n.realType = json.TypeMixed.String()
 	return &n
+}
+
+func (*MixedValueNode) SetRealType(string) bool {
+	// Mixed value node is always have mixed type.
+	return true
 }
 
 func (n *MixedValueNode) AddConstraint(c constraint.Constraint) {

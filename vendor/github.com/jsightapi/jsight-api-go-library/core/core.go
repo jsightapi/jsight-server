@@ -13,8 +13,11 @@ import (
 // JApiCore the Brain and heart of jApi. Collects lexemes from scanner, validates document logic and structure,
 // builds catalog, renders documentation
 type JApiCore struct {
-	// builtUserTypes a "set" of already build user types.
+	// processedUserTypes a "set" of already build user types.
 	processedUserTypes map[string]struct{}
+
+	// processedByAllOf a "set" of already processed types by allOf.
+	processedByAllOf map[string]struct{}
 
 	// onlyOneProtocolIntoUrl to verify the uniqueness of a directive Protocol within a directive URL
 	onlyOneProtocolIntoUrl map[*directive.Directive]struct{}
@@ -90,6 +93,7 @@ func NewJApiCore(file *fs.File, oo ...Option) *JApiCore {
 	core := &JApiCore{
 		userTypes:              &catalog.UserSchemas{},
 		processedUserTypes:     make(map[string]struct{}, 30),
+		processedByAllOf:       map[string]struct{}{},
 		scanner:                scanner.NewJApiScanner(file),
 		catalog:                catalog.NewCatalog(),
 		currentDirective:       nil,

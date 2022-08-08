@@ -19,7 +19,7 @@ type Node interface {
 	// Type returns type of this node.
 	Type() json.Type
 
-	SetRealType(string)
+	SetRealType(string) bool
 	RealType() string
 
 	// Parent returns a parent of this node.
