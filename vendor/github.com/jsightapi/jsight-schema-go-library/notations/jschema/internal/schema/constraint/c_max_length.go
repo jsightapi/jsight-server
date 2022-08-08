@@ -1,6 +1,9 @@
 package constraint
 
 import (
+	"fmt"
+	"strconv"
+
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -8,8 +11,7 @@ import (
 )
 
 type MaxLength struct {
-	value    *json.Number
-	rawValue bytes.Bytes
+	value uint
 }
 
 var (
@@ -20,14 +22,8 @@ var (
 )
 
 func NewMaxLength(ruleValue bytes.Bytes) *MaxLength {
-	number, err := json.NewIntegerNumber(ruleValue)
-	if err != nil {
-		panic(err)
-	}
-
 	return &MaxLength{
-		rawValue: ruleValue,
-		value:    number,
+		value: parseUint(ruleValue, MaxLengthConstraintType),
 	}
 }
 
@@ -40,21 +36,24 @@ func (MaxLength) Type() Type {
 }
 
 func (c MaxLength) String() string {
-	return MaxLengthConstraintType.String() + ": " + c.value.String()
+	return fmt.Sprintf("%s: %d", MaxLengthConstraintType, c.value)
 }
 
 func (c MaxLength) Validate(value bytes.Bytes) {
-	length := len(value.Unquote())
-	jsonLength := json.NewNumberFromInt(length)
-	if jsonLength.GreaterThan(c.value) {
+	length := uint(len(value.Unquote()))
+	if length > c.value {
 		panic(errors.Format(
 			errors.ErrConstraintStringLengthValidation,
 			MaxLengthConstraintType.String(),
-			c.value.String(),
+			strconv.FormatUint(uint64(c.value), 10),
 		))
 	}
 }
 
 func (c MaxLength) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(
+		jschema.JSONTypeNumber,
+		strconv.FormatUint(uint64(c.value), 10),
+		jschema.RuleASTNodeSourceManual,
+	)
 }

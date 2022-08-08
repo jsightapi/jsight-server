@@ -29,7 +29,7 @@ type LiteralValidator interface {
 
 type ArrayValidator interface {
 	ValidateTheArray(numberOfChildren uint)
-	Value() *json.Number
+	Value() uint
 }
 
 type BytesKeeper interface {

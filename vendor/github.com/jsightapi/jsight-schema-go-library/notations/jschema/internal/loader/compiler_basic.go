@@ -409,19 +409,20 @@ func (schemaCompiler) precisionConstraint(node schema.Node) {
 }
 
 func (schemaCompiler) emptyArray(node schema.Node) {
-	if arrayNode, ok := node.(*schema.ArrayNode); ok {
-		if arrayNode.Len() == 0 {
-			zero := json.NewNumberFromUint(0)
-			if min := node.Constraint(constraint.MinItemsConstraintType); min != nil {
-				if !min.(constraint.ArrayValidator).Value().Equal(zero) {
-					panic(errors.ErrIncorrectConstraintValueForEmptyArray)
-				}
-			}
-			if max := node.Constraint(constraint.MaxItemsConstraintType); max != nil {
-				if !max.(constraint.ArrayValidator).Value().Equal(zero) {
-					panic(errors.ErrIncorrectConstraintValueForEmptyArray)
-				}
-			}
+	arrayNode, ok := node.(*schema.ArrayNode)
+
+	if !ok || arrayNode.Len() != 0 {
+		return
+	}
+
+	if min := node.Constraint(constraint.MinItemsConstraintType); min != nil {
+		if min.(constraint.ArrayValidator).Value() != 0 {
+			panic(errors.ErrIncorrectConstraintValueForEmptyArray)
+		}
+	}
+	if max := node.Constraint(constraint.MaxItemsConstraintType); max != nil {
+		if max.(constraint.ArrayValidator).Value() != 0 {
+			panic(errors.ErrIncorrectConstraintValueForEmptyArray)
 		}
 	}
 }

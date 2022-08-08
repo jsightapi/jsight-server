@@ -21,10 +21,7 @@ var (
 )
 
 func NewPrecision(ruleValue bytes.Bytes) *Precision {
-	u, err := ruleValue.ParseUint()
-	if err != nil {
-		panic(errors.Format(errors.ErrInvalidValueOfConstraint, PrecisionConstraintType.String()))
-	}
+	u := parseUint(ruleValue, PrecisionConstraintType)
 
 	if u == 0 {
 		panic(errors.ErrZeroPrecision)

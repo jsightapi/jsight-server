@@ -1,11 +1,11 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914 h1:KTR7IMQRFjObHteQQOnRUpBX9vfmdhTfgbTrDwgCqhs=
-github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
-github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220808171008-2a296e4bd3e4 h1:NsTMXbQdwvV7gYloguF2Qtl0ycShpKaEM91wfhwasn8=
-github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220808171008-2a296e4bd3e4/go.mod h1:BOTWKIa8flNwj43dUfpJLdGJpPUJ23i+QUe9oPtjmoI=
-github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220805092806-4a4929377447 h1:yfmk+CLleXCuFEG3VN/KMs4iJBOJCqwZfjfh4taiVS8=
-github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220805092806-4a4929377447/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
+github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707 h1:DvpMxaeajafsBn3NVjcaloatbqupVaIdcV4y8KHunI8=
+github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
+github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220808172659-52221db5e7fa h1:usayCGYP/Vlk1ejnAAer6fS6k4eceaUNHYG/fpwdZGA=
+github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220808172659-52221db5e7fa/go.mod h1:YdlBeLI8SIIqvvbscwzq8jYamSUitqGBFFVDihxW2lg=
+github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220808162424-0dce01a06924 h1:C85w7B+Okff8AmzgNxSZHmK4fhkjicMw+ChYXiQmIl8=
+github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220808162424-0dce01a06924/go.mod h1:OO00XD+yMOCPSWZy3EpsknpHKL9U67CeAuFwTThJk4w=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb/go.mod h1:5ELEyG+X8f+meRWHuqUOewBOhvHkl7M76pdGEansxW4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
