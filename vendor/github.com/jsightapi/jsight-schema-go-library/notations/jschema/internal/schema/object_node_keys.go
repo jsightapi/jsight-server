@@ -25,14 +25,36 @@ func newObjectNodeKeys() *ObjectNodeKeys {
 }
 
 func (k *ObjectNodeKeys) Set(v ObjectNodeKey) {
-	if !v.IsShortcut {
-		if _, ok := k.index[v.Key]; ok {
-			panic(errors.Format(errors.ErrDuplicateKeysInSchema, v.Key))
-		}
+	if k.isDuplicatedKey(v) {
+		panic(errors.Format(errors.ErrDuplicateKeysInSchema, v.Key))
 	}
 
 	k.index[v.Key] = v.Index
 	k.Data = append(k.Data, v)
+}
+
+func (k *ObjectNodeKeys) isDuplicatedKey(newKey ObjectNodeKey) bool {
+	idx, ok := k.index[newKey.Key]
+	if !ok {
+		// We don't have any duplication, allow.
+		return false
+	}
+
+	// We have some duplication.
+	// We allow to have two keys with same name but one of them should be shortcut.
+	isNewKeyShortcut := newKey.IsShortcut
+	isExistsKeyShortcut := k.Data[idx].IsShortcut
+	switch {
+	case !isNewKeyShortcut && !isExistsKeyShortcut:
+		return true
+	case isNewKeyShortcut && !isExistsKeyShortcut:
+		return false
+	case !isNewKeyShortcut && isExistsKeyShortcut:
+		return false
+	case isNewKeyShortcut && isExistsKeyShortcut:
+		return true
+	}
+	return true
 }
 
 func (k ObjectNodeKeys) Find(i int) (ObjectNodeKey, bool) {
