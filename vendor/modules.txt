@@ -4,7 +4,7 @@ github.com/davecgh/go-spew/spew
 # github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
 ## explicit; go 1.18
 github.com/jsightapi/datagram
-# github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220810151836-080b4aba4296
+# github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220815152333-a14656d8960f
 ## explicit; go 1.18
 github.com/jsightapi/jsight-api-go-library/catalog
 github.com/jsightapi/jsight-api-go-library/core
@@ -13,7 +13,7 @@ github.com/jsightapi/jsight-api-go-library/jerr
 github.com/jsightapi/jsight-api-go-library/kit
 github.com/jsightapi/jsight-api-go-library/notation
 github.com/jsightapi/jsight-api-go-library/scanner
-# github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220810125742-7e9917ccbcf9
+# github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220815152145-06fa8b53347e
 ## explicit; go 1.18
 github.com/jsightapi/jsight-schema-go-library
 github.com/jsightapi/jsight-schema-go-library/bytes

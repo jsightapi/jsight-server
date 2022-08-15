@@ -19,11 +19,9 @@ func (b Bytes) Slice(begin, end Index) Bytes {
 }
 
 func (b Bytes) Unquote() Bytes {
-	if len(b) >= 2 {
-		lestCharIndex := len(b) - 1
-		if b[0] == '"' && b[lestCharIndex] == '"' {
-			return b[1:lestCharIndex]
-		}
+	if len(b) >= 2 && b[0] == '"' && b[len(b)-1] == '"' {
+		bb, _ := unquoteBytes(b)
+		return bb
 	}
 	return b
 }

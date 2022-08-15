@@ -55,6 +55,10 @@ type scanner struct {
 	// to take into account the nesting of SCHEME elements.
 	stack *ds.Stack[lexeme.LexEvent]
 
+	// uniqueValues represent a map of found values.
+	// Useful for duplication tracking.
+	uniqueValues map[string]struct{}
+
 	// file a structure containing jSchema data.
 	file *fs.File
 
@@ -94,6 +98,7 @@ func newScanner(file *fs.File, oo ...scannerOption) *scanner {
 		dataSize:     bytes.Index(len(content)),
 		returnToStep: &ds.Stack[stepFunc]{},
 		stack:        &ds.Stack[lexeme.LexEvent]{},
+		uniqueValues: map[string]struct{}{},
 		finds:        make([]lexeme.LexEventType, 0, 3),
 	}
 
@@ -337,6 +342,10 @@ func (s *scanner) stateEndValue(c byte) (state, error) {
 	if t == lexeme.LiteralBegin {
 		s.found(lexeme.LiteralEnd)
 
+		if err := s.validateValue(); err != nil {
+			return scanSkip, err
+		}
+
 		if length == 1 { // json ex `123 `
 			s.step = s.stateEndTop
 			return s.step(c)
@@ -358,6 +367,20 @@ func (s *scanner) stateEndValue(c byte) (state, error) {
 	}
 
 	return scanSkip, s.newDocumentErrorAtCharacter("at the end of value")
+}
+
+func (s *scanner) validateValue() error {
+	begin := s.stack.Peek().Begin()
+
+	v := s.file.Content().Slice(begin, s.index-2).String()
+	if _, ok := s.uniqueValues[v]; ok {
+		e := errors.Format(errors.ErrDuplicationInEnumRule, v)
+		err := errors.NewDocumentError(s.file, e)
+		err.SetIndex(begin)
+		return err
+	}
+	s.uniqueValues[v] = struct{}{}
+	return nil
 }
 
 func (s *scanner) stateAfterArrayItem(c byte) (state, error) {

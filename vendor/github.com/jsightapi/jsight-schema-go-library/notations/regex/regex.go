@@ -15,31 +15,55 @@ import (
 type Schema struct {
 	file *fs.File
 
-	pattern     string
-	compileOnce sync.ErrOnce
+	pattern       string
+	compileOnce   sync.ErrOnce
+	generatorOnce sync.ErrOnceWithValue[*reggen.Generator]
+	generatorSeed int64
 }
 
 var _ jschema.Schema = &Schema{}
 
-// New creates a Regex schema with specified name and content.
-func New[T fs.FileContent](name string, content T) *Schema {
-	return FromFile(fs.NewFile(name, content))
-}
+type Option func(*Schema)
 
-// FromFile creates a Regex schema from file.
-func FromFile(f *fs.File) *Schema {
-	return &Schema{
-		file: f,
+// WithGeneratorSeed pass specific seed to regex example generator.
+// Necessary for test.
+func WithGeneratorSeed(seed int64) Option {
+	return func(s *Schema) {
+		s.generatorSeed = seed
 	}
 }
 
+// New creates a Regex schema with specified name and content.
+func New[T fs.FileContent](name string, content T, oo ...Option) *Schema {
+	return FromFile(fs.NewFile(name, content), oo...)
+}
+
+// FromFile creates a Regex schema from file.
+func FromFile(f *fs.File, oo ...Option) *Schema {
+	s := &Schema{
+		file: f,
+	}
+
+	for _, o := range oo {
+		o(s)
+	}
+
+	return s
+}
+
 func (s *Schema) Pattern() (string, error) {
-	return s.pattern, s.compile()
+	if err := s.compile(); err != nil {
+		return "", err
+	}
+	return s.pattern, nil
 }
 
 func (s *Schema) Len() (uint, error) {
+	if err := s.compile(); err != nil {
+		return 0, err
+	}
 	// Add 2 for beginning and ending '/' character.
-	return uint(len(s.pattern)) + 2, s.compile()
+	return uint(len(s.pattern)) + 2, nil
 }
 
 func (s *Schema) Example() ([]byte, error) {
@@ -51,11 +75,19 @@ func (s *Schema) Example() ([]byte, error) {
 }
 
 func (s *Schema) generateExample() ([]byte, error) {
-	str, err := reggen.Generate(s.pattern, 1)
+	g, err := s.generatorOnce.Do(func() (*reggen.Generator, error) {
+		g, err := reggen.NewGenerator(s.pattern)
+		if err != nil {
+			return nil, err
+		}
+		g.SetSeed(s.generatorSeed)
+		return g, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return []byte(str), nil
+
+	return []byte(g.Generate(1)), nil
 }
 
 func (*Schema) AddType(string, jschema.Schema) error {
@@ -77,13 +109,16 @@ func (*Schema) Validate(jschema.Document) error {
 }
 
 func (s *Schema) GetAST() (jschema.ASTNode, error) {
+	if err := s.compile(); err != nil {
+		return jschema.ASTNode{}, err
+	}
 	return jschema.ASTNode{
 		IsKeyShortcut: false,
 		JSONType:      jschema.JSONTypeString,
 		SchemaType:    string(jschema.SchemaTypeString),
 		Rules:         nil,
 		Value:         "/" + s.pattern + "/",
-	}, s.compile()
+	}, nil
 }
 
 func (*Schema) UsedUserTypes() ([]string, error) {

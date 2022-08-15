@@ -87,7 +87,7 @@ func (b *exampleBuilder) buildExampleForObjectNode(node *internalSchema.ObjectNo
 }
 
 func (b *exampleBuilder) buildObjectKey(k internalSchema.ObjectNodeKey) ([]byte, error) {
-	if !bytes.Bytes(k.Key).IsUserTypeName() {
+	if !k.IsShortcut {
 		return []byte(k.Key), nil
 	}
 
@@ -152,7 +152,7 @@ func (b *exampleBuilder) buildExampleForMixedValueNode(node *internalSchema.Mixe
 
 	b.processedTypes[typeName]++
 	defer func() {
-		delete(b.processedTypes, typeName)
+		b.processedTypes[typeName]--
 	}()
 
 	t, ok := b.types[typeName]
