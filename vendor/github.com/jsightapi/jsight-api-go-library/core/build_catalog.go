@@ -47,7 +47,11 @@ func (core *JApiCore) buildUserTypes() *jerr.JApiError {
 				core.userTypes.Set(k, jschema.New(k, v.BodyCoords.Read()))
 			}
 		case notation.SchemaNotationRegex:
-			core.userTypes.Set(k, regex.New(k, v.BodyCoords.Read()))
+			var oo []regex.Option
+			if core.useFixedSeedForRegex {
+				oo = append(oo, regex.WithGeneratorSeed(0))
+			}
+			core.userTypes.Set(k, regex.New(k, v.BodyCoords.Read(), oo...))
 		default:
 			// nothing
 		}

@@ -45,7 +45,10 @@ func (compile schemaCompiler) compileNode(node schema.Node, indexOfNode int) {
 	if err := compile.allowedConstraintCheck(node); err != nil {
 		panic(err)
 	}
-	compile.anyConstraint(node)                    // can panic
+	compile.anyConstraint(node) // can panic
+	if err := compile.checkPairConstraints(node); err != nil {
+		panic(err)
+	}
 	compile.exclusiveMinimumConstraint(node)       // can panic
 	compile.exclusiveMaximumConstraint(node)       // can panic
 	compile.optionalConstraints(node, indexOfNode) // can panic
@@ -342,6 +345,96 @@ func (schemaCompiler) anyConstraint(node schema.Node) {
 			panic(errors.ErrInvalidNestedElementsFoundForTypeAny)
 		}
 	}
+}
+
+// checkPairConstraints checks some constraints which has pairs such as `min` and `max`,
+// `minLength` and `maxLength`, etc.
+func (compile schemaCompiler) checkPairConstraints(node schema.Node) error {
+	checkers := []func(schema.Node) error{
+		compile.checkMinAndMax,
+		compile.checkMinLengthAndMaxLength,
+		compile.checkMinItemsAndMaxItems,
+	}
+
+	for _, fn := range checkers {
+		if err := fn(node); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinAndMax(node schema.Node) error {
+	minRaw := node.Constraint(constraint.MinConstraintType)
+	maxRaw := node.Constraint(constraint.MaxConstraintType)
+
+	if minRaw == nil || maxRaw == nil {
+		return nil
+	}
+
+	min := minRaw.(*constraint.Min) //nolint:errcheck // We're sure about this type.
+	max := maxRaw.(*constraint.Max) //nolint:errcheck // We're sure about this type.
+
+	if min.Exclusive() || max.Exclusive() {
+		if min.Value().GreaterThanOrEqual(max.Value()) {
+			return errors.Format(
+				errors.ErrValueOfOneConstraintGreaterOrEqualToAnother,
+				"min",
+				"max",
+			)
+		}
+	} else {
+		if min.Value().GreaterThan(max.Value()) {
+			return errors.Format(
+				errors.ErrValueOfOneConstraintGreaterThanAnother,
+				"min",
+				"max",
+			)
+		}
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinLengthAndMaxLength(node schema.Node) error {
+	minLengthRaw := node.Constraint(constraint.MinLengthConstraintType)
+	maxLengthRaw := node.Constraint(constraint.MaxLengthConstraintType)
+
+	if minLengthRaw == nil || maxLengthRaw == nil {
+		return nil
+	}
+
+	minLength := minLengthRaw.(*constraint.MinLength) //nolint:errcheck // We're sure about this type.
+	maxLength := maxLengthRaw.(*constraint.MaxLength) //nolint:errcheck // We're sure about this type.
+
+	if minLength.Value() > maxLength.Value() {
+		return errors.Format(
+			errors.ErrValueOfOneConstraintGreaterThanAnother,
+			"minLength",
+			"maxLength",
+		)
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinItemsAndMaxItems(node schema.Node) error {
+	minItemsRaw := node.Constraint(constraint.MinItemsConstraintType)
+	maxItemsRaw := node.Constraint(constraint.MaxItemsConstraintType)
+
+	if minItemsRaw == nil || maxItemsRaw == nil {
+		return nil
+	}
+
+	minItems := minItemsRaw.(*constraint.MinItems) //nolint:errcheck // We're sure about this type.
+	maxItems := maxItemsRaw.(*constraint.MaxItems) //nolint:errcheck // We're sure about this type.
+
+	if minItems.Value() > maxItems.Value() {
+		return errors.Format(
+			errors.ErrValueOfOneConstraintGreaterThanAnother,
+			"minItems",
+			"maxItems",
+		)
+	}
+	return nil
 }
 
 func (schemaCompiler) exclusiveMinimumConstraint(node schema.Node) {

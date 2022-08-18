@@ -46,22 +46,24 @@ const (
 	ErrDuplicateRule ErrorCode = 501
 
 	// constraint
-	ErrUnknownRule                      ErrorCode = 601
-	ErrConstraintValidation             ErrorCode = 602
-	ErrConstraintStringLengthValidation ErrorCode = 603
-	ErrInvalidValueOfConstraint         ErrorCode = 604
-	ErrZeroPrecision                    ErrorCode = 605
-	ErrEmptyEmail                       ErrorCode = 606
-	ErrInvalidEmail                     ErrorCode = 607
-	ErrConstraintMinItemsValidation     ErrorCode = 608
-	ErrConstraintMaxItemsValidation     ErrorCode = 609
-	ErrDoesNotMatchAnyOfTheEnumValues   ErrorCode = 610
-	ErrDoesNotMatchRegularExpression    ErrorCode = 611
-	ErrInvalidUri                       ErrorCode = 612
-	ErrInvalidDateTime                  ErrorCode = 613
-	ErrInvalidUuid                      ErrorCode = 614
-	ErrInvalidConst                     ErrorCode = 615
-	ErrInvalidDate                      ErrorCode = 616
+	ErrUnknownRule                                 ErrorCode = 601
+	ErrConstraintValidation                        ErrorCode = 602
+	ErrConstraintStringLengthValidation            ErrorCode = 603
+	ErrInvalidValueOfConstraint                    ErrorCode = 604
+	ErrZeroPrecision                               ErrorCode = 605
+	ErrEmptyEmail                                  ErrorCode = 606
+	ErrInvalidEmail                                ErrorCode = 607
+	ErrConstraintMinItemsValidation                ErrorCode = 608
+	ErrConstraintMaxItemsValidation                ErrorCode = 609
+	ErrDoesNotMatchAnyOfTheEnumValues              ErrorCode = 610
+	ErrDoesNotMatchRegularExpression               ErrorCode = 611
+	ErrInvalidUri                                  ErrorCode = 612
+	ErrInvalidDateTime                             ErrorCode = 613
+	ErrInvalidUuid                                 ErrorCode = 614
+	ErrInvalidConst                                ErrorCode = 615
+	ErrInvalidDate                                 ErrorCode = 616
+	ErrValueOfOneConstraintGreaterThanAnother      ErrorCode = 617
+	ErrValueOfOneConstraintGreaterOrEqualToAnother ErrorCode = 618
 
 	// loader
 	ErrInvalidSchemaName                ErrorCode = 701
@@ -174,22 +176,24 @@ var errorFormat = map[ErrorCode]string{
 	ErrDuplicateRule: "Duplicate %q rule",
 
 	// constraint
-	ErrUnknownRule:                      `Unknown rule "%s"`,
-	ErrConstraintValidation:             "Invalid value for %q = %s constraint %s",
-	ErrConstraintStringLengthValidation: "Invalid string length for %q = %q constraint",
-	ErrInvalidValueOfConstraint:         "Invalid value of %q constraint",
-	ErrZeroPrecision:                    "Precision can't be zero",
-	ErrEmptyEmail:                       "Empty email",
-	ErrInvalidEmail:                     "Invalid email (%s)",
-	ErrConstraintMinItemsValidation:     `The number of array elements does not match the "minItems" rule`,
-	ErrConstraintMaxItemsValidation:     `The number of array elements does not match the "maxItems" rule`,
-	ErrDoesNotMatchAnyOfTheEnumValues:   "Does not match any of the enumeration values",
-	ErrDoesNotMatchRegularExpression:    `Does not match regular expression`,
-	ErrInvalidUri:                       "Invalid URI (%s)",
-	ErrInvalidDateTime:                  `Date/Time parsing error`,
-	ErrInvalidUuid:                      "UUID parsing error: %s",
-	ErrInvalidConst:                     "Does not match expected value (%s)",
-	ErrInvalidDate:                      `Date parsing error (%s)`,
+	ErrUnknownRule:                                 `Unknown rule "%s"`,
+	ErrConstraintValidation:                        "Invalid value for %q = %s constraint %s",
+	ErrConstraintStringLengthValidation:            "Invalid string length for %q = %q constraint",
+	ErrInvalidValueOfConstraint:                    "Invalid value of %q constraint",
+	ErrZeroPrecision:                               "Precision can't be zero",
+	ErrEmptyEmail:                                  "Empty email",
+	ErrInvalidEmail:                                "Invalid email (%s)",
+	ErrConstraintMinItemsValidation:                `The number of array elements does not match the "minItems" rule`,
+	ErrConstraintMaxItemsValidation:                `The number of array elements does not match the "maxItems" rule`,
+	ErrDoesNotMatchAnyOfTheEnumValues:              "Does not match any of the enumeration values",
+	ErrDoesNotMatchRegularExpression:               "Does not match regular expression",
+	ErrInvalidUri:                                  "Invalid URI (%s)",
+	ErrInvalidDateTime:                             "Date/Time parsing error",
+	ErrInvalidUuid:                                 "UUID parsing error: %s",
+	ErrInvalidConst:                                "Does not match expected value (%s)",
+	ErrInvalidDate:                                 "Date parsing error (%s)",
+	ErrValueOfOneConstraintGreaterThanAnother:      "Value of constraint %q should be less or equal to value of %q constraint", //nolint:lll
+	ErrValueOfOneConstraintGreaterOrEqualToAnother: "Value of constraint %q should be less than value of %q constraint",
 
 	// loader
 	ErrInvalidSchemaName:                "Invalid schema name (%s)",

@@ -6,7 +6,6 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/core"
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 
-	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/reader"
 )
@@ -34,11 +33,6 @@ func readPanicFree(filename string) (f *fs.File, err error) {
 	}()
 	f = reader.Read(filename)
 	return f, err
-}
-
-// Deprecated: use NewJApiFromFile
-func NewJapiFromBytes(b bytes.Bytes, oo ...core.Option) JApi {
-	return NewJApiFromFile(fs.NewFile("root", b), oo...)
 }
 
 func NewJApiFromFile(file *fs.File, oo ...core.Option) JApi {

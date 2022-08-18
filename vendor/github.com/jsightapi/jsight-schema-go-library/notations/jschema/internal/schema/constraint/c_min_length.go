@@ -57,3 +57,7 @@ func (c MinLength) ASTNode() jschema.RuleASTNode {
 		jschema.RuleASTNodeSourceManual,
 	)
 }
+
+func (c MinLength) Value() uint {
+	return c.value
+}

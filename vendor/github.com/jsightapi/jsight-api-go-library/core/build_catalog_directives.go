@@ -307,7 +307,7 @@ func (core JApiCore) addQuery(d *directive.Directive) *jerr.JApiError {
 		q.Example = example
 	}
 
-	s, err := catalog.UnmarshalSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
+	s, err := catalog.UnmarshalJSightSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
 	if err != nil {
 		var e kit.Error
 		if errors.As(err, &e) {
@@ -357,12 +357,12 @@ func (core JApiCore) addRequest(d *directive.Directive) *jerr.JApiError {
 
 	switch {
 	case sn == notation.SchemaNotationJSight && typ != "" && !d.BodyCoords.IsSet():
-		if s, err = catalog.UnmarshalSchema("", bytes.Bytes(typ), core.userTypes, core.rules); err == nil {
+		if s, err = catalog.UnmarshalJSightSchema("", bytes.Bytes(typ), core.userTypes, core.rules); err == nil {
 			err = core.catalog.AddRequestBody(s, bodyFormat, *d)
 		}
 
 	case sn == notation.SchemaNotationJSight && typ == "" && d.BodyCoords.IsSet():
-		if s, err = catalog.UnmarshalSchema("", d.BodyCoords.Read(), core.userTypes, core.rules); err == nil {
+		if s, err = catalog.UnmarshalJSightSchema("", d.BodyCoords.Read(), core.userTypes, core.rules); err == nil {
 			err = core.catalog.AddRequestBody(s, bodyFormat, *d)
 		}
 		var e kit.Error
@@ -371,8 +371,13 @@ func (core JApiCore) addRequest(d *directive.Directive) *jerr.JApiError {
 		}
 
 	case sn == notation.SchemaNotationRegex && typ == "" && d.BodyCoords.IsSet():
-		s = catalog.NewRegexSchema(d.BodyCoords.Read())
-		err = core.catalog.AddRequestBody(s, bodyFormat, *d)
+		if s, err = catalog.UnmarshalRegexSchema("", d.BodyCoords.Read()); err == nil {
+			err = core.catalog.AddRequestBody(s, bodyFormat, *d)
+		}
+		var e kit.Error
+		if errors.As(err, &e) {
+			return d.BodyErrorIndex(e.Message(), e.Position())
+		}
 
 	case (sn == notation.SchemaNotationAny || sn == notation.SchemaNotationEmpty) && !d.BodyCoords.IsSet():
 		s = catalog.NewSchema(sn)
@@ -450,7 +455,7 @@ func (core JApiCore) addHeaders(d *directive.Directive) *jerr.JApiError {
 	var s catalog.Schema
 	var err error
 
-	s, err = catalog.UnmarshalSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
+	s, err = catalog.UnmarshalJSightSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
 	if err != nil {
 		var e kit.Error
 		if errors.As(err, &e) {
@@ -543,7 +548,7 @@ func (core JApiCore) addJsonRpcSchema(d *directive.Directive, f func(catalog.Sch
 	var s catalog.Schema
 	var err error
 
-	s, err = catalog.UnmarshalSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
+	s, err = catalog.UnmarshalJSightSchema("", d.BodyCoords.Read(), core.userTypes, core.rules)
 	if err != nil {
 		var e kit.Error
 		if errors.As(err, &e) {

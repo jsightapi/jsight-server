@@ -57,3 +57,7 @@ func (c MaxLength) ASTNode() jschema.RuleASTNode {
 		jschema.RuleASTNodeSourceManual,
 	)
 }
+
+func (c MaxLength) Value() uint {
+	return c.value
+}

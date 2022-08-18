@@ -404,7 +404,7 @@ func (c *Catalog) AddBaseUrl(serverName string, path string) error {
 
 	// if d.BodyCoords.IsSet() {
 	// 	// baseurl has jschema body
-	// 	s, err := UnmarshalSchema("", d.BodyCoords.Read())
+	// 	s, err := UnmarshalJSightSchema("", d.BodyCoords.Read())
 	// 	if err != nil {
 	// 		if e, ok := err.(kit.Error); ok {
 	// 			return c.japiError(e.Message(), d.BodyCoords.B()+bytes.Index(e.Position()))
@@ -453,21 +453,20 @@ func (c *Catalog) AddType(
 		if !d.BodyCoords.IsSet() {
 			return d.KeywordError(jerr.EmptyBody)
 		}
-		b := d.BodyCoords.Read()
-		schema, err := UnmarshalSchema(name, b, tt, rr)
+		schema, err := UnmarshalJSightSchema(name, d.BodyCoords.Read(), tt, rr)
 		if err != nil {
-			var e kit.Error
-			if errors.As(err, &e) {
-				return d.BodyErrorIndex(e.Message(), e.Position())
-			}
-			return d.KeywordError(err.Error())
+			return adoptErrorForAddType(d, err)
 		}
 		userType.Schema = schema
 	case notation.SchemaNotationRegex:
 		if !d.BodyCoords.IsSet() {
 			return d.KeywordError(jerr.EmptyBody)
 		}
-		userType.Schema = NewRegexSchema(d.BodyCoords.Read())
+		schema, err := UnmarshalRegexSchema(name, d.BodyCoords.Read())
+		if err != nil {
+			return adoptErrorForAddType(d, err)
+		}
+		userType.Schema = schema
 	case notation.SchemaNotationAny, notation.SchemaNotationEmpty:
 		userType.Schema = NewSchema(typeNotation)
 	}
@@ -662,4 +661,12 @@ func (*Catalog) enumDirectiveToUserRule(d *directive.Directive, e *enum.Enum) (*
 		Value:      r,
 		Directive:  d,
 	}, nil
+}
+
+func adoptErrorForAddType(d directive.Directive, err error) *jerr.JApiError {
+	var e kit.Error
+	if errors.As(err, &e) {
+		return d.BodyErrorIndex(e.Message(), e.Position())
+	}
+	return d.KeywordError(err.Error())
 }

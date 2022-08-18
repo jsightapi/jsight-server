@@ -69,10 +69,16 @@ type JApiCore struct {
 
 	// directivesWithPastes directives after processing the MACRO and PASTE directives.
 	directivesWithPastes []*directive.Directive
+
+	// useFixedSeedForRegex use specific constant seed for generating regex example.
+	// Should be used for tests.
+	useFixedSeedForRegex bool
 }
 
 type Option func(*JApiCore)
 
+// WithBannedDirectives ban specified directives.
+// Core will emit an error if found one of them.
 func WithBannedDirectives(dd ...directive.Enumeration) Option {
 	return func(c *JApiCore) {
 		if len(dd) == 0 {
@@ -86,6 +92,13 @@ func WithBannedDirectives(dd ...directive.Enumeration) Option {
 		for _, v := range dd {
 			c.bannedDirectives[v] = struct{}{}
 		}
+	}
+}
+
+// WithFixedSeedForRegex use fixed seed for generating regex examples.
+func WithFixedSeedForRegex() Option {
+	return func(c *JApiCore) {
+		c.useFixedSeedForRegex = true
 	}
 }
 

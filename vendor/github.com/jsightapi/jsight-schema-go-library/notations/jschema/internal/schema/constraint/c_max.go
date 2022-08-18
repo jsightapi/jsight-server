@@ -52,6 +52,10 @@ func (c *Max) SetExclusive(exclusive bool) {
 	c.exclusive = exclusive
 }
 
+func (c *Max) Exclusive() bool {
+	return c.exclusive
+}
+
 func (c Max) Validate(value bytes.Bytes) {
 	jsonNumber, err := json.NewNumber(value)
 	if err != nil {
@@ -70,4 +74,8 @@ func (c Max) Validate(value bytes.Bytes) {
 
 func (c Max) ASTNode() jschema.RuleASTNode {
 	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+}
+
+func (c *Max) Value() *json.Number {
+	return c.max
 }
