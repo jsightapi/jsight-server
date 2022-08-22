@@ -127,6 +127,7 @@ const (
 	// regex
 	ErrRegexUnexpectedStart ErrorCode = 1500
 	ErrRegexUnexpectedEnd   ErrorCode = 1501
+	ErrRegexInvalid         ErrorCode = 1502
 
 	// enum
 	ErrEnumArrayExpected  ErrorCode = 1600
@@ -255,6 +256,7 @@ var errorFormat = map[ErrorCode]string{
 	ErrUnnecessaryLexemeAfterTheEndOfEnum: `An unnecessary non-space character after the end of the enum`,
 	ErrRegexUnexpectedStart:               "Regex should starts with '/' character, but found %s",
 	ErrRegexUnexpectedEnd:                 "Regex should ends with '/' character, but found %s",
+	ErrRegexInvalid:                       "Invalid regex %s",
 
 	// enum
 	ErrEnumArrayExpected:  `An array was expected as a value for the "enum"`,

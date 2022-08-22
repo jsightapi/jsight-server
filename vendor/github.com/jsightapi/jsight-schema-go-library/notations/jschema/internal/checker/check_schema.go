@@ -78,6 +78,7 @@ func (c checkSchema) checkNode(node schema.Node, ss map[string]schema.Type) {
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
 		c.checkArrayItems(node)
+		c.checkArrayNode(node)
 	case *schema.ObjectNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
@@ -141,6 +142,20 @@ func (c checkSchema) checkArrayItems(node schema.Node) {
 				c.checkArrayItems(arrayNode)
 			}
 		}
+	}
+}
+
+func (checkSchema) checkArrayNode(node schema.Node) {
+	arrayNode := node.(*schema.ArrayNode) //nolint:errcheck // We're sure about this type.
+
+	length := uint(arrayNode.Len())
+
+	if cnstr := arrayNode.Constraint(constraint.MinItemsConstraintType); cnstr != nil {
+		cnstr.(*constraint.MinItems).ValidateTheArray(length)
+	}
+
+	if cnstr := arrayNode.Constraint(constraint.MaxItemsConstraintType); cnstr != nil {
+		cnstr.(*constraint.MaxItems).ValidateTheArray(length)
 	}
 }
 

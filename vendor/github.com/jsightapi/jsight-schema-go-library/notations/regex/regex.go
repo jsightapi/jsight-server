@@ -2,6 +2,7 @@ package regex
 
 import (
 	stdErrors "errors"
+	"regexp"
 
 	"github.com/lucasjones/reggen"
 
@@ -162,6 +163,13 @@ loop:
 	if s.pattern == "" {
 		idx := uint(len(content) - 1)
 		return s.newDocumentError(errors.ErrRegexUnexpectedEnd, idx, content[idx])
+	}
+
+	if _, err := regexp.Compile(s.pattern); err != nil {
+		e := errors.Format(errors.ErrRegexInvalid, content)
+		err := errors.NewDocumentError(s.file, e)
+		err.SetIndex(bytes.Index(0))
+		return err
 	}
 	return nil
 }
