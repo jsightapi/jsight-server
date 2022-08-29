@@ -11,7 +11,7 @@ func (d Directive) Path() (string, error) {
 	var path string
 
 	switch {
-	case d.Type() == Url:
+	case d.Type() == URL:
 		path = d.NamedParameter("Path")
 
 	case d.Type().IsHTTPRequestMethod():

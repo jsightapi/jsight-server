@@ -50,5 +50,5 @@ func (c ExclusiveMaximum) IsExclusive() bool {
 }
 
 func (c ExclusiveMaximum) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.exclusive), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.exclusive), jschema.RuleASTNodeSourceManual)
 }

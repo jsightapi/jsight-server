@@ -147,7 +147,7 @@ func (a *orValueLoader) literal(lex lexeme.LexEvent) {
 
 		a.
 			nodeTypesListConstraint().
-			AddName(name, root.Type().String(), jschema.RuleASTNodeSourceManual)
+			AddName(name, string(root.SchemaType()), jschema.RuleASTNodeSourceManual)
 	}
 
 	a.stateFunc = a.itemEnd

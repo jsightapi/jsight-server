@@ -2,16 +2,16 @@ package catalog
 
 type TagJsonRpcInteractionGroup struct {
 	Protocol     Protocol        `json:"protocol"`
-	Interactions []InteractionId `json:"interactions"`
+	Interactions []InteractionID `json:"interactions"`
 }
 
 func newTagJsonRpcInteractionGroup() *TagJsonRpcInteractionGroup {
 	return &TagJsonRpcInteractionGroup{
 		Protocol:     JsonRpc,
-		Interactions: make([]InteractionId, 0, 5),
+		Interactions: make([]InteractionID, 0, 5),
 	}
 }
 
-func (l *TagJsonRpcInteractionGroup) append(i InteractionId) {
+func (l *TagJsonRpcInteractionGroup) append(i InteractionID) {
 	l.Interactions = append(l.Interactions, i)
 }

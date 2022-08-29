@@ -1,7 +1,6 @@
 package constraint
 
 import (
-	"fmt"
 	"strconv"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
@@ -36,7 +35,7 @@ func (MinLength) Type() Type {
 }
 
 func (c MinLength) String() string {
-	return fmt.Sprintf("%s: %d", MinLengthConstraintType, c.value)
+	return MinLengthConstraintType.String() + ": " + strconv.FormatUint(uint64(c.value), 10)
 }
 
 func (c MinLength) Validate(value bytes.Bytes) {
@@ -52,7 +51,7 @@ func (c MinLength) Validate(value bytes.Bytes) {
 
 func (c MinLength) ASTNode() jschema.RuleASTNode {
 	return newRuleASTNode(
-		jschema.JSONTypeNumber,
+		jschema.TokenTypeNumber,
 		strconv.FormatUint(uint64(c.value), 10),
 		jschema.RuleASTNodeSourceManual,
 	)

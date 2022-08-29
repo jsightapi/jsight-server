@@ -52,7 +52,7 @@ func (c TypesList) String() string {
 }
 
 func (c *TypesList) AddName(name, typ string, s jschema.RuleASTNodeSource) {
-	c.AddNameWithASTNode(name, typ, newRuleASTNode(jschema.JSONTypeString, typ, s))
+	c.AddNameWithASTNode(name, typ, newRuleASTNode(jschema.TokenTypeString, typ, s))
 }
 
 func (c *TypesList) AddNameWithASTNode(name, typ string, an jschema.RuleASTNode) {
@@ -71,7 +71,7 @@ func (c TypesList) Len() int {
 }
 
 func (c TypesList) ASTNode() jschema.RuleASTNode {
-	n := newRuleASTNode(jschema.JSONTypeArray, "", c.source)
+	n := newRuleASTNode(jschema.TokenTypeArray, "", c.source)
 	n.Items = c.elementASTNodes
 	return n
 }

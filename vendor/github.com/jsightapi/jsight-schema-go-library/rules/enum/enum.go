@@ -66,7 +66,7 @@ func (e *Enum) GetAST() (jschema.ASTNode, error) {
 func (e *Enum) buildASTNode() (jschema.ASTNode, error) {
 	return e.buildASTNodeOnce.Do(func() (jschema.ASTNode, error) {
 		an := jschema.ASTNode{
-			JSONType:   jschema.JSONTypeArray,
+			TokenType:  jschema.TokenTypeArray,
 			SchemaType: string(jschema.SchemaTypeEnum),
 		}
 
@@ -83,10 +83,10 @@ func (e *Enum) buildASTNode() (jschema.ASTNode, error) {
 			}
 
 			if v.Value == nil {
-				n.JSONType = jschema.JSONTypeNull
+				n.TokenType = jschema.TokenTypeNull
 				n.SchemaType = string(jschema.SchemaTypeComment)
 			} else {
-				n.JSONType = v.Type.ToTokenType()
+				n.TokenType = v.Type.ToTokenType()
 				n.SchemaType = string(v.Type)
 			}
 
@@ -150,7 +150,7 @@ func (e *Enum) doCompile() (err error) {
 }
 
 func (e *Enum) handleLiteralEnd(lex lexeme.LexEvent) error {
-	v := lex.Value()
+	v := lex.Value().Normalize()
 	t, err := jschema.GuessSchemaType(v)
 	if err != nil {
 		return err

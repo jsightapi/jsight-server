@@ -54,7 +54,7 @@ func (c *validatorListConstructor) appendTypeValidators(names []string) {
 	for _, name := range names {
 		if _, ok := c.addedTypeNames[name]; !ok {
 			c.addedTypeNames[name] = struct{}{}
-			c.buildList(c.rootSchema.Type(name).RootNode()) // can panic
+			c.buildList(c.rootSchema.MustType(name).RootNode()) // can panic
 		}
 	}
 }
@@ -66,7 +66,7 @@ func (c *validatorListConstructor) appendNodeValidators(node schema.Node) {
 
 	var v validator
 
-	if node.Constraint(constraint.AnyConstraintType) != nil && node.Constraint(constraint.ConstType) == nil {
+	if node.Constraint(constraint.AnyConstraintType) != nil && node.Constraint(constraint.ConstConstraintType) == nil {
 		v = newAnyNestedStructureValidator(node, c.parent)
 	} else {
 		switch node.Type() {

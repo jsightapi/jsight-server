@@ -154,7 +154,7 @@ func (l *enumValueLoader) ruleName(lex lexeme.LexEvent) {
 
 	vv, err := e.Values()
 	if err != nil {
-		panic(fmt.Errorf("Invalid enum %q: %s", v, getDetailsFromEnumError(err))) //nolint:stylecheck // It's expected.
+		panic(fmt.Errorf("Invalid enum %q: %s", v, getDetailsFromEnumError(err)))
 	}
 
 	l.enumConstraint.SetRuleName(v)

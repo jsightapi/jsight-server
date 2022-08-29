@@ -5,7 +5,7 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 )
 
-// A tree of validators.
+// A Tree of validators.
 //
 // The tree consists of nodes (validators).
 // Each node contains a pointer to the parent and validator from the schema package.
@@ -14,7 +14,6 @@ import (
 //
 // The "tree" structure contains the leaves in which to pass the LexEvent for
 // validation.
-
 type Tree struct {
 	// leaves a list of all the leaves of the tree.
 	leaves map[int]validator
@@ -80,7 +79,8 @@ func (t *Tree) setLeavesIndexes() {
 	}
 }
 
-// Passes the LexEvent to the validator. Based on the results changes the tree.
+// feedLeaf passes the LexEvent to the validator. Based on the results changes the
+// tree.
 // Removes or adds new validators to the tree.
 // Returns common.DocumentError if an error is found during node validation.
 func (t *Tree) feedLeaf(leaf validator, jsonLex lexeme.LexEvent, indexOfLeaf int) (err error) {
@@ -106,15 +106,17 @@ func (t *Tree) feedLeaf(leaf validator, jsonLex lexeme.LexEvent, indexOfLeaf int
 		} else {
 			t.leaves[indexOfLeaf] = parent // step back to parent
 		}
-	} else { // children found
-		for j, child := range children {
-			if j == 0 {
-				// Forget/replace the current leaf. He becomes branch, parent for
-				// first child.
-				t.leaves[indexOfLeaf] = child
-			} else {
-				t.addLeaf(child) // append new child leaf to tree
-			}
+		return nil
+	}
+
+	// children found
+	for j, child := range children {
+		if j == 0 {
+			// Forget/replace the current leaf. He becomes branch, parent for
+			// first child.
+			t.leaves[indexOfLeaf] = child
+		} else {
+			t.addLeaf(child) // append new child leaf to tree
 		}
 	}
 
@@ -125,32 +127,3 @@ func (t *Tree) addLeaf(v validator) {
 	t.leaves[t.nextIndex] = v
 	t.nextIndex++
 }
-
-// Truncates all leaves to the specified node.
-// If the leaves whose parents have some specified node, leaving only one leaf after trimming.
-// func (t *tree) trimBranchesTo(target validator) {
-// 	targetAreFound := false
-// 	for i := range t.leaves {
-// 		for {
-// 			leaf := t.leaves[i]
-// 			if leaf != target {
-// 				// trim leaf
-// 				parent := leaf.parent()
-// 				leaf.setParent(nil) // remove the pointer to simplify garbage collection in the future
-// 				if parent == nil {
-// 					delete(t.leaves, i) // trim branch
-// 					break
-// 				} else {
-// 					t.leaves[i] = parent // trim leaf
-// 				}
-// 			} else { // leaf == target
-// 				if targetAreFound {
-// 					delete(t.leaves, i) // unnecessary leaf is removed completely
-// 				} else {
-// 					targetAreFound = true // first branch with the target is found
-// 				}
-// 				break
-// 			}
-// 		}
-// 	}
-// }

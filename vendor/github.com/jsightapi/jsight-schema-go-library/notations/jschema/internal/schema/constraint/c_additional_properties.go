@@ -51,27 +51,27 @@ func NewAdditionalProperties(ruleValue bytes.Bytes) *AdditionalProperties {
 	switch {
 	case txt.OneOf("any", "true"):
 		if txt.String() == "true" {
-			c.astNode.JSONType = jschema.JSONTypeBoolean
+			c.astNode.TokenType = jschema.TokenTypeBoolean
 			c.astNode.Value = "true"
 		} else {
-			c.astNode.JSONType = jschema.JSONTypeString
+			c.astNode.TokenType = jschema.TokenTypeString
 			c.astNode.Value = txtStr
 		}
 		c.mode = AdditionalPropertiesCanBeAny
 
 	case txt.String() == "false":
-		c.astNode.JSONType = jschema.JSONTypeBoolean
+		c.astNode.TokenType = jschema.TokenTypeBoolean
 		c.astNode.Value = "false"
 		c.mode = AdditionalPropertiesNotAllowed
 
 	case txt.IsUserTypeName():
-		c.astNode.JSONType = jschema.JSONTypeString
+		c.astNode.TokenType = jschema.TokenTypeString
 		c.astNode.Value = txtStr
 		c.mode = AdditionalPropertiesMustBeType
 		c.typeName = txt
 
 	case jschema.IsValidType(txtStr):
-		c.astNode.JSONType = jschema.JSONTypeString
+		c.astNode.TokenType = jschema.TokenTypeString
 		c.astNode.Value = txtStr
 		c.mode = AdditionalPropertiesMustBeSchemaType
 		c.schemaType = jschema.SchemaType(txtStr)

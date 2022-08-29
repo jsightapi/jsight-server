@@ -1,9 +1,9 @@
 package catalog
 
-type HttpInteraction struct { //nolint:govet
+type HTTPInteraction struct { //nolint:govet
 	Id            string         `json:"id"`
 	Protocol      Protocol       `json:"protocol"`
-	HttpMethod    HttpMethod     `json:"httpMethod"`
+	HttpMethod    HTTPMethod     `json:"httpMethod"`
 	PathVal       Path           `json:"path"`
 	PathVariables *PathVariables `json:"pathVariables,omitempty"`
 	Tags          []TagName      `json:"tags"`
@@ -14,20 +14,20 @@ type HttpInteraction struct { //nolint:govet
 	Responses     []HTTPResponse `json:"responses,omitempty"`
 }
 
-func (h HttpInteraction) Path() Path {
+func (h HTTPInteraction) Path() Path {
 	return h.PathVal
 }
 
-func (h *HttpInteraction) appendTagName(tn TagName) {
+func (h *HTTPInteraction) appendTagName(tn TagName) {
 	h.Tags = append(h.Tags, tn)
 }
 
-func (h *HttpInteraction) SetPathVariables(p *PathVariables) {
+func (h *HTTPInteraction) SetPathVariables(p *PathVariables) {
 	h.PathVariables = p
 }
 
-func newHttpInteraction(id HttpInteractionId, annotation string) *HttpInteraction {
-	h := &HttpInteraction{
+func newHTTPInteraction(id HTTPInteractionID, annotation string) *HTTPInteraction {
+	h := &HTTPInteraction{
 		Id:            id.String(),
 		Protocol:      HTTP,
 		HttpMethod:    id.method,

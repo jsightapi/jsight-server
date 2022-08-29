@@ -208,7 +208,7 @@ func (s *orRuleSetLoader) makeTypeASTNode(
 	cc := s.typeRoot.ConstraintMap()
 
 	an := jschema.RuleASTNode{
-		JSONType:   jschema.JSONTypeObject,
+		TokenType:  jschema.TokenTypeObject,
 		Properties: jschema.MakeRuleASTNodes(cc.Len()),
 		Source:     source,
 	}

@@ -50,5 +50,5 @@ func (c Nullable) Bool() bool {
 }
 
 func (c Nullable) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
 }

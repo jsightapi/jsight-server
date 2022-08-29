@@ -6,7 +6,7 @@ import (
 )
 
 type ObjectNodeKeys struct {
-	index map[string]int
+	index map[indexKey]int
 	Data  []ObjectNodeKey
 }
 
@@ -17,10 +17,22 @@ type ObjectNodeKey struct {
 	IsShortcut bool
 }
 
+type indexKey struct {
+	Key        string
+	IsShortcut bool
+}
+
+func indexKeyFromObjectNodeKey(k ObjectNodeKey) indexKey {
+	return indexKey{
+		Key:        k.Key,
+		IsShortcut: k.IsShortcut,
+	}
+}
+
 func newObjectNodeKeys() *ObjectNodeKeys {
 	return &ObjectNodeKeys{
 		Data:  make([]ObjectNodeKey, 0, 5),
-		index: make(map[string]int, 5),
+		index: make(map[indexKey]int, 5),
 	}
 }
 
@@ -29,32 +41,13 @@ func (k *ObjectNodeKeys) Set(v ObjectNodeKey) {
 		panic(errors.Format(errors.ErrDuplicateKeysInSchema, v.Key))
 	}
 
-	k.index[v.Key] = v.Index
+	k.index[indexKeyFromObjectNodeKey(v)] = v.Index
 	k.Data = append(k.Data, v)
 }
 
 func (k *ObjectNodeKeys) isDuplicatedKey(newKey ObjectNodeKey) bool {
-	idx, ok := k.index[newKey.Key]
-	if !ok {
-		// We don't have any duplication, allow.
-		return false
-	}
-
-	// We have some duplication.
-	// We allow to have two keys with same name but one of them should be shortcut.
-	isNewKeyShortcut := newKey.IsShortcut
-	isExistsKeyShortcut := k.Data[idx].IsShortcut
-	switch {
-	case !isNewKeyShortcut && !isExistsKeyShortcut:
-		return true
-	case isNewKeyShortcut && !isExistsKeyShortcut:
-		return false
-	case !isNewKeyShortcut && isExistsKeyShortcut:
-		return false
-	case isNewKeyShortcut && isExistsKeyShortcut:
-		return true
-	}
-	return true
+	_, ok := k.index[indexKeyFromObjectNodeKey(newKey)]
+	return ok
 }
 
 func (k ObjectNodeKeys) Find(i int) (ObjectNodeKey, bool) {
@@ -64,8 +57,11 @@ func (k ObjectNodeKeys) Find(i int) (ObjectNodeKey, bool) {
 	return ObjectNodeKey{}, false
 }
 
-func (k ObjectNodeKeys) Get(key string) (ObjectNodeKey, bool) {
-	if i, ok := k.index[key]; ok {
+func (k ObjectNodeKeys) Get(key string, isShortcut bool) (ObjectNodeKey, bool) {
+	if i, ok := k.index[indexKey{
+		Key:        key,
+		IsShortcut: isShortcut,
+	}]; ok {
 		return k.Data[i], true
 	}
 	return ObjectNodeKey{}, false

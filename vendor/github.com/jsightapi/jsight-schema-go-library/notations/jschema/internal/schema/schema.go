@@ -24,13 +24,23 @@ func (s Schema) TypesList() map[string]Type {
 	return s.types
 }
 
-// Type returns *Schema or panic if not found.
-func (s Schema) Type(name string) *Schema { // todo confuses that here is returning Schema, instead Type. So historically. Perhaps it is worth remaking?
+// MustType returns *Schema or panic if not found.
+// Deprecated: use Schema.MustType instead
+func (s Schema) MustType(name string) *Schema {
 	t, ok := s.types[name]
 	if ok {
 		return t.schema
 	}
 	panic(errors.Format(errors.ErrTypeNotFound, name))
+}
+
+// Type returns specified type's schema.
+func (s Schema) Type(name string) (*Schema, errors.Err) {
+	t, ok := s.types[name]
+	if ok {
+		return t.schema, nil
+	}
+	return nil, errors.Format(errors.ErrTypeNotFound, name)
 }
 
 func (s Schema) RootNode() Node {

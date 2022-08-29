@@ -18,6 +18,14 @@ output:
   sort-results: true
 
 linters-settings:
+  gomoddirectives:
+    # Allow local `replace` directives. Default is false.
+    replace-local: false
+    # Allow to not explain why the version has been retracted in the `retract` directives. Default is false.
+    retract-allow-no-explanation: false
+    # Forbid the use of the `exclude` directives. Default is false.
+    exclude-forbidden: false
+
   errcheck:
     # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
     check-type-assertions: true
@@ -38,10 +46,6 @@ linters-settings:
     # }
     # ```
     errorf: true
-
-  exhaustive:
-    check-generated: true
-    default-signifies-exhaustive: true
 
   forbidigo:
     forbid:
@@ -87,9 +91,6 @@ linters-settings:
 
   gocyclo:
     min-complexity: 10
-
-#  godot:
-#    check-all: true
 
   gofmt:
     simplify: false
@@ -147,9 +148,8 @@ linters-settings:
   nakedret:
     max-func-lines: 5
 
-# todo too many issues
-#  nestif:
-#    min-complexity: 5
+  nestif:
+    min-complexity: 5
 
   revive:
     # https://github.com/mgechev/revive#available-rules
@@ -261,10 +261,6 @@ linters:
     # in Go 1.13.
     - errorlint
 
-    # Checks exhaustiveness of enum switch statements.
-    # It's broken :(
-    #- exhaustive
-
     # Checks for pointers to enclosing loop variables.
     - exportloopref
 
@@ -283,10 +279,6 @@ linters:
 
     # Computes and checks the cyclomatic complexity of functions.
     - gocyclo
-
-    # Check if comments end in a period.
-# todo too many issues
-#    - godot
 
     # Checks whether code was gofmt-ed.
     - gofmt
@@ -307,25 +299,6 @@ linters:
 
     - govet
 
-    # Checks that your code uses short syntax for if-statements whenever possible.
-    #
-    # Bad:
-    # ```
-    # _, err := := strconv.Atoi(numStr) <-- Will trigger an error at this line.
-    # if err != nil {
-    #   return fmt.Errorf("failed to convert: %w", err)
-    # }
-    # ```
-    #
-    # Good:
-    # ```
-    # if _, err := := strconv.Atoi(numStr); err != nil {
-    #   return fmt.Errorf("failed to convert: %w", err)
-    # }
-    # ```
-# some false positive
-#    - ifshort
-
     # Detects when assignments to existing variables are not used.
     - ineffassign
 
@@ -339,8 +312,7 @@ linters:
     - nakedret
 
     # Reports deeply nested if statements.
-# todo too many issues
-#    - nestif
+    - nestif
 
     # Finds the code that returns nil even if it checks that the error is not nil.
     - nilerr
@@ -453,9 +425,12 @@ issues:
       linters:
         - goconst
 
-    # Skip for now, should refactor in the future
-    - text: "fieldalignment: struct with"
+    - text: "fieldalignment: struct"
       path: (_test\.go|internal/cmd|test/)
+
+    - text: "ST1005: error strings should not be capitalized"
+      linters:
+        - stylecheck
 
 severity:
   default-severity: error

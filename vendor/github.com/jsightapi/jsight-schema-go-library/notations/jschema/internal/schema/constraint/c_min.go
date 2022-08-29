@@ -78,7 +78,7 @@ func (c Min) Validate(value bytes.Bytes) {
 }
 
 func (c Min) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
 }
 
 func (c *Min) Value() *json.Number {

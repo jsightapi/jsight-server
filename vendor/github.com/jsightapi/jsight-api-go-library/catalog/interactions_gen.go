@@ -11,12 +11,12 @@ import (
 )
 
 // Set sets a value with specified key.
-func (m *Interactions) Set(k InteractionId, v Interaction) {
+func (m *Interactions) Set(k InteractionID, v Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
 	if m.data == nil {
-		m.data = map[InteractionId]Interaction{}
+		m.data = map[InteractionID]Interaction{}
 	}
 	if !m.has(k) {
 		m.order = append(m.order, k)
@@ -26,21 +26,21 @@ func (m *Interactions) Set(k InteractionId, v Interaction) {
 
 // SetToTop do the same as Set, but new key will be placed on top of the order
 // map.
-func (m *Interactions) SetToTop(k InteractionId, v Interaction) {
+func (m *Interactions) SetToTop(k InteractionID, v Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
 	if m.data == nil {
-		m.data = map[InteractionId]Interaction{}
+		m.data = map[InteractionID]Interaction{}
 	}
 	if !m.has(k) {
-		m.order = append([]InteractionId{k}, m.order...)
+		m.order = append([]InteractionID{k}, m.order...)
 	}
 	m.data[k] = v
 }
 
 // Update updates a value with specified key.
-func (m *Interactions) Update(k InteractionId, fn func(v Interaction) Interaction) {
+func (m *Interactions) Update(k InteractionID, fn func(v Interaction) Interaction) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
@@ -54,7 +54,7 @@ func (m *Interactions) Update(k InteractionId, fn func(v Interaction) Interactio
 }
 
 // GetValue gets a value by key.
-func (m *Interactions) GetValue(k InteractionId) Interaction {
+func (m *Interactions) GetValue(k InteractionID) Interaction {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -62,7 +62,7 @@ func (m *Interactions) GetValue(k InteractionId) Interaction {
 }
 
 // Get gets a value by key.
-func (m *Interactions) Get(k InteractionId) (Interaction, bool) {
+func (m *Interactions) Get(k InteractionID) (Interaction, bool) {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
@@ -71,14 +71,14 @@ func (m *Interactions) Get(k InteractionId) (Interaction, bool) {
 }
 
 // Has checks that specified key is set.
-func (m *Interactions) Has(k InteractionId) bool {
+func (m *Interactions) Has(k InteractionID) bool {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
 
 	return m.has(k)
 }
 
-func (m *Interactions) has(k InteractionId) bool {
+func (m *Interactions) has(k InteractionID) bool {
 	_, ok := m.data[k]
 	return ok
 }
@@ -107,7 +107,7 @@ func (m *Interactions) Find(fn findInteractionsFunc) (InteractionsItem, bool) {
 	return InteractionsItem{}, false
 }
 
-type findInteractionsFunc = func(k InteractionId, v Interaction) bool
+type findInteractionsFunc = func(k InteractionID, v Interaction) bool
 
 // Each iterates and perform given function on each item in the map.
 func (m *Interactions) Each(fn eachInteractionsFunc) error {
@@ -136,7 +136,7 @@ func (m *Interactions) EachReverse(fn eachInteractionsFunc) error {
 	return nil
 }
 
-type eachInteractionsFunc = func(k InteractionId, v Interaction) error
+type eachInteractionsFunc = func(k InteractionID, v Interaction) error
 
 func (m *Interactions) EachSafe(fn eachSafeInteractionsFunc) {
 	m.mx.RLock()
@@ -147,7 +147,7 @@ func (m *Interactions) EachSafe(fn eachSafeInteractionsFunc) {
 	}
 }
 
-type eachSafeInteractionsFunc = func(k InteractionId, v Interaction)
+type eachSafeInteractionsFunc = func(k InteractionID, v Interaction)
 
 // Map iterates and changes values in the map.
 func (m *Interactions) Map(fn mapInteractionsFunc) error {
@@ -164,11 +164,11 @@ func (m *Interactions) Map(fn mapInteractionsFunc) error {
 	return nil
 }
 
-type mapInteractionsFunc = func(k InteractionId, v Interaction) (Interaction, error)
+type mapInteractionsFunc = func(k InteractionID, v Interaction) (Interaction, error)
 
 // InteractionsItem represent single data from the Interactions.
 type InteractionsItem struct {
-	Key   InteractionId
+	Key   InteractionID
 	Value Interaction
 }
 

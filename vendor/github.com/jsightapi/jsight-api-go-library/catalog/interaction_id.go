@@ -1,6 +1,6 @@
 package catalog
 
-type InteractionId interface {
+type InteractionID interface {
 	Protocol() Protocol
 	Path() Path
 	String() string

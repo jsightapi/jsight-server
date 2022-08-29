@@ -53,5 +53,5 @@ func (c Optional) Bool() bool {
 }
 
 func (c Optional) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
 }

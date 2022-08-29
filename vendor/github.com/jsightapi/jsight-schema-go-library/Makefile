@@ -4,6 +4,7 @@ all: generate fmt lint test
 .PHONY: deps
 deps:
 	go install github.com/vektra/mockery/v2@v2.12.3
+	go install golang.org/x/tools/cmd/stringer@v0.1.12
 
 .PHONY: generate
 generate: deps

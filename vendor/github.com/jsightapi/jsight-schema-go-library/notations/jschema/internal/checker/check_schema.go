@@ -82,7 +82,9 @@ func (c checkSchema) checkNode(node schema.Node, ss map[string]schema.Type) {
 	case *schema.ObjectNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
-		c.ensureShortcutKeysAreValid(node)
+		if err := c.ensureShortcutKeysAreValid(node); err != nil {
+			panic(err)
+		}
 	case *schema.MixedNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
@@ -136,7 +138,7 @@ func (c checkSchema) checkArrayItems(node schema.Node) {
 
 	if typesList := arrayNode.Constraint(constraint.TypesListConstraintType); typesList != nil {
 		for _, name := range typesList.(*constraint.TypesList).Names() {
-			typeRootNode := c.rootSchema.Type(name).RootNode() // can panic
+			typeRootNode := c.rootSchema.MustType(name).RootNode() // can panic
 
 			if arrayNode, ok := typeRootNode.(*schema.ArrayNode); ok {
 				c.checkArrayItems(arrayNode)
@@ -193,33 +195,26 @@ func (c *checkSchema) checkLinksOfNode(node schema.Node, ss map[string]schema.Ty
 	}
 }
 
-func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) {
-	var lex lexeme.LexEvent
-
-	defer func() {
-		r := recover()
-		if r == nil {
-			return
-		}
-
-		err, ok := r.(errors.Errorf)
-		if !ok {
-			panic(r)
-		}
-
-		if err.Code() != errors.ErrTypeNotFound {
-			panic(r)
-		}
-
-		panic(lexeme.NewLexEventError(lex, err))
-	}()
-
+func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) error {
 	for _, v := range node.Keys().Data {
-		if v.IsShortcut {
-			lex = v.Lex
-			c.rootSchema.Type(v.Key) // can panic
+		if !v.IsShortcut {
+			continue
+		}
+
+		s, err := c.rootSchema.Type(v.Key) // can panic
+		if err != nil {
+			return lexeme.NewLexEventError(v.Lex, err)
+		}
+		actualType := s.RootNode().Type()
+
+		if actualType != json.TypeString {
+			return lexeme.NewLexEventError(
+				v.Lex,
+				errors.Format(errors.ErrInvalidKeyShortcutType, v.Key, actualType),
+			)
 		}
 	}
+	return nil
 }
 
 func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]schema.Type) {
@@ -232,7 +227,7 @@ func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]sc
 		// Check all user types are defined.
 		if typesConstraint := node.Constraint(constraint.TypesListConstraintType); typesConstraint != nil {
 			for _, typeName := range typesConstraint.(*constraint.TypesList).Names() {
-				c.rootSchema.Type(typeName) // can panic
+				c.rootSchema.MustType(typeName) // can panic
 			}
 		}
 		return
@@ -256,7 +251,7 @@ func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]sc
 
 func getType(n string, rootSchema *schema.Schema, ss map[string]schema.Type) (ret *schema.Schema) {
 	getFromRoot := func() *schema.Schema {
-		return rootSchema.Type(n)
+		return rootSchema.MustType(n)
 	}
 
 	getFromMap := func() *schema.Schema {

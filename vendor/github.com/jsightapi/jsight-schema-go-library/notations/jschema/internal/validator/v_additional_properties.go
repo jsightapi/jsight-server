@@ -51,7 +51,7 @@ func newAdditionalPropertiesValidator(
 	case constraint.AdditionalPropertiesMustBeType:
 		schem := parentValidator.(*objectValidator).rootSchema
 		return NodeValidatorList(
-			schem.Type(c.TypeName().String()).RootNode(), // can panic
+			schem.MustType(c.TypeName().String()).RootNode(), // can panic
 			schem,
 			parentValidator,
 		)

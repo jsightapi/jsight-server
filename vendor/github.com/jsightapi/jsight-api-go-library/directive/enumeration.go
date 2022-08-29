@@ -17,8 +17,8 @@ const (
 	Version
 	Description
 	Server
-	BaseUrl
-	Url
+	BaseURL
+	URL
 	Get
 	Post
 	Put
@@ -120,7 +120,7 @@ func (de Enumeration) IsHTTPRequestMethod() bool {
 
 func (de Enumeration) IsAllowedForRootContext() bool {
 	switch de { //nolint:exhaustive // False-positive.
-	case Jsight, Info, Server, Url, Get, Post, Put, Patch, Delete, Type, Enum,
+	case Jsight, Info, Server, URL, Get, Post, Put, Patch, Delete, Type, Enum,
 		Macro, Paste, TAG:
 		return true
 	}
@@ -140,7 +140,7 @@ func (de Enumeration) IsAllowedForDirectiveContext(child Enumeration) bool {
 // directiveAllowedToDirectiveContext a map between directive type and directive
 // types which can be placed into this directive context.
 var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{}{
-	Url:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method, Tags),
+	URL:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method, Tags),
 	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
 	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
 	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
@@ -149,7 +149,7 @@ var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{
 	HTTPResponseCode: createEnumerationSet(Body, Headers, Paste),
 	Request:          createEnumerationSet(Body, Headers, Paste),
 	Info:             createEnumerationSet(Title, Version, Description, Paste),
-	Server:           createEnumerationSet(BaseUrl, Paste),
+	Server:           createEnumerationSet(BaseURL, Paste),
 	Method:           createEnumerationSet(Description, Params, Result, Tags),
 	TAG:              createEnumerationSet(Description),
 	Macro: createEnumerationSet(
@@ -158,8 +158,8 @@ var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{
 		Version,
 		Description,
 		Server,
-		BaseUrl,
-		Url,
+		BaseURL,
+		URL,
 		Get,
 		Post,
 		Put,

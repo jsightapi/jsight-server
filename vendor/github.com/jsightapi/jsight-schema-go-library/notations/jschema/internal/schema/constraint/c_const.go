@@ -30,7 +30,7 @@ func NewConst(value, nodeValue bytes.Bytes) *Const {
 
 	var err error
 	if c.apply, err = value.ParseBool(); err != nil {
-		panic(errors.Format(errors.ErrInvalidValueOfConstraint, ConstType.String()))
+		panic(errors.Format(errors.ErrInvalidValueOfConstraint, ConstConstraintType.String()))
 	}
 	return &c
 }
@@ -40,14 +40,14 @@ func (Const) IsJsonTypeCompatible(t json.Type) bool {
 }
 
 func (Const) Type() Type {
-	return ConstType
+	return ConstConstraintType
 }
 
 func (c Const) String() string {
 	if c.apply {
-		return ConstType.String() + ": true"
+		return ConstConstraintType.String() + ": true"
 	}
-	return ConstType.String() + ": false"
+	return ConstConstraintType.String() + ": false"
 }
 
 func (c Const) Bool() bool {
@@ -65,5 +65,5 @@ func (c Const) Validate(v bytes.Bytes) {
 }
 
 func (c Const) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.apply), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.apply), jschema.RuleASTNodeSourceManual)
 }

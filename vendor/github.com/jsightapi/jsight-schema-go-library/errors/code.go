@@ -11,13 +11,15 @@ const (
 	ErrGeneric    ErrorCode = 0
 	ErrImpossible ErrorCode = 1
 
-	// main & common
+	// Main & common.
+
 	ErrUserTypeFound             ErrorCode = 101
 	ErrUnknownType               ErrorCode = 102
 	ErrUnknownJSchemaType        ErrorCode = 103
 	ErrInfinityRecursionDetected ErrorCode = 104
 
-	// validator
+	// Validator.
+
 	ErrValidator                       ErrorCode = 201
 	ErrEmptySchema                     ErrorCode = 202
 	ErrEmptyJson                       ErrorCode = 203
@@ -31,21 +33,25 @@ const (
 	ErrInvalidKeyType                  ErrorCode = 211
 	ErrUnexpectedLexInMixedValidator   ErrorCode = 212
 
-	// scanner
+	// Scanner.
+
 	ErrInvalidCharacter                      ErrorCode = 301
 	ErrInvalidCharacterInAnnotationObjectKey ErrorCode = 302
 	ErrUnexpectedEOF                         ErrorCode = 303
 	ErrAnnotationNotAllowed                  ErrorCode = 304
 
-	// schema
+	// Schema.
+
 	ErrNodeGrow                 ErrorCode = 401
 	ErrDuplicateKeysInSchema    ErrorCode = 402
 	ErrDuplicationOfNameOfTypes ErrorCode = 403
 
-	// node
+	// Node.
+
 	ErrDuplicateRule ErrorCode = 501
 
-	// constraint
+	// Constraint
+
 	ErrUnknownRule                                 ErrorCode = 601
 	ErrConstraintValidation                        ErrorCode = 602
 	ErrConstraintStringLengthValidation            ErrorCode = 603
@@ -65,14 +71,16 @@ const (
 	ErrValueOfOneConstraintGreaterThanAnother      ErrorCode = 617
 	ErrValueOfOneConstraintGreaterOrEqualToAnother ErrorCode = 618
 
-	// loader
+	// Loader.
+
 	ErrInvalidSchemaName                ErrorCode = 701
 	ErrInvalidSchemaNameInAllOfRule     ErrorCode = 702
 	ErrUnacceptableRecursionInAllOfRule ErrorCode = 703
 	ErrUnacceptableUserTypeInAllOfRule  ErrorCode = 704
 	ErrConflictAdditionalProperties     ErrorCode = 705
 
-	// rule loader
+	// Rule loader.
+
 	ErrLoader                           ErrorCode = 801
 	ErrIncorrectRuleValueType           ErrorCode = 802
 	ErrIncorrectRuleWithoutExample      ErrorCode = 803
@@ -84,14 +92,16 @@ const (
 	ErrTypeNameNotFoundInAllOfRule      ErrorCode = 809
 	ErrDuplicationInEnumRule            ErrorCode = 810
 
-	// "or" rule loader
+	// "or" rule loader.
+
 	ErrArrayWasExpectedInOrRule       ErrorCode = 901
 	ErrEmptyArrayInOrRule             ErrorCode = 902
 	ErrOneElementInArrayInOrRule      ErrorCode = 903
 	ErrIncorrectArrayItemTypeInOrRule ErrorCode = 904
 	ErrEmptyRuleSet                   ErrorCode = 905
 
-	// compiler
+	// Compiler.
+
 	ErrRuleOptionalAppliesOnlyToObjectProperties ErrorCode = 1101
 	ErrCannotSpecifyOtherRulesWithTypeReference  ErrorCode = 1102
 	ErrShouldBeNoOtherRulesInSetWithOr           ErrorCode = 1103
@@ -110,26 +120,32 @@ const (
 	ErrUnknownAdditionalPropertiesTypes          ErrorCode = 1116
 	ErrUnexpectedConstraint                      ErrorCode = 1117
 
-	// checker
+	// Checker.
+
 	ErrChecker                               ErrorCode = 1201
 	ErrElementNotFoundInArray                ErrorCode = 1203
 	ErrIncorrectConstraintValueForEmptyArray ErrorCode = 1204
 
-	// link checker
+	// Link checker.
+
 	ErrIncorrectUserType                              ErrorCode = 1301
 	ErrTypeNotFound                                   ErrorCode = 1302
 	ErrImpossibleToDetermineTheJsonTypeDueToRecursion ErrorCode = 1303
+	ErrInvalidKeyShortcutType                         ErrorCode = 1304
 
-	// sdk
+	// SDK.
+
 	ErrEmptyType                          ErrorCode = 1401
 	ErrUnnecessaryLexemeAfterTheEndOfEnum ErrorCode = 1402
 
-	// regex
+	// Regex.
+
 	ErrRegexUnexpectedStart ErrorCode = 1500
 	ErrRegexUnexpectedEnd   ErrorCode = 1501
 	ErrRegexInvalid         ErrorCode = 1502
 
-	// enum
+	// Enum.
+
 	ErrEnumArrayExpected  ErrorCode = 1600
 	ErrEnumIsHoldRuleName ErrorCode = 1601
 	ErrEnumRuleNotFound   ErrorCode = 1602
@@ -247,9 +263,10 @@ var errorFormat = map[ErrorCode]string{
 	ErrIncorrectConstraintValueForEmptyArray: `Incorrect constraint value for empty array`,
 
 	// link checker
-	ErrIncorrectUserType: `Incorrect type of user type`,
-	ErrTypeNotFound:      `Type "%s" not found`,
-	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type "%s"`, //nolint:lll
+	ErrIncorrectUserType: "Incorrect type of user type",
+	ErrTypeNotFound:      "Type %q not found",
+	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type %q`, //nolint:lll
+	ErrInvalidKeyShortcutType:                         "Key shortcut %q should be string but %q given",
 
 	// sdk
 	ErrEmptyType:                          `Type "%s" must not be empty`,

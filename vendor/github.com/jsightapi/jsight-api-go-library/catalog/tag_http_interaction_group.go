@@ -1,17 +1,17 @@
 package catalog
 
-type TagHttpInteractionGroup struct {
+type TagHTTPInteractionGroup struct {
 	Protocol     Protocol        `json:"protocol"`
-	Interactions []InteractionId `json:"interactions"`
+	Interactions []InteractionID `json:"interactions"`
 }
 
-func newTagHttpInteractionGroup() *TagHttpInteractionGroup {
-	return &TagHttpInteractionGroup{
+func newTagHTTPInteractionGroup() *TagHTTPInteractionGroup {
+	return &TagHTTPInteractionGroup{
 		Protocol:     HTTP,
-		Interactions: make([]InteractionId, 0, 5),
+		Interactions: make([]InteractionID, 0, 5),
 	}
 }
 
-func (l *TagHttpInteractionGroup) append(i InteractionId) {
+func (l *TagHTTPInteractionGroup) append(i InteractionID) {
 	l.Interactions = append(l.Interactions, i)
 }

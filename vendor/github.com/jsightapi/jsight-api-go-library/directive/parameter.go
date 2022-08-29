@@ -35,7 +35,7 @@ func (d *Directive) AppendParameter(b bytes.Bytes) error {
 	s := b.String()
 
 	switch d.Type() { //nolint:exhaustive // We catch all uncovered enumeration.
-	case Url, Get, Post, Put, Patch, Delete:
+	case URL, Get, Post, Put, Patch, Delete:
 		return d.SetNamedParameter("Path", s)
 
 	case Request, HTTPResponseCode, Body:
@@ -72,7 +72,7 @@ func (d *Directive) AppendParameter(b bytes.Bytes) error {
 	case Title:
 		return d.SetNamedParameter("Title", s)
 
-	case BaseUrl:
+	case BaseURL:
 		return d.SetNamedParameter("Path", s)
 
 	case Server, Enum, Macro, Paste:

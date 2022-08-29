@@ -57,14 +57,14 @@ func (c AllOf) ASTNode() jschema.RuleASTNode {
 	const source = jschema.RuleASTNodeSourceManual
 
 	if len(c.schemaName) == 1 {
-		return newRuleASTNode(jschema.JSONTypeShortcut, c.schemaName[0], source)
+		return newRuleASTNode(jschema.TokenTypeShortcut, c.schemaName[0], source)
 	}
 
-	n := newRuleASTNode(jschema.JSONTypeArray, "", source)
+	n := newRuleASTNode(jschema.TokenTypeArray, "", source)
 	n.Items = make([]jschema.RuleASTNode, 0, len(c.schemaName))
 
 	for _, sn := range c.schemaName {
-		n.Items = append(n.Items, newRuleASTNode(jschema.JSONTypeShortcut, sn, source))
+		n.Items = append(n.Items, newRuleASTNode(jschema.TokenTypeShortcut, sn, source))
 	}
 
 	return n

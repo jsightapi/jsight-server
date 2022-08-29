@@ -364,7 +364,7 @@ func (c *userTypesCollector) collectUserTypesObjectNode(node *internalSchema.Obj
 			}
 		}
 
-		child, ok := node.Child(k)
+		child, ok := node.Child(k, v.IsShortcut)
 		if ok {
 			c.collect(child)
 		}

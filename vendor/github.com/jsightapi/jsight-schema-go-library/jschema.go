@@ -68,8 +68,8 @@ type Schema interface {
 
 // ASTNode an AST node.
 type ASTNode struct {
-	// JSONType corresponding JSON type for this AST node's value. TODO rename to TokenType
-	JSONType JSONType
+	// TokenType corresponding JSON type for this AST node's value.
+	TokenType TokenType
 
 	// SchemaType corresponding schema type for this AST node's value.
 	SchemaType string
@@ -105,8 +105,8 @@ type ASTNodes struct {
 }
 
 type RuleASTNode struct {
-	// JSONType corresponding JSON type for this AST node's value.
-	JSONType JSONType
+	// TokenType corresponding JSON type for this AST node's value.
+	TokenType TokenType
 
 	// Value a node value.
 	// Make sense only for scalars and shortcuts.

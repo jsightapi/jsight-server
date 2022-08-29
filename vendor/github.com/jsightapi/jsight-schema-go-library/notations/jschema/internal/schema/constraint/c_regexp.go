@@ -54,5 +54,5 @@ func (c Regex) Validate(value bytes.Bytes) {
 }
 
 func (c Regex) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeString, c.expression, jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeString, c.expression, jschema.RuleASTNodeSourceManual)
 }

@@ -70,7 +70,7 @@ func astNodeToSchemaRule(node jschemaLib.RuleASTNode) Rule {
 	}
 
 	return Rule{
-		TokenType:   RuleTokenType(node.JSONType),
+		TokenType:   RuleTokenType(node.TokenType),
 		ScalarValue: node.Value,
 		Note:        node.Comment,
 		Children:    children,

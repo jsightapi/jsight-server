@@ -22,8 +22,8 @@ func (core *JApiCore) newPathVariables(properties []prop) (*catalog.PathVariable
 	s := catalog.NewSchema(notation.SchemaNotationJSight)
 	s.ContentJSight = &catalog.SchemaContentJSight{
 		IsKeyUserTypeRef: false,
-		TokenType:        jschema.JSONTypeObject,
-		Type:             jschema.JSONTypeObject,
+		TokenType:        jschema.TokenTypeObject,
+		Type:             jschema.TokenTypeObject,
 		Optional:         false,
 		Children:         make([]*catalog.SchemaContentJSight, 0, len(properties)),
 	}
@@ -41,7 +41,7 @@ func (core *JApiCore) newPathVariables(properties []prop) (*catalog.PathVariable
 }
 
 func (core *JApiCore) collectUsedUserTypes(sc *catalog.SchemaContentJSight, usedUserTypes *catalog.StringSet) error {
-	if sc.TokenType == jschema.JSONTypeShortcut {
+	if sc.TokenType == jschema.TokenTypeShortcut {
 		// We have two different cases under "reference" type:
 		// 1. Single type like "@foo"
 		// 2. A list of types like "@foo | @bar"
@@ -54,46 +54,45 @@ func (core *JApiCore) collectUsedUserTypes(sc *catalog.SchemaContentJSight, used
 				return err
 			}
 		}
-	} else {
-		err := sc.Rules.Each(func(k string, v catalog.Rule) error {
-			switch k {
-			case "type":
-				if v.ScalarValue[0] == '@' {
-					if err := core.appendUsedUserType(usedUserTypes, v.ScalarValue); err != nil {
-						return err
-					}
-				}
-
-			case "or":
-				for _, i := range v.Children {
-					var userType string
-					if i.ScalarValue != "" {
-						userType = i.ScalarValue
-					} else {
-						for _, c := range i.Children {
-							if c.Key == "type" {
-								userType = c.ScalarValue
-								break
-							}
-						}
-						// TODO if not found ???
-					}
-
-					// Schema types shouldn't be added.
-					if jschema.IsValidType(userType) {
-						continue
-					}
-
-					if err := core.appendUsedUserType(usedUserTypes, userType); err != nil {
-						return err
-					}
+		return nil
+	}
+	err := sc.Rules.Each(func(k string, v catalog.Rule) error {
+		switch k {
+		case "type":
+			if v.ScalarValue[0] == '@' {
+				if err := core.appendUsedUserType(usedUserTypes, v.ScalarValue); err != nil {
+					return err
 				}
 			}
-			return nil
-		})
-		if err != nil {
-			return err
+
+		case "or":
+			for _, i := range v.Children {
+				var userType string
+				if i.ScalarValue != "" {
+					userType = i.ScalarValue
+				} else {
+					for _, c := range i.Children {
+						if c.Key == "type" {
+							userType = c.ScalarValue
+							break
+						}
+					}
+				}
+
+				// Schema types shouldn't be added.
+				if jschema.IsValidType(userType) {
+					continue
+				}
+
+				if err := core.appendUsedUserType(usedUserTypes, userType); err != nil {
+					return err
+				}
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -108,7 +107,11 @@ func (core *JApiCore) appendUsedUserType(usedUserTypes *catalog.StringSet, s str
 				usedUserTypes.Add(s)
 				return nil
 			default:
-				return fmt.Errorf(`unavailable JSON type "%s" of the UserType "%s" in Path directive`, t.Schema.ContentJSight.TokenType, s)
+				return fmt.Errorf(
+					"unavailable JSON type %q of the UserType %q in Path directive",
+					t.Schema.ContentJSight.TokenType,
+					s,
+				)
 			}
 		case notation.SchemaNotationRegex:
 			usedUserTypes.Add(s)

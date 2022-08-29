@@ -125,7 +125,8 @@ func (e *DocumentError) detectNewLineSymbol() {
 	}
 }
 
-// Before calling this method, you must run the e.preparation()
+// lineBeginning
+// Before calling this method, you must run the e.preparation().
 func (e DocumentError) lineBeginning() bytes.Index {
 	content := e.file.Content()
 	i := e.index
@@ -145,7 +146,8 @@ func (e DocumentError) lineBeginning() bytes.Index {
 	return i
 }
 
-// Before calling this method, you must run the e.preparation()
+// lineEnd
+// Before calling this method, you must run the e.preparation().
 func (e DocumentError) lineEnd() bytes.Index {
 	content := e.file.Content()
 	i := e.index
@@ -195,6 +197,8 @@ func (e *DocumentError) Line() uint {
 
 // SourceSubString returns empty string, if cannot determine the source sub-string.
 func (e *DocumentError) SourceSubString() string {
+	const maxLength = 200
+
 	if e.file == nil || len(e.file.Content()) == 0 {
 		return ""
 	}
@@ -204,7 +208,6 @@ func (e *DocumentError) SourceSubString() string {
 	content := e.file.Content()
 	begin := e.lineBeginning()
 	end := e.lineEnd()
-	maxLength := bytes.Index(200)
 
 	if end-begin > maxLength {
 		end = begin + maxLength - 3

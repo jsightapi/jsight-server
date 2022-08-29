@@ -73,7 +73,7 @@ func (c Max) Validate(value bytes.Bytes) {
 }
 
 func (c Max) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
 }
 
 func (c *Max) Value() *json.Number {

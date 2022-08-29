@@ -46,9 +46,9 @@ func (c TypeConstraint) Bytes() bytes.Bytes {
 }
 
 func (c TypeConstraint) ASTNode() jschema.RuleASTNode {
-	t := jschema.JSONTypeString
+	t := jschema.TokenTypeString
 	if c.value.Unquote().IsUserTypeName() {
-		t = jschema.JSONTypeShortcut
+		t = jschema.TokenTypeShortcut
 	}
 	return newRuleASTNode(t, c.value.Unquote().String(), c.source)
 }

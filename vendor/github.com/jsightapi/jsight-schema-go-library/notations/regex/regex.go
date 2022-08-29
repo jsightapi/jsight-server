@@ -115,7 +115,7 @@ func (s *Schema) GetAST() (jschema.ASTNode, error) {
 	}
 	return jschema.ASTNode{
 		IsKeyShortcut: false,
-		JSONType:      jschema.JSONTypeString,
+		TokenType:     jschema.TokenTypeString,
 		SchemaType:    string(jschema.SchemaTypeString),
 		Rules:         nil,
 		Value:         "/" + s.pattern + "/",

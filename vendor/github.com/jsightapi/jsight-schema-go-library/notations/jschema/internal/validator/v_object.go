@@ -66,7 +66,7 @@ func (v *objectValidator) setParent(parent validator) {
 
 // feed returns array (pointers to validators, or nil if not found) and bool (true
 // if validator is done).
-func (v *objectValidator) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool) { //nolint:gocyclo // todo do something with that.
+func (v *objectValidator) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool) {
 	defer lexeme.CatchLexEventError(jsonLexeme)
 
 	switch jsonLexeme.Type() { //nolint:exhaustive // We will throw a panic in over cases.
@@ -74,43 +74,11 @@ func (v *objectValidator) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool) {
 		return nil, false
 
 	case lexeme.ObjectKeyEnd:
-		v.lastFoundKeyLex = jsonLexeme
-		if _, ok := v.node_.(*schema.ObjectNode); !ok { // mixed node
-			panic(lexeme.NewLexEventError(
-				v.lastFoundKeyLex,
-				errors.Format(errors.ErrSchemaDoesNotSupportKey, v.lastFoundKeyLex.Value().Unquote().String())),
-			)
-		}
-		delete(v.requiredKeys, v.lastFoundKeyLex.Value().Unquote().String())
+		v.feedObjectKeyEnd(jsonLexeme)
 		return nil, false
 
 	case lexeme.ObjectValueBegin:
-		if objectNode, ok := v.node_.(*schema.ObjectNode); ok {
-			childNode, ok := objectNode.Child(v.lastFoundKeyLex.Value().Unquote().String())
-			if !ok { // child node not found on schema object
-				if c := v.node_.Constraint(constraint.RequiredKeysConstraintType); c != nil {
-					key, ok := v.validateTypeRules(v.lastFoundKeyLex.Value())
-					if ok {
-						child, ok := objectNode.Child(key)
-						if ok {
-							delete(v.requiredKeys, key)
-							return NodeValidatorList(child, v.rootSchema, v), false
-						}
-					}
-				}
-				if c := v.node_.Constraint(constraint.AdditionalPropertiesConstraintType); c != nil {
-					return newAdditionalPropertiesValidator(v.node_, v, c.(*constraint.AdditionalProperties)), false
-				}
-
-				panic(lexeme.NewLexEventError(
-					v.lastFoundKeyLex,
-					errors.Format(errors.ErrSchemaDoesNotSupportKey, v.lastFoundKeyLex.Value().Unquote().String())),
-				)
-			}
-			return NodeValidatorList(childNode, v.rootSchema, v), false
-		} else { // mixed node
-			panic(errors.ErrImpossible)
-		}
+		return v.feedObjectValueBegin()
 
 	case lexeme.ObjectEnd:
 		if len(v.requiredKeys) != 0 {
@@ -120,6 +88,49 @@ func (v *objectValidator) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool) {
 	}
 
 	panic(errors.ErrUnexpectedLexInObjectValidator)
+}
+
+func (v *objectValidator) feedObjectKeyEnd(jsonLexeme lexeme.LexEvent) {
+	v.lastFoundKeyLex = jsonLexeme
+	if _, ok := v.node_.(*schema.ObjectNode); !ok { // mixed node
+		panic(lexeme.NewLexEventError(
+			v.lastFoundKeyLex,
+			errors.Format(errors.ErrSchemaDoesNotSupportKey, v.lastFoundKeyLex.Value().Unquote().String())),
+		)
+	}
+	delete(v.requiredKeys, v.lastFoundKeyLex.Value().Unquote().String())
+}
+
+func (v *objectValidator) feedObjectValueBegin() ([]validator, bool) {
+	objectNode, ok := v.node_.(*schema.ObjectNode)
+	if !ok {
+		panic(errors.ErrImpossible)
+	}
+
+	childNode, ok := objectNode.ChildByRawKey(v.lastFoundKeyLex.Value())
+	if ok {
+		return NodeValidatorList(childNode, v.rootSchema, v), false
+	}
+
+	// child node not found on schema object
+	if c := v.node_.Constraint(constraint.RequiredKeysConstraintType); c != nil {
+		key, ok := v.validateTypeRules(v.lastFoundKeyLex.Value())
+		if ok {
+			child, ok := objectNode.ChildByRawKey([]byte(key))
+			if ok {
+				delete(v.requiredKeys, key)
+				return NodeValidatorList(child, v.rootSchema, v), false
+			}
+		}
+	}
+	if c := v.node_.Constraint(constraint.AdditionalPropertiesConstraintType); c != nil {
+		return newAdditionalPropertiesValidator(v.node_, v, c.(*constraint.AdditionalProperties)), false
+	}
+
+	panic(lexeme.NewLexEventError(
+		v.lastFoundKeyLex,
+		errors.Format(errors.ErrSchemaDoesNotSupportKey, v.lastFoundKeyLex.Value().Unquote().String())),
+	)
 }
 
 func (v objectValidator) requiredKeysString() string {
@@ -133,34 +144,36 @@ func (v objectValidator) requiredKeysString() string {
 // validate with rules
 func (v objectValidator) validateTypeRules(value jbytes.Bytes) (string, bool) {
 	for key := range v.requiredKeys {
-		if typ, ok := v.rootSchema.TypesList()[key]; ok {
-			node := typ.Schema().RootNode()
-			if node.Type().String() != "string" {
-				panic(errors.Format(errors.ErrInvalidKeyType, v.requiredKeysString()))
-			}
+		typ, ok := v.rootSchema.TypesList()[key]
+		if !ok {
+			continue
+		}
+		node := typ.Schema().RootNode()
+		if node.Type().String() != "string" {
+			panic(errors.Format(errors.ErrInvalidKeyType, v.requiredKeysString()))
+		}
 
-			flag := false
-			inside := false
-			i := 0
+		flag := false
+		inside := false
+		i := 0
 
-			node.ConstraintMap().EachSafe(func(_ constraint.Type, v constraint.Constraint) {
-				inside = true
-				if i == 0 {
-					flag = true
-				}
-				flag = flag && checkConstraint(v, value)
-				i++
-			})
+		node.ConstraintMap().EachSafe(func(_ constraint.Type, v constraint.Constraint) {
+			inside = true
+			if i == 0 {
+				flag = true
+			}
+			flag = flag && checkConstraint(v, value)
+			i++
+		})
 
-			if !inside {
-				if bytes.Equal(node.Value(), value) {
-					flag = true
-				}
+		if !inside {
+			if bytes.Equal(node.Value(), value) {
+				flag = true
 			}
-			if flag {
-				// all rules ok for a node
-				return key, true
-			}
+		}
+		if flag {
+			// all rules ok for a node
+			return key, true
 		}
 	}
 	return "", false

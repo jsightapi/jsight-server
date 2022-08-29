@@ -24,7 +24,7 @@ func NewTag(name, title string) *Tag {
 	}
 }
 
-func newPathTag(r InteractionId) *Tag {
+func newPathTag(r InteractionID) *Tag {
 	title := pathTagTitle(r.Path().String())
 	return &Tag{
 		InteractionGroups: make(map[Protocol]TagInteractionGroup),
@@ -48,7 +48,7 @@ func pathTagTitle(path string) string {
 	return "/" + p[0]
 }
 
-func (t *Tag) appendInteractionId(k InteractionId) {
+func (t *Tag) appendInteractionID(k InteractionID) {
 	list, ok := t.InteractionGroups[k.Protocol()]
 	if !ok {
 		list = newTagInteractionGroup(k.Protocol())

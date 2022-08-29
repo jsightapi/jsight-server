@@ -9,70 +9,45 @@ import (
 )
 
 type (
-	state    uint8
 	stepFunc func(*scanner, byte) state
 )
 
-// These values are returned by the state transition functions
-// assigned to scanner.state and the method scanner.eof.
-// They give details about the current state of the scan that
-// callers might be interested to know about.
-// It is okay to ignore the return value of any particular
-// call to scanner.state.
+// state values are returned by the state transition functions assigned to
+// scanner.state and the method scanner.eof.
+// They give details about the current state of the scan that callers might be
+// interested to know about.
+// It is okay to ignore the return value of any particular call to scanner.state.
+type state uint8
+
 const (
 	// scanContinue indicates an uninteresting byte, so we can keep scanning forward.
 	scanContinue state = iota // uninteresting byte
 
-	// scanSkipSpace indicates a space byte, can be skipped.
-	scanSkipSpace
-
 	// scanBeginObject indicates beginning of an object.
 	scanBeginObject
-
-	// scanObjectKey indicates finished object key (string)
-	scanObjectKey
-
-	// scanObjectValue indicates finished non-last value in an object.
-	scanObjectValue
-
-	// scanEndObject indicates the end of object (implies scanObjectValue if
-	// possible).
-	scanEndObject
 
 	// scanBeginArray indicates beginning of an array.
 	scanBeginArray
 
-	// scanArrayValue indicates finished array value.
-	scanArrayValue
-
-	// scanEndArray indicates the end of array (implies scanArrayValue if possible).
-	scanEndArray
-
 	// scanBeginLiteral indicates beginning of any value outside an array or object.
 	scanBeginLiteral
-
-	// scanEnd indicates the end of the scanning. Top-level value ended *before*
-	// this byte.
-	scanEnd
 )
 
 // scanner represents a scanner is a JSON scanning state machine.
-// Callers call scan.reset() and then pass bytes in one at a time
-// by calling scan.step(&scan, c) for each byte.
-// The return value, referred to as an opcode, tells the
-// caller about significant parsing events like beginning
-// and ending literals, objects, and arrays, so that the
-// caller can follow along if it wishes.
-// The return value scanEnd indicates that a single top-level
-// JSON value has been completed, *before* the byte that
-// just got passed in.  (The indication must be delayed in order
-// to recognize the end of numbers: is 123 a whole value or
-// the beginning of 12345e+6?).
+// Callers call scan.reset() and then pass bytes in one at a time by calling
+// scan.step(&scan, c) for each byte.
+// The return value, referred to as an opcode, tells the caller about significant
+// parsing events like beginning and ending literals, objects, and arrays, so that
+// the caller can follow along if it wishes.
+// The return value scanEnd indicates that a single top-level JSON value has been
+// completed, *before* the byte that just got passed in.  (The indication must be
+// delayed in order to recognize the end of numbers: is 123 a whole value or the
+// beginning of 12345e+6?).
 type scanner struct {
 	// step is a func to be called to execute the next transition.
-	// Also tried using an integer constant and a single func
-	// with a switch, but using the func directly was 10% faster
-	// on a 64-bit Mac Mini, and it's nicer to read.
+	// Also tried using an integer constant and a single func with a switch, but
+	// using the func directly was 10% faster on a 64-bit Mac Mini, and it's nicer
+	// to read.
 	step stepFunc
 
 	// returnToStep a stack of step functions, to preserve the sequence of steps
@@ -128,7 +103,8 @@ func (s *scanner) Length() uint {
 		}
 
 		if lex.Type() == lexeme.EndTop {
-			// Found character after the end of the schema and spaces. Ex: char "s" in "{} some text"
+			// Found character after the end of the schema and spaces. Ex: char
+			// "s" in "{} some text".
 			length = uint(lex.End()) - 1
 			break
 		}
@@ -160,9 +136,6 @@ func (s *scanner) Next() (lexeme.LexEvent, bool) {
 	for s.index < s.dataSize {
 		c := s.data[s.index]
 		s.index++
-
-		// useful for debugging comment below 1 line for release
-		// fmt.Println("Next->step", runtime.FuncForPC(reflect.ValueOf(s.step).Pointer()).Name())
 
 		s.step(s, c)
 
@@ -207,7 +180,7 @@ func (s *scanner) shiftFound() lexeme.LexEventType {
 	return lexType
 }
 
-func (s *scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexEvent { //nolint:gocyclo // todo try to make this more readable
+func (s *scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexEvent {
 	i := s.index - 1
 	if lexType == lexeme.NewLine || lexType == lexeme.EndTop {
 		return lexeme.NewLexEvent(lexType, i, i, s.file)
@@ -225,21 +198,32 @@ func (s *scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 		return lex
 	}
 
-	// closing tag
+	return s.processFoundLexemeClosingTag(lexType, i)
+}
+
+func (s *scanner) processFoundLexemeClosingTag(lexType lexeme.LexEventType, i bytes.Index) lexeme.LexEvent {
 	pair := s.stack.Pop()
 	pairType := pair.Type()
-	if (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
-		(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd) {
+	if isNonScalarPair(pairType, lexType) {
 		return lexeme.NewLexEvent(lexType, pair.Begin(), i, s.file)
 	}
 
-	if (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
-		(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
-		(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
-		(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd) {
+	if isScalarPair(pairType, lexType) {
 		return lexeme.NewLexEvent(lexType, pair.Begin(), i-1, s.file)
 	}
 	panic("Incorrect ending of the lexical event")
+}
+
+func isNonScalarPair(pairType, lexType lexeme.LexEventType) bool {
+	return (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
+		(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd)
+}
+
+func isScalarPair(pairType, lexType lexeme.LexEventType) bool {
+	return (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
+		(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
+		(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
+		(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd)
 }
 
 func stateFoundRootValue(s *scanner, c byte) state {
@@ -259,7 +243,7 @@ func stateFoundRootValue(s *scanner, c byte) state {
 
 func stateFoundObjectKeyBeginOrEmpty(s *scanner, c byte) state {
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 
 	return stateBeginKeyOrEmpty(s, c)
@@ -267,7 +251,7 @@ func stateFoundObjectKeyBeginOrEmpty(s *scanner, c byte) state {
 
 func stateFoundObjectKeyBegin(s *scanner, c byte) state {
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 
 	r := stateBeginString(s, c)
@@ -331,7 +315,7 @@ func stateFoundArrayItemBegin(s *scanner, c byte) state {
 
 func stateBeginValue(s *scanner, c byte) state { //nolint:gocyclo // It's okay.
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	switch c {
 	case '{':
@@ -371,7 +355,7 @@ func stateBeginValue(s *scanner, c byte) state { //nolint:gocyclo // It's okay.
 	panic(s.newDocumentErrorAtCharacter("looking for beginning of value"))
 }
 
-// after reading `[`
+// After reading `[`.
 func stateBeginArrayItemOrEmpty(s *scanner, c byte) state {
 	if c == ']' {
 		return stateFoundArrayEnd(s)
@@ -379,7 +363,7 @@ func stateBeginArrayItemOrEmpty(s *scanner, c byte) state {
 	return stateBeginValue(s, c)
 }
 
-// after reading `{`
+// After reading `{`.
 func stateBeginKeyOrEmpty(s *scanner, c byte) state {
 	if c == '}' {
 		return stateFoundObjectEnd(s)
@@ -388,7 +372,7 @@ func stateBeginKeyOrEmpty(s *scanner, c byte) state {
 	return stateBeginString(s, c)
 }
 
-// after reading `{"key": value,`
+// After reading `{"key": value,`.
 func stateBeginString(s *scanner, c byte) state {
 	if c == '"' {
 		s.step = stateInString
@@ -437,23 +421,23 @@ func stateEndValue(s *scanner, c byte) state {
 
 func stateAfterObjectKey(s *scanner, c byte) state {
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 
 	if c == ':' {
 		s.step = stateFoundObjectValueBegin
-		return scanObjectKey
+		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("after object key"))
 }
 
 func stateAfterObjectValue(s *scanner, c byte) state {
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if c == ',' {
 		s.step = stateFoundObjectKeyBegin
-		return scanObjectValue
+		return scanContinue
 	}
 	if c == '}' {
 		return stateFoundObjectEnd(s)
@@ -463,11 +447,11 @@ func stateAfterObjectValue(s *scanner, c byte) state {
 
 func stateAfterArrayItem(s *scanner, c byte) state {
 	if bytes.IsBlank(c) {
-		return scanSkipSpace
+		return scanContinue
 	}
 	if c == ',' {
 		s.step = stateFoundArrayItemBegin
-		return scanArrayValue
+		return scanContinue
 	}
 	if c == ']' {
 		return stateFoundArrayEnd(s)
@@ -478,7 +462,7 @@ func stateAfterArrayItem(s *scanner, c byte) state {
 func stateFoundObjectEnd(s *scanner) state {
 	s.found(lexeme.ObjectEnd)
 	s.step = stateEndValue
-	return scanEndObject
+	return scanContinue
 }
 
 func stateFoundArrayEnd(s *scanner) state {
@@ -488,11 +472,11 @@ func stateFoundArrayEnd(s *scanner) state {
 	} else {
 		s.step = stateEndValue
 	}
-	return scanEndArray
+	return scanContinue
 }
 
-// stateEndTop is the state after finishing the top-level value,
-// such as after reading `{}` or `[1,2,3]`.
+// stateEndTop is the state after finishing the top-level value, such as after
+// reading `{}` or `[1,2,3]`.
 // Only space characters should be seen now.
 func stateEndTop(s *scanner, c byte) state {
 	if !bytes.IsBlank(c) {
@@ -501,10 +485,10 @@ func stateEndTop(s *scanner, c byte) state {
 		}
 		s.found(lexeme.EndTop)
 	}
-	return scanEnd
+	return scanContinue
 }
 
-// after reading `"`
+// After reading `"`.
 func stateInString(s *scanner, c byte) state {
 	switch c {
 	case '"':
@@ -521,7 +505,7 @@ func stateInString(s *scanner, c byte) state {
 	return scanContinue
 }
 
-// after reading `"\` during a quoted string
+// After reading `"\` during a quoted string.
 func stateInStringEsc(s *scanner, c byte) state {
 	switch c {
 	case 'b', 'f', 'n', 'r', 't', '\\', '/', '"':
@@ -535,43 +519,43 @@ func stateInStringEsc(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in string escape code"))
 }
 
-// after reading `"\u` during a quoted string
+// After reading `"\u` during a quoted string.
 func stateInStringEscU(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU1
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("in \\u hexadecimal character escape"))
 }
 
-// after reading `"\u1` during a quoted string
+// After reading `"\u1` during a quoted string.
 func stateInStringEscU1(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU12
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("in \\u hexadecimal character escape"))
 }
 
-// after reading `"\u12` during a quoted string
+// After reading `"\u12` during a quoted string.
 func stateInStringEscU12(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU123
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("in \\u hexadecimal character escape"))
 }
 
-// after reading `"\u123` during a quoted string
+// After reading `"\u123` during a quoted string.
 func stateInStringEscU123(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = s.returnToStep.Pop() // = stateInString for JSON, = stateInAnnotationObjectKey for AnnotationObject
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("in \\u hexadecimal character escape"))
 }
 
-// after reading `-` during a number
+// After reading `-` during a number.
 func stateNeg(s *scanner, c byte) state {
 	if c == '0' {
 		s.step = state0
@@ -586,17 +570,17 @@ func stateNeg(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in numeric literal"))
 }
 
-// after reading a non-zero integer during a number,
-// such as after reading `1` or `100` but not `0`
+// After reading a non-zero integer during a number, such as after reading `1` or
+// `100` but not `0`.
 func state1(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		s.step = state1
 		return scanContinue
 	}
 	return state0(s, c)
 }
 
-// after reading `0` during a number
+// After reading `0` during a number.
 func state0(s *scanner, c byte) state {
 	if c == '.' {
 		s.step = stateDot
@@ -609,19 +593,20 @@ func state0(s *scanner, c byte) state {
 	return stateEndValue(s, c)
 }
 
-// after reading the integer and decimal point in a number, such as after reading `1.`
+// After reading the integer and decimal point in a number, such as after reading
+// `1.`.
 func stateDot(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		s.step = stateDot0
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("after decimal point in numeric literal"))
 }
 
-// after reading the integer, decimal point, and subsequent
-// digits of a number, such as after reading `3.14`
+// After reading the integer, decimal point, and subsequent digits of a number,
+// such as after reading `3.14`.
 func stateDot0(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		return scanContinue
 	}
 	if c == 'e' || c == 'E' {
@@ -631,8 +616,8 @@ func stateDot0(s *scanner, c byte) state {
 	return stateEndValue(s, c)
 }
 
-// after reading the mantissa and e in a number,
-// such as after reading `314e` or `0.314e`
+// After reading the mantissa and e in a number, such as after reading `314e` or
+// `0.314e`.
 func stateE(s *scanner, c byte) state {
 	if c == '+' || c == '-' {
 		s.step = stateESign
@@ -641,27 +626,26 @@ func stateE(s *scanner, c byte) state {
 	return stateESign(s, c)
 }
 
-// after reading the mantissa, e, and sign in a number,
-// such as after reading `314e-` or `0.314e+`
+// After reading the mantissa, e, and sign in a number, such as after reading
+// `314e-` or `0.314e+`.
 func stateESign(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		s.step = stateE0
 		return scanContinue
 	}
 	panic(s.newDocumentErrorAtCharacter("in exponent of numeric literal"))
 }
 
-// after reading the mantissa, e, optional sign,
-// and at least one digit of the exponent in a number,
-// such as after reading `314e-2` or `0.314e+1` or `3.14e0`
+// After reading the mantissa, e, optional sign, and at least one digit of the
+// exponent in a number, such as after reading `314e-2` or `0.314e+1` or `3.14e0`.
 func stateE0(s *scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		return scanContinue
 	}
 	return stateEndValue(s, c)
 }
 
-// after reading `t`
+// After reading `t`.
 func stateT(s *scanner, c byte) state {
 	if c == 'r' {
 		s.step = stateTr
@@ -670,7 +654,7 @@ func stateT(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal true (expecting 'r')"))
 }
 
-// after reading `tr`
+// After reading `tr`.
 func stateTr(s *scanner, c byte) state {
 	if c == 'u' {
 		s.step = stateTru
@@ -679,7 +663,7 @@ func stateTr(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal true (expecting 'u')"))
 }
 
-// after reading `tru`
+// After reading `tru`.
 func stateTru(s *scanner, c byte) state {
 	if c == 'e' {
 		s.step = stateEndValue
@@ -689,7 +673,7 @@ func stateTru(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal true (expecting 'e')"))
 }
 
-// after reading `f`
+// After reading `f`.
 func stateF(s *scanner, c byte) state {
 	if c == 'a' {
 		s.step = stateFa
@@ -698,7 +682,7 @@ func stateF(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal false (expecting 'a')"))
 }
 
-// after reading `fa`
+// After reading `fa`.
 func stateFa(s *scanner, c byte) state {
 	if c == 'l' {
 		s.step = stateFal
@@ -707,7 +691,7 @@ func stateFa(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal false (expecting 'l')"))
 }
 
-// after reading `fal`
+// After reading `fal`.
 func stateFal(s *scanner, c byte) state {
 	if c == 's' {
 		s.step = stateFals
@@ -716,7 +700,7 @@ func stateFal(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal false (expecting 's')"))
 }
 
-// after reading `fals`
+// After reading `fals`.
 func stateFals(s *scanner, c byte) state {
 	if c == 'e' {
 		s.step = stateEndValue
@@ -726,7 +710,7 @@ func stateFals(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal false (expecting 'e')"))
 }
 
-// after reading `n`
+// After reading `n`.
 func stateN(s *scanner, c byte) state {
 	if c == 'u' {
 		s.step = stateNu
@@ -735,7 +719,7 @@ func stateN(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal null (expecting 'u')"))
 }
 
-// after reading `nu`
+// After reading `nu`.
 func stateNu(s *scanner, c byte) state {
 	if c == 'l' {
 		s.step = stateNul
@@ -744,7 +728,7 @@ func stateNu(s *scanner, c byte) state {
 	panic(s.newDocumentErrorAtCharacter("in literal null (expecting 'l')"))
 }
 
-// after reading `nul`
+// After reading `nul`.
 func stateNul(s *scanner, c byte) state {
 	if c == 'l' {
 		s.step = stateEndValue
@@ -757,7 +741,7 @@ func stateNul(s *scanner, c byte) state {
 func (s *scanner) newDocumentErrorAtCharacter(context string) errors.DocumentError {
 	// Make runes (utf8 symbols) from current index to last of slice s.data.
 	// Get first rune. Then make string with format ' symbol '
-	runes := []rune(string(s.data[(s.index - 1):])) // TODO is memory allocation optimization required?
+	runes := []rune(string(s.data[(s.index - 1):]))
 	e := errors.Format(errors.ErrInvalidCharacter, string(runes[0]), context)
 	err := errors.NewDocumentError(s.file, e)
 	err.SetIndex(s.index - 1)

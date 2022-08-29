@@ -48,11 +48,11 @@ func (c *RequiredKeys) AddKey(key string) {
 func (c RequiredKeys) ASTNode() jschema.RuleASTNode {
 	const source = jschema.RuleASTNodeSourceManual
 
-	n := newRuleASTNode(jschema.JSONTypeArray, "", source)
+	n := newRuleASTNode(jschema.TokenTypeArray, "", source)
 	n.Items = make([]jschema.RuleASTNode, 0, len(c.keys))
 
 	for _, s := range c.keys {
-		n.Items = append(n.Items, newRuleASTNode(jschema.JSONTypeString, s, source))
+		n.Items = append(n.Items, newRuleASTNode(jschema.TokenTypeString, s, source))
 	}
 
 	return n

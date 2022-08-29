@@ -148,7 +148,7 @@ func (core JApiCore) addInfoDescription(d *directive.Directive, description stri
 }
 
 func (core JApiCore) addHTTPMethodDescription(d *directive.Directive, description string) *jerr.JApiError {
-	if err := core.catalog.AddDescriptionToHttpMethod(*d, description); err != nil {
+	if err := core.catalog.AddDescriptionToHTTPMethod(*d, description); err != nil {
 		return d.KeywordError(err.Error())
 	}
 	return nil
@@ -189,7 +189,7 @@ func (core JApiCore) addBaseUrl(d *directive.Directive) *jerr.JApiError {
 	}
 
 	server := d.Parent
-	if err := core.catalog.AddBaseUrl(server.NamedParameter("Name"), path); err != nil {
+	if err := core.catalog.AddBaseURL(server.NamedParameter("Name"), path); err != nil {
 		return d.KeywordError(err.Error())
 	}
 	return nil
@@ -415,7 +415,9 @@ func (core JApiCore) addResponse(d *directive.Directive) *jerr.JApiError {
 	if d.Type() == directive.Body {
 		d1 := d.Parent
 		if d1.Type() == directive.HTTPResponseCode && typeParam != "" && d1.NamedParameter("Type") != "" {
-			return d.KeywordError("You cannot specify User Type in the response directive if it has a child Body directive.")
+			return d.KeywordError(
+				"You cannot specify User Type in the response directive if it has a child Body directive.",
+			)
 		}
 	}
 
@@ -429,13 +431,34 @@ func (core JApiCore) addResponse(d *directive.Directive) *jerr.JApiError {
 
 	switch {
 	case typeParam != "":
-		je = core.catalog.AddResponseBody(bytes.Bytes(typeParam), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(
+			bytes.Bytes(typeParam),
+			bodyFormat,
+			schemaNotation,
+			*d,
+			core.userTypes,
+			core.rules,
+		)
 
 	case d.BodyCoords.IsSet():
-		je = core.catalog.AddResponseBody(d.BodyCoords.Read(), bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(
+			d.BodyCoords.Read(),
+			bodyFormat,
+			schemaNotation,
+			*d,
+			core.userTypes,
+			core.rules,
+		)
 
 	case schemaNotation.IsAnyOrEmpty():
-		je = core.catalog.AddResponseBody(nil, bodyFormat, schemaNotation, *d, core.userTypes, core.rules)
+		je = core.catalog.AddResponseBody(
+			nil,
+			bodyFormat,
+			schemaNotation,
+			*d,
+			core.userTypes,
+			core.rules,
+		)
 
 	case d.Type() == directive.Body:
 		je = d.KeywordError("body is empty")
@@ -508,10 +531,10 @@ func (core JApiCore) addProtocol(d *directive.Directive) *jerr.JApiError {
 		return d.KeywordError("the parameter value have to be \"json-rpc-2.0\"")
 	}
 
-	if _, ok := core.onlyOneProtocolIntoUrl[d.Parent]; ok {
+	if _, ok := core.onlyOneProtocolIntoURL[d.Parent]; ok {
 		return d.KeywordError("the directive Protocol must be unique within the directive URL")
 	}
-	core.onlyOneProtocolIntoUrl[d.Parent] = struct{}{}
+	core.onlyOneProtocolIntoURL[d.Parent] = struct{}{}
 
 	return nil
 }
@@ -537,7 +560,10 @@ func isProtocolExists(d *directive.Directive) bool {
 	return false
 }
 
-func (core JApiCore) addJsonRpcSchema(d *directive.Directive, f func(catalog.Schema, directive.Directive) error) *jerr.JApiError {
+func (core JApiCore) addJsonRpcSchema(
+	d *directive.Directive,
+	f func(catalog.Schema, directive.Directive) error,
+) *jerr.JApiError {
 	if d.Annotation != "" {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
 	}

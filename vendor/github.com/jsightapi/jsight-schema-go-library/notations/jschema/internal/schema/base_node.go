@@ -1,6 +1,7 @@
 package schema
 
 import (
+	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
@@ -39,6 +40,24 @@ func newBaseNode(lex lexeme.LexEvent) baseNode {
 
 func (n baseNode) Type() json.Type {
 	return n.jsonType
+}
+
+func (n baseNode) SchemaType() jschema.SchemaType {
+	for k, v := range constraintToSchemaTypeMap {
+		if n.constraints.Has(k) {
+			return v
+		}
+	}
+	return jschema.SchemaType(n.jsonType.String())
+}
+
+var constraintToSchemaTypeMap = map[constraint.Type]jschema.SchemaType{
+	constraint.AnyConstraintType:      jschema.SchemaTypeAny,
+	constraint.DateConstraintType:     jschema.SchemaTypeDate,
+	constraint.DateTimeConstraintType: jschema.SchemaTypeDateTime,
+	constraint.UuidConstraintType:     jschema.SchemaTypeUUID,
+	constraint.UriConstraintType:      jschema.SchemaTypeURI,
+	constraint.EmailConstraintType:    jschema.SchemaTypeEmail,
 }
 
 func (n *baseNode) SetRealType(s string) bool {

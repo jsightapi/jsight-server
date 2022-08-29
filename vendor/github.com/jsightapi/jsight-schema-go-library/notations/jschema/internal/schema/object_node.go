@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
+	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 )
@@ -78,8 +79,20 @@ func (n ObjectNode) Len() int {
 	return len(n.children)
 }
 
-func (n ObjectNode) Child(key string) (Node, bool) {
-	i, ok := n.keys.Get(key)
+// ChildByRawKey returns child by raw key as is present in schema.
+// For instance: "foo" or @foo (shortcut).
+func (n ObjectNode) ChildByRawKey(rawKey bytes.Bytes) (Node, bool) {
+	key := rawKey
+	isShortcut := rawKey.IsUserTypeName()
+	if !isShortcut {
+		key = key.Unquote()
+	}
+	return n.Child(key.String(), isShortcut)
+}
+
+// Child returns child bye specified key.
+func (n ObjectNode) Child(key string, isShortcut bool) (Node, bool) {
+	i, ok := n.keys.Get(key, isShortcut)
 	if ok {
 		return n.children[i.Index], true
 	}

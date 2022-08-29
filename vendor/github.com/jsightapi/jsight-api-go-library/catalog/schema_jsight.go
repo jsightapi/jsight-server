@@ -98,7 +98,7 @@ func astNodeToJsightContent(
 
 	c := &SchemaContentJSight{
 		IsKeyUserTypeRef: node.IsKeyShortcut,
-		TokenType:        node.JSONType,
+		TokenType:        node.TokenType,
 		Type:             node.SchemaType,
 		Optional:         isOptional,
 		ScalarValue:      node.Value,
@@ -107,10 +107,10 @@ func astNodeToJsightContent(
 		Rules:            rules,
 	}
 
-	switch node.JSONType {
-	case jschemaLib.JSONTypeObject:
+	switch node.TokenType {
+	case jschemaLib.TokenTypeObject:
 		c.collectJSightContentObjectProperties(node, usedUserTypes, usedUserEnums)
-	case jschemaLib.JSONTypeArray:
+	case jschemaLib.TokenTypeArray:
 		c.collectJSightContentArrayItems(node, usedUserTypes, usedUserEnums)
 	}
 
@@ -269,7 +269,7 @@ func (c *SchemaContentJSight) collectJSightContentArrayItems(
 
 func (c SchemaContentJSight) MarshalJSON() (b []byte, err error) {
 	switch c.TokenType {
-	case jschemaLib.JSONTypeObject, jschemaLib.JSONTypeArray:
+	case jschemaLib.TokenTypeObject, jschemaLib.TokenTypeArray:
 		b, err = c.marshalJSONObjectOrArray()
 
 	default:

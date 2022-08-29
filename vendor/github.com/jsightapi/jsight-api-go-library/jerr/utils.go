@@ -33,8 +33,8 @@ func GetQuote(content bytes.Bytes, position bytes.Index, nl byte) string {
 }
 
 func quote(content bytes.Bytes, position bytes.Index, lineBeginning bytes.Index, nl byte) string {
+	const maxLength = 200
 	end := LineEnd(content, position, nl)
-	maxLength := bytes.Index(200)
 	if end-lineBeginning > maxLength {
 		end = lineBeginning + maxLength - 3
 		return string(content[lineBeginning:end].TrimSpacesFromLeft()) + "..."

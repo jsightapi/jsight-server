@@ -19,8 +19,8 @@ type JApiCore struct {
 	// processedByAllOf a "set" of already processed types by allOf.
 	processedByAllOf map[string]struct{}
 
-	// onlyOneProtocolIntoUrl to verify the uniqueness of a directive Protocol within a directive URL
-	onlyOneProtocolIntoUrl map[*directive.Directive]struct{}
+	// onlyOneProtocolIntoURL to verify the uniqueness of a directive Protocol within a directive URL
+	onlyOneProtocolIntoURL map[*directive.Directive]struct{}
 
 	// uniqURLPath used for checking the uniqueness URL paths.
 	uniqURLPath map[catalog.Path]struct{}
@@ -111,7 +111,7 @@ func NewJApiCore(file *fs.File, oo ...Option) *JApiCore {
 		catalog:                catalog.NewCatalog(),
 		currentDirective:       nil,
 		directives:             make([]*directive.Directive, 0, 200),
-		onlyOneProtocolIntoUrl: make(map[*directive.Directive]struct{}, 20),
+		onlyOneProtocolIntoURL: make(map[*directive.Directive]struct{}, 20),
 		uniqURLPath:            make(map[catalog.Path]struct{}, 20),
 		similarPaths:           make(map[string]string, 20),
 		rawPathVariables:       make([]rawPathVariable, 0, 40),
@@ -126,9 +126,9 @@ func NewJApiCore(file *fs.File, oo ...Option) *JApiCore {
 		directive.Version:          core.addVersion,
 		directive.Description:      core.addDescription,
 		directive.Server:           core.addServer,
-		directive.BaseUrl:          core.addBaseUrl,
+		directive.BaseURL:          core.addBaseUrl,
 		directive.Type:             core.addType,
-		directive.Url:              core.addURL,
+		directive.URL:              core.addURL,
 		directive.Get:              core.addHTTPMethod,
 		directive.Post:             core.addHTTPMethod,
 		directive.Put:              core.addHTTPMethod,

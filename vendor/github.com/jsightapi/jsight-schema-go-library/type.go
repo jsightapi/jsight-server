@@ -6,16 +6,16 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 )
 
-type JSONType = string
+type TokenType = string
 
 const (
-	JSONTypeNumber   JSONType = "number"
-	JSONTypeString   JSONType = "string"
-	JSONTypeBoolean  JSONType = "boolean"
-	JSONTypeArray    JSONType = "array"
-	JSONTypeObject   JSONType = "object"
-	JSONTypeShortcut JSONType = "reference"
-	JSONTypeNull     JSONType = "null"
+	TokenTypeNumber   TokenType = "number"
+	TokenTypeString   TokenType = "string"
+	TokenTypeBoolean  TokenType = "boolean"
+	TokenTypeArray    TokenType = "array"
+	TokenTypeObject   TokenType = "object"
+	TokenTypeShortcut TokenType = "reference"
+	TokenTypeNull     TokenType = "null"
 )
 
 type SchemaType string

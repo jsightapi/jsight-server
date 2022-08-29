@@ -6,30 +6,30 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/directive"
 )
 
-type HttpInteractionId struct {
+type HTTPInteractionID struct {
 	protocol Protocol
 	path     Path
-	method   HttpMethod
+	method   HTTPMethod
 }
 
-func (h HttpInteractionId) Protocol() Protocol {
+func (h HTTPInteractionID) Protocol() Protocol {
 	return h.protocol
 }
 
-func (h HttpInteractionId) Path() Path {
+func (h HTTPInteractionID) Path() Path {
 	return h.path
 }
 
-func (h HttpInteractionId) String() string {
+func (h HTTPInteractionID) String() string {
 	return fmt.Sprintf("http %s %s", h.method.String(), h.path.String())
 }
 
-func (h HttpInteractionId) MarshalText() ([]byte, error) {
+func (h HTTPInteractionID) MarshalText() ([]byte, error) {
 	return []byte(h.String()), nil
 }
 
-func newHttpInteractionId(d directive.Directive) (HttpInteractionId, error) {
-	h := HttpInteractionId{
+func newHTTPInteractionID(d directive.Directive) (HTTPInteractionID, error) {
+	h := HTTPInteractionID{
 		protocol: HTTP,
 	}
 
@@ -38,12 +38,12 @@ func newHttpInteractionId(d directive.Directive) (HttpInteractionId, error) {
 		return h, err
 	}
 
-	de, err := d.HttpMethod()
+	de, err := d.HTTPMethod()
 	if err != nil {
 		return h, err
 	}
 
-	method, err := NewHttpMethod(de)
+	method, err := NewHTTPMethod(de)
 	if err != nil {
 		return h, err
 	}

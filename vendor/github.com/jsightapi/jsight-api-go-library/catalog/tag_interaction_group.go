@@ -1,7 +1,7 @@
 package catalog
 
 type TagInteractionGroup interface {
-	append(i InteractionId)
+	append(i InteractionID)
 }
 
 func newTagInteractionGroup(p Protocol) TagInteractionGroup {
@@ -9,6 +9,6 @@ func newTagInteractionGroup(p Protocol) TagInteractionGroup {
 	case JsonRpc:
 		return newTagJsonRpcInteractionGroup()
 	default: // case http:
-		return newTagHttpInteractionGroup()
+		return newTagHTTPInteractionGroup()
 	}
 }

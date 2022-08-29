@@ -131,7 +131,7 @@ func (c *allOfConstraintCompiler) processType(name string) *schema.Schema {
 		panic(errors.ErrUnacceptableRecursionInAllOfRule)
 	}
 
-	typ := c.rootSchema.Type(name) // can panic
+	typ := c.rootSchema.MustType(name) // can panic
 
 	if _, ok := c.compiledTypes[name]; ok {
 		return typ

@@ -11,10 +11,10 @@ func newEmptyRuleASTNode() jschema.RuleASTNode {
 	}
 }
 
-func newRuleASTNode(t jschema.JSONType, v string, s jschema.RuleASTNodeSource) jschema.RuleASTNode {
+func newRuleASTNode(t jschema.TokenType, v string, s jschema.RuleASTNodeSource) jschema.RuleASTNode {
 	an := newEmptyRuleASTNode()
 
-	an.JSONType = t
+	an.TokenType = t
 	an.Value = v
 	an.Source = s
 

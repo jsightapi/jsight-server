@@ -205,7 +205,7 @@ func (s *Scanner) newDocumentError(code errors.ErrorCode, c byte) errors.Documen
 func (s *Scanner) newDocumentErrorAtCharacter(context string) errors.DocumentError {
 	// Make runes (utf8 symbols) from current index to last of slice s.data.
 	// Get first rune. Then make string with format ' symbol '
-	runes := []rune(string(s.data[(s.index - 1):])) // TODO is memory allocation optimization required?
+	runes := []rune(string(s.data[(s.index - 1):]))
 	e := errors.Format(errors.ErrInvalidCharacter, string(runes[0]), context)
 	err := errors.NewDocumentError(s.file, e)
 	err.SetIndex(s.index - 1)
@@ -259,37 +259,57 @@ func (s *Scanner) Next() (lexeme.LexEvent, bool) {
 	return lexeme.LexEvent{}, false
 }
 
-func (s *Scanner) isFoundLastObjectEndOnAnnotation() (bool, lexeme.LexEventType) { //nolint:gocyclo // todo try to make this more readable
+func (s *Scanner) isFoundLastObjectEndOnAnnotation() (bool, lexeme.LexEventType) {
 	length := s.stack.Len()
 
 	switch {
-	case length >= 5 &&
+	case s.isFoundLastObjectEndOnAnnotationInShortcut(length):
+		return true, s.stack.Get(length - 5).Type()
+
+	case s.isFoundLastObjectEndOnAnnotationInLiteral(length):
+		return true, s.stack.Get(length - 4).Type()
+
+	case s.isFoundLastObjectEndOnAnnotationInObjectValue(length):
+		return true, s.stack.Get(length - 3).Type()
+
+	case s.isFoundLastObjectEndOnAnnotationInObject(length):
+		return true, s.stack.Get(length - 2).Type()
+	}
+	return false, lexeme.InlineAnnotationBegin
+}
+
+func (s *Scanner) isFoundLastObjectEndOnAnnotationInShortcut(length int) bool {
+	return length >= 5 &&
 		s.stack.Get(length-1).Type() == lexeme.TypesShortcutBegin &&
 		s.stack.Get(length-2).Type() == lexeme.MixedValueBegin &&
 		s.stack.Get(length-3).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-4).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-5).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-5).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
-		return true, s.stack.Get(length - 5).Type()
+		(s.stack.Get(length-5).Type() == lexeme.InlineAnnotationBegin ||
+			s.stack.Get(length-5).Type() == lexeme.MultiLineAnnotationBegin)
+}
 
-	case length >= 4 &&
+func (s *Scanner) isFoundLastObjectEndOnAnnotationInLiteral(length int) bool {
+	return length >= 4 &&
 		s.stack.Get(length-1).Type() == lexeme.LiteralBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-3).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
-		return true, s.stack.Get(length - 4).Type()
+		(s.stack.Get(length-4).Type() == lexeme.InlineAnnotationBegin ||
+			s.stack.Get(length-4).Type() == lexeme.MultiLineAnnotationBegin)
+}
 
-	case length >= 3 &&
+func (s *Scanner) isFoundLastObjectEndOnAnnotationInObjectValue(length int) bool {
+	return length >= 3 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectValueBegin &&
 		s.stack.Get(length-2).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
-		return true, s.stack.Get(length - 3).Type()
+		(s.stack.Get(length-3).Type() == lexeme.InlineAnnotationBegin ||
+			s.stack.Get(length-3).Type() == lexeme.MultiLineAnnotationBegin)
+}
 
-	case length >= 2 &&
+func (s *Scanner) isFoundLastObjectEndOnAnnotationInObject(length int) bool {
+	return length >= 2 &&
 		s.stack.Get(length-1).Type() == lexeme.ObjectBegin &&
-		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin || s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin): //nolint:lll
-		return true, s.stack.Get(length - 2).Type()
-	}
-	return false, lexeme.InlineAnnotationBegin
+		(s.stack.Get(length-2).Type() == lexeme.InlineAnnotationBegin ||
+			s.stack.Get(length-2).Type() == lexeme.MultiLineAnnotationBegin)
 }
 
 func (s *Scanner) isInsideMultiLineAnnotation() bool {
@@ -316,7 +336,7 @@ func (s *Scanner) shiftFound() lexeme.LexEventType {
 	return lexType
 }
 
-func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexEvent { //nolint:gocyclo // todo try to make this more readable
+func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexEvent {
 	i := s.index - 1
 	if lexType == lexeme.NewLine || lexType == lexeme.EndTop {
 		return lexeme.NewLexEvent(lexType, i, i, s.file)
@@ -334,23 +354,18 @@ func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 		return lex
 	}
 
-	// closing tag
+	return s.processingFoundLexemeClosingTag(lexType, i)
+}
+
+func (s *Scanner) processingFoundLexemeClosingTag(lexType lexeme.LexEventType, i bytes.Index) lexeme.LexEvent {
 	pair := s.stack.Pop()
 	pairType := pair.Type()
-	if (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
-		(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd) ||
-		(pairType == lexeme.MultiLineAnnotationBegin && lexType == lexeme.MultiLineAnnotationEnd) {
+
+	switch {
+	case isNonScalarPair(pairType, lexType):
 		return lexeme.NewLexEvent(lexType, pair.Begin(), i, s.file)
-	} else if (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
-		(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
-		(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
-		(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd) ||
-		(pairType == lexeme.InlineAnnotationTextBegin && lexType == lexeme.InlineAnnotationTextEnd) ||
-		(pairType == lexeme.MultiLineAnnotationTextBegin && lexType == lexeme.MultiLineAnnotationTextEnd) ||
-		(pairType == lexeme.InlineAnnotationBegin && lexType == lexeme.InlineAnnotationEnd) ||
-		(pairType == lexeme.KeyShortcutBegin && lexType == lexeme.KeyShortcutEnd) ||
-		(pairType == lexeme.TypesShortcutBegin && lexType == lexeme.TypesShortcutEnd) ||
-		(pairType == lexeme.MixedValueBegin && lexType == lexeme.MixedValueEnd) {
+
+	case isScalarPair(pairType, lexType):
 		if lexType == lexeme.MixedValueEnd && s.data[i-1] == ' ' {
 			i--
 		}
@@ -359,8 +374,27 @@ func (s *Scanner) processingFoundLexeme(lexType lexeme.LexEventType) lexeme.LexE
 	panic("Incorrect ending of the lexical event")
 }
 
+func isNonScalarPair(pairType, lexType lexeme.LexEventType) bool {
+	return (pairType == lexeme.ObjectBegin && lexType == lexeme.ObjectEnd) ||
+		(pairType == lexeme.ArrayBegin && lexType == lexeme.ArrayEnd) ||
+		(pairType == lexeme.MultiLineAnnotationBegin && lexType == lexeme.MultiLineAnnotationEnd)
+}
+
+func isScalarPair(pairType, lexType lexeme.LexEventType) bool { //nolint:gocyclo // We can't do anything about it.
+	return (pairType == lexeme.LiteralBegin && lexType == lexeme.LiteralEnd) ||
+		(pairType == lexeme.ArrayItemBegin && lexType == lexeme.ArrayItemEnd) ||
+		(pairType == lexeme.ObjectKeyBegin && lexType == lexeme.ObjectKeyEnd) ||
+		(pairType == lexeme.ObjectValueBegin && lexType == lexeme.ObjectValueEnd) ||
+		(pairType == lexeme.InlineAnnotationTextBegin && lexType == lexeme.InlineAnnotationTextEnd) ||
+		(pairType == lexeme.MultiLineAnnotationTextBegin && lexType == lexeme.MultiLineAnnotationTextEnd) ||
+		(pairType == lexeme.InlineAnnotationBegin && lexType == lexeme.InlineAnnotationEnd) ||
+		(pairType == lexeme.KeyShortcutBegin && lexType == lexeme.KeyShortcutEnd) ||
+		(pairType == lexeme.TypesShortcutBegin && lexType == lexeme.TypesShortcutEnd) ||
+		(pairType == lexeme.MixedValueBegin && lexType == lexeme.MixedValueEnd)
+}
+
 func (s *Scanner) isNewLine(c byte) bool {
-	if c != '\n' && c != '\r' {
+	if !bytes.IsNewLine(c) {
 		return false
 	}
 
@@ -934,7 +968,7 @@ func stateInStringEsc(s *Scanner, c byte) state {
 
 // after reading `"\u` during a quoted string
 func stateInStringEscU(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU1
 		return scanContinue
 	}
@@ -943,7 +977,7 @@ func stateInStringEscU(s *Scanner, c byte) state {
 
 // after reading `"\u1` during a quoted string
 func stateInStringEscU1(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU12
 		return scanContinue
 	}
@@ -952,7 +986,7 @@ func stateInStringEscU1(s *Scanner, c byte) state {
 
 // after reading `"\u12` during a quoted string
 func stateInStringEscU12(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = stateInStringEscU123
 		return scanContinue
 	}
@@ -961,7 +995,7 @@ func stateInStringEscU12(s *Scanner, c byte) state {
 
 // after reading `"\u123` during a quoted string
 func stateInStringEscU123(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F' {
+	if bytes.IsHexDigit(c) {
 		s.step = s.returnToStep.Pop() // = stateInAnnotationObjectKey for AnnotationObject
 		return scanContinue
 	}
@@ -986,7 +1020,7 @@ func stateNeg(s *Scanner, c byte) state {
 // after reading a non-zero integer during a number,
 // such as after reading `1` or `100` but not `0`
 func state1(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		s.step = state1
 		return scanContinue
 	}
@@ -1008,7 +1042,7 @@ func state0(s *Scanner, c byte) state {
 
 // after reading the integer and decimal point in a number, such as after reading `1.`
 func stateDot(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		s.unfinishedLiteral = false
 		s.step = stateDot0
 		return scanContinue
@@ -1019,7 +1053,7 @@ func stateDot(s *Scanner, c byte) state {
 // after reading the integer, decimal point, and subsequent
 // digits of a number, such as after reading `3.14`
 func stateDot0(s *Scanner, c byte) state {
-	if '0' <= c && c <= '9' {
+	if bytes.IsDigit(c) {
 		return scanContinue
 	}
 	if c == 'e' || c == 'E' {

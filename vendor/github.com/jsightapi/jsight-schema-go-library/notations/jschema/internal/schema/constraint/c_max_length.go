@@ -1,7 +1,6 @@
 package constraint
 
 import (
-	"fmt"
 	"strconv"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
@@ -36,7 +35,7 @@ func (MaxLength) Type() Type {
 }
 
 func (c MaxLength) String() string {
-	return fmt.Sprintf("%s: %d", MaxLengthConstraintType, c.value)
+	return MaxLengthConstraintType.String() + ": " + strconv.FormatUint(uint64(c.value), 10)
 }
 
 func (c MaxLength) Validate(value bytes.Bytes) {
@@ -52,7 +51,7 @@ func (c MaxLength) Validate(value bytes.Bytes) {
 
 func (c MaxLength) ASTNode() jschema.RuleASTNode {
 	return newRuleASTNode(
-		jschema.JSONTypeNumber,
+		jschema.TokenTypeNumber,
 		strconv.FormatUint(uint64(c.value), 10),
 		jschema.RuleASTNodeSourceManual,
 	)
