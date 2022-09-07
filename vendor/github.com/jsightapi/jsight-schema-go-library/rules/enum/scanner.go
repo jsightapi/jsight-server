@@ -56,7 +56,7 @@ type scanner struct {
 
 	// uniqueValues represent a map of found values.
 	// Useful for duplication tracking.
-	uniqueValues map[string]struct{}
+	uniqueValues map[enumItemValue]struct{}
 
 	// file a structure containing jSchema data.
 	file *fs.File
@@ -97,7 +97,7 @@ func newScanner(file *fs.File, oo ...scannerOption) *scanner {
 		dataSize:     bytes.Index(len(content)),
 		returnToStep: &ds.Stack[stepFunc]{},
 		stack:        &ds.Stack[lexeme.LexEvent]{},
-		uniqueValues: map[string]struct{}{},
+		uniqueValues: map[enumItemValue]struct{}{},
 		finds:        make([]lexeme.LexEventType, 0, 3),
 	}
 
@@ -372,9 +372,9 @@ func (s *scanner) validateValue() error {
 	begin := s.stack.Peek().Begin()
 
 	v := s.file.Content().Slice(begin, s.index-2)
-	key := v.Normalize().String()
+	key := newEnumItem(v)
 	if _, ok := s.uniqueValues[key]; ok {
-		e := errors.Format(errors.ErrDuplicationInEnumRule, v)
+		e := errors.Format(errors.ErrDuplicationInEnumRule, v.String())
 		err := errors.NewDocumentError(s.file, e)
 		err.SetIndex(begin)
 		return err

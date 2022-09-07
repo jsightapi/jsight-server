@@ -70,9 +70,10 @@ func (n Number) LengthOfFractionalPart() uint {
 }
 
 // Cmp compares the numbers represented by n and nn and returns:
-//  -1 if n <  nn
-//   0 if n == nn
-//  +1 if n >  nn.
+//
+//	-1 if n <  nn
+//	 0 if n == nn
+//	+1 if n >  nn.
 func (n Number) Cmp(nn *Number) int {
 	if n.neg == nn.neg {
 		b := n.cmpAbs(nn)

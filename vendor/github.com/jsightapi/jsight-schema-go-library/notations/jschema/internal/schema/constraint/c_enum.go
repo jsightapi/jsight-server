@@ -1,24 +1,53 @@
 package constraint
 
 import (
-	"bytes"
+	"encoding/json"
 	"strings"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	jbytes "github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
-	"github.com/jsightapi/jsight-schema-go-library/internal/json"
+	jjson "github.com/jsightapi/jsight-schema-go-library/internal/json"
 )
 
 type Enum struct {
-	uniqueIdx map[string]struct{}
+	uniqueIdx map[enumItemValue]struct{}
 	ruleName  string
-	items     []enumItem
+	items     []EnumItem
 }
 
-type enumItem struct {
+type EnumItem struct {
+	src     jbytes.Bytes
 	comment string
-	value   jbytes.Bytes
+	enumItemValue
+}
+
+type enumItemValue struct {
+	value    string
+	jsonType jjson.Type
+}
+
+func (v enumItemValue) String() string {
+	if v.jsonType == jjson.TypeString {
+		b, err := json.Marshal(v.value)
+		if err != nil {
+			panic(errors.ErrImpossible)
+		}
+		return string(b)
+	} else {
+		return v.value
+	}
+}
+
+func NewEnumItem(b jbytes.Bytes, c string) EnumItem {
+	i := EnumItem{src: b, comment: c}
+	b = b.TrimSpaces()
+	i.jsonType = jjson.Guess(b).JsonType()
+	if i.jsonType == jjson.TypeString {
+		b = b.Unquote()
+	}
+	i.value = b.String()
+	return i
 }
 
 var (
@@ -30,12 +59,12 @@ var (
 
 func NewEnum() *Enum {
 	return &Enum{
-		uniqueIdx: make(map[string]struct{}),
-		items:     make([]enumItem, 0, 5),
+		uniqueIdx: make(map[enumItemValue]struct{}),
+		items:     make([]EnumItem, 0, 5),
 	}
 }
 
-func (Enum) IsJsonTypeCompatible(t json.Type) bool {
+func (Enum) IsJsonTypeCompatible(t jjson.Type) bool {
 	return t.IsLiteralType()
 }
 
@@ -48,7 +77,7 @@ func (c Enum) String() string {
 	str.WriteString(EnumConstraintType.String())
 	str.WriteString(": [")
 	for i, v := range c.items {
-		str.WriteString(v.value.String())
+		str.WriteString(v.enumItemValue.String())
 		if len(c.items)-1 != i {
 			str.WriteString(", ")
 		}
@@ -57,16 +86,13 @@ func (c Enum) String() string {
 	return str.String()
 }
 
-func (c *Enum) Append(b jbytes.Bytes) int {
-	key := b.TrimSpaces().Normalize().String()
-	if key != "" {
-		if _, ok := c.uniqueIdx[key]; ok {
-			panic(errors.Format(errors.ErrDuplicationInEnumRule, b.String()))
-		}
+func (c *Enum) Append(i EnumItem) int {
+	if _, ok := c.uniqueIdx[i.enumItemValue]; ok {
+		panic(errors.Format(errors.ErrDuplicationInEnumRule, i.src.String()))
 	}
 	idx := len(c.items)
-	c.items = append(c.items, enumItem{value: b.Normalize()})
-	c.uniqueIdx[key] = struct{}{}
+	c.items = append(c.items, i)
+	c.uniqueIdx[i.enumItemValue] = struct{}{}
 	return idx
 }
 
@@ -83,9 +109,9 @@ func (c *Enum) RuleName() string {
 }
 
 func (c Enum) Validate(a jbytes.Bytes) {
-	a = a.Normalize()
+	aa := NewEnumItem(a, "")
 	for _, b := range c.items {
-		if bytes.Equal(a, b.value) {
+		if aa.enumItemValue == b.enumItemValue {
 			return
 		}
 	}
@@ -104,8 +130,8 @@ func (c Enum) ASTNode() jschema.RuleASTNode {
 
 	for _, b := range c.items {
 		an := newRuleASTNode(
-			json.Guess(b.value).JsonType().ToTokenType(),
-			b.value.Unquote().String(),
+			b.jsonType.ToTokenType(),
+			b.value,
 			source,
 		)
 		an.Comment = b.comment

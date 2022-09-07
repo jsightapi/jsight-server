@@ -150,7 +150,7 @@ func (e *Enum) doCompile() (err error) {
 }
 
 func (e *Enum) handleLiteralEnd(lex lexeme.LexEvent) error {
-	v := lex.Value().Normalize()
+	v := lex.Value()
 	t, err := jschema.GuessSchemaType(v)
 	if err != nil {
 		return err

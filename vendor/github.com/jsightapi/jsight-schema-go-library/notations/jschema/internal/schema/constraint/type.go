@@ -1,7 +1,7 @@
 package constraint
 
 // Type available constraint types.
-//gen:Stringer t Unknown constraint type
+// gen:Stringer t Unknown constraint type
 type Type int
 
 const (

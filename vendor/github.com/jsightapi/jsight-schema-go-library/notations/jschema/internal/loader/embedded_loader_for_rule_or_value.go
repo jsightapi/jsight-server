@@ -129,10 +129,16 @@ func (a *orValueLoader) literal(lex lexeme.LexEvent) {
 	}
 
 	val := lex.Value().Unquote()
+	valStr := val.String()
 
 	c := a.nodeTypesListConstraint()
 	if val.IsUserTypeName() {
-		c.AddName(val.String(), val.String(), jschema.RuleASTNodeSourceManual)
+		c.AddNameWithASTNode(valStr, valStr, jschema.RuleASTNode{
+			TokenType:  jschema.TokenTypeShortcut,
+			Value:      valStr,
+			Properties: &jschema.RuleASTNodes{},
+			Source:     jschema.RuleASTNodeSourceManual,
+		})
 	} else {
 		root := schema.NewMixedNode(a.node.BasisLexEventOfSchemaForNode())
 		root.AddConstraint(constraint.NewType(val, jschema.RuleASTNodeSourceManual))

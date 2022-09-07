@@ -35,11 +35,12 @@ var (
 // Might panic if got unknown JSON type.
 //
 // Handle next cases:
-//  {additionalProperties: "any"}
-//  {additionalProperties: true}
-//  {additionalProperties: false} - in that case this function will return nil.
-//  {additionalProperties: "@Foo"}
-//  {additionalProperties: "string"}
+//
+//	{additionalProperties: "any"}
+//	{additionalProperties: true}
+//	{additionalProperties: false} - in that case this function will return nil.
+//	{additionalProperties: "@Foo"}
+//	{additionalProperties: "string"}
 func NewAdditionalProperties(ruleValue bytes.Bytes) *AdditionalProperties {
 	c := &AdditionalProperties{}
 

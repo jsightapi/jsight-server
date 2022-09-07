@@ -10,21 +10,23 @@ import (
 // CheckRecursion checks that given schema doesn't have invalid recursions.
 //
 // Examples of invalid recursions:
-// TYPE @foo
-// {
-//   "foo": @foo
-// }
+//
+//	TYPE @foo
+//	{
+//	  "foo": @foo
+//	}
 //
 // Examples of valid recursions:
-// TYPE @foo
-// {
-//   "foo": @foo // {optional: true}
-// }
 //
-// TYPE @foo
-// {
-//   "foo": [@foo]
-// }
+//	TYPE @foo
+//	{
+//	  "foo": @foo // {optional: true}
+//	}
+//
+//	TYPE @foo
+//	{
+//	  "foo": [@foo]
+//	}
 func CheckRecursion(rootTypeName string, rootSchema *schema.Schema) error {
 	if rootSchema.RootNode() == nil {
 		return nil

@@ -9,13 +9,6 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/notation"
 )
 
-func NewRegexSchema(regexStr bytes.Bytes) Schema {
-	s := NewSchema(notation.SchemaNotationRegex)
-	s.ContentRegexp = strings.TrimPrefix(regexStr.String(), "/")
-	s.ContentRegexp = strings.TrimSuffix(s.ContentRegexp, "/")
-	return s
-}
-
 func UnmarshalRegexSchema(name string, regexStr bytes.Bytes) (schema Schema, err error) {
 	return mainRegexMarshaller.Marshal(name, regexStr)
 }

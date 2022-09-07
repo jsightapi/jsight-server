@@ -1,7 +1,7 @@
 package lexeme
 
 // LexEventType available lexeme event types.
-//gen:Stringer e Unknown lexical event type
+// gen:Stringer e Unknown lexical event type
 type LexEventType uint8
 
 const (

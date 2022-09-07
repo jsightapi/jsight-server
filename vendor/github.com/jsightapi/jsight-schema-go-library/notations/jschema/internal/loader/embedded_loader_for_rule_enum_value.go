@@ -111,7 +111,7 @@ func (l *enumValueLoader) literal(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.LiteralBegin:
 	case lexeme.LiteralEnd:
-		l.lastIdx = l.enumConstraint.Append(lex.Value())
+		l.lastIdx = l.enumConstraint.Append(constraint.NewEnumItem(lex.Value(), ""))
 		l.stateFunc = l.arrayItemEnd
 	default:
 		panic(errors.ErrIncorrectArrayItemTypeInEnumRule)
@@ -158,9 +158,11 @@ func (l *enumValueLoader) ruleName(lex lexeme.LexEvent) {
 	}
 
 	l.enumConstraint.SetRuleName(v)
-	for i, v := range vv {
-		l.enumConstraint.Append(v.Value)
-		l.enumConstraint.SetComment(i, v.Comment)
+	for _, v := range vv {
+		if v.Type == jschemaLib.SchemaTypeComment {
+			continue
+		}
+		l.enumConstraint.Append(constraint.NewEnumItem(v.Value, v.Comment))
 	}
 	l.stateFunc = l.endOfLoading
 	l.inProgress = false
