@@ -223,155 +223,55 @@ linters-settings:
     check-exported: true
 
 linters:
-  # https://golangci-lint.run/usage/linters/
+  disable-all: true
   enable:
-    - asciicheck
-
-    # Finds unused code.
-    - deadcode
-
-    # Checks if package imports are in a list of acceptable packages.
+    - bodyclose
     - depguard
-
-    # Checks assignments with too many blank identifiers (e.g. `x, _, _, _, := f()`).
     - dogsled
-
-    # Code clone detection.
     - dupl
-
-    # Check for two durations multiplied together.
-    #
-    # ```
-    # func do(d time.Duration) {
-    #   ...
-    #    time.Sleep(d * time.Second) <-- will trigger an error at this line.
-    #   ...
-    # }
-    # ```
-    - durationcheck
-
-    # Searches for unchecked errors.
     - errcheck
-
-    # Checks that sentinel errors are prefixed with the `Err` and error types are
-    # suffixed with the `Error`.
-    - errname
-
-    # Find code that will cause problems with the error wrapping scheme introduced
-    # in Go 1.13.
-    - errorlint
-
-    # Checks for pointers to enclosing loop variables.
     - exportloopref
-
-    # Forbids identifiers.
-    - forbidigo
-
-    # Checks that no init functions are present in Go code.
+#    - funlen
     - gochecknoinits
-
-    # Finds repeated strings that could be replaced by a constant.
     - goconst
-
-    # Provides many diagnostics that check for bugs, performance and style issues.
-    # https://go-critic.github.io/overview
     - gocritic
-
-    # Computes and checks the cyclomatic complexity of functions.
     - gocyclo
-
-    # Checks whether code was gofmt-ed.
     - gofmt
-
-    # Checks is file header matches to pattern.
-    - goheader
-
     - goimports
-
-    # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
-    - gomoddirectives
-
-    # Linter that specializes in simplifying a code.
-    - gosimple
-
-    # Inspects source code for security problems.
+#    - gomnd
+    - goprintffuncname
     - gosec
-
+    - gosimple
     - govet
-
-    # Detects when assignments to existing variables are not used.
     - ineffassign
-
-    # Reports long lines.
     - lll
-
-    # Finds commonly misspelled words in comments.
     - misspell
-
-    # Finds naked returns in functions greater than a specified function length.
     - nakedret
-
-    # Reports deeply nested if statements.
-    - nestif
-
-    # Finds the code that returns nil even if it checks that the error is not nil.
-    - nilerr
-
-    # Reports ill-formed or insufficient nolint directives.
+    - noctx
     - nolintlint
-
-    # Find code that shadows one of Go's predeclared identifiers.
-    - predeclared
-
-    - revive
-
-    # Applying a ton of static analysis checks.
     - staticcheck
-
-    # Finds unused struct fields.
-    - structcheck
-
-    # Is a replacement for golint.
     - stylecheck
-
-    # Like the front-end of a Go compiler, parses and type-checks Go code.
     - typecheck
-
-    # Finds unnecessary type conversions.
     - unconvert
-
-    # Reports unused function parameters.
     - unparam
-
-    # Checks Go code for unused constants, variables, functions and types.
     - unused
-
-    # Finds unused global variables and constants.
-    - varcheck
-
-    # Finds wasted assignment statements.
-    #
-    # ```
-    # func f() int {
-    #   a := 0
-    #   b := 0
-    #   fmt.Print(a)
-    #   fmt.Print(b)
-    #   a = 1  // This reassignment is wasted, because never used afterwards. Wastedassign find this.
-    #
-    #   b = 1  // This reassignment is wasted, because reassigned without use this value. Wastedassign find this.
-    #   b = 2
-    #   fmt.Print(b)
-    #
-    #   return 1 + 2
-    # }
-    # ```
-    - wastedassign
-
-    # Finds leading and trailing whitespace.
     - whitespace
-  disbale:
-    - megacheck
+
+  # don't enable:
+  # - asciicheck
+  # - scopelint
+  # - gochecknoglobals
+  # - gocognit
+  # - godot
+  # - godox
+  # - goerr113
+  # - interfacer
+  # - maligned
+  # - nestif
+  # - prealloc
+  # - testpackage
+  # - revive
+  # - wsl
 
 issues:
   # Maximum count of issues with the same text. Set to 0 to disable.

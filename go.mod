@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
-	github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220907140903-1da6d4131032
-	github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220907135947-77fd9f8816d9
+	github.com/jsightapi/jsight-api-go-library v1.0.1-0.20220915135552-7e2bca69c87e
+	github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20220915134509-45d3636e428f
 	github.com/stretchr/testify v1.7.0
 )
 

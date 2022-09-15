@@ -201,11 +201,11 @@ func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) error 
 			continue
 		}
 
-		s, err := c.rootSchema.Type(v.Key) // can panic
+		s, err := c.rootSchema.Type(v.Key)
 		if err != nil {
 			return lexeme.NewLexEventError(v.Lex, err)
 		}
-		actualType := s.RootNode().Type()
+		actualType := actualRootType(s, c.rootSchema)
 
 		if actualType != json.TypeString {
 			return lexeme.NewLexEventError(
@@ -215,6 +215,32 @@ func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) error 
 		}
 	}
 	return nil
+}
+
+func actualRootType(s, root *schema.Schema) json.Type {
+	t := s.RootNode().Type()
+	if t != json.TypeMixed {
+		return t
+	}
+
+	// mixed type for example: @aaa | @bbb
+	if n, ok := s.RootNode().(*schema.MixedValueNode); ok {
+		types := make(map[json.Type]struct{}, 2)
+		var tt json.Type
+		for _, tn := range n.GetTypes() {
+			ss, err := root.Type(tn)
+			if err != nil {
+				return json.TypeMixed
+			}
+			tt = actualRootType(ss, root)
+			types[tt] = struct{}{}
+		}
+		if len(types) == 1 { // all USER TYPES (example: @aaa | @bbb) have the same type (example: string)
+			return tt
+		}
+	}
+
+	return json.TypeMixed
 }
 
 func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]schema.Type) {
