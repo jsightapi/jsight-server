@@ -14,13 +14,13 @@ type AdditionalPropertiesMode int
 const (
 	AdditionalPropertiesCanBeAny AdditionalPropertiesMode = iota
 	AdditionalPropertiesMustBeSchemaType
-	AdditionalPropertiesMustBeType
+	AdditionalPropertiesMustBeUserType
 	AdditionalPropertiesNotAllowed
 )
 
 type AdditionalProperties struct {
 	schemaType jschema.SchemaType // only for AdditionalPropertiesMustBeSchemaType
-	typeName   bytes.Bytes        // only for AdditionalPropertiesMustBeType
+	typeName   bytes.Bytes        // only for AdditionalPropertiesMustBeUserType
 	astNode    jschema.RuleASTNode
 	mode       AdditionalPropertiesMode
 }
@@ -68,7 +68,7 @@ func NewAdditionalProperties(ruleValue bytes.Bytes) *AdditionalProperties {
 	case txt.IsUserTypeName():
 		c.astNode.TokenType = jschema.TokenTypeString
 		c.astNode.Value = txtStr
-		c.mode = AdditionalPropertiesMustBeType
+		c.mode = AdditionalPropertiesMustBeUserType
 		c.typeName = txt
 
 	case jschema.IsValidType(txtStr):
@@ -102,7 +102,7 @@ func (c AdditionalProperties) String() string {
 	case AdditionalPropertiesMustBeSchemaType:
 		buf.WriteString(string(c.schemaType))
 
-	case AdditionalPropertiesMustBeType:
+	case AdditionalPropertiesMustBeUserType:
 		buf.WriteString(c.typeName.String())
 
 	case AdditionalPropertiesNotAllowed:

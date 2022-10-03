@@ -117,8 +117,9 @@ const (
 	ErrNotFoundRuleEnum                          ErrorCode = 1113
 	ErrNotFoundRuleOr                            ErrorCode = 1114
 	ErrIncompatibleTypes                         ErrorCode = 1115
-	ErrUnknownAdditionalPropertiesTypes          ErrorCode = 1116
-	ErrUnexpectedConstraint                      ErrorCode = 1117
+	// ErrUnknownAdditionalPropertiesTypes          ErrorCode = 1116
+
+	ErrUnexpectedConstraint ErrorCode = 1117
 
 	// Checker.
 
@@ -254,8 +255,8 @@ var errorFormat = map[ErrorCode]string{
 	ErrNotFoundRuleEnum:                          `Not found the rule "enum" for the "enum" type`,
 	ErrNotFoundRuleOr:                            `Not found the rule "or" for the "mixed" type`,
 	ErrIncompatibleTypes:                         `Incompatible value of example and "type" rule (%s)`,
-	ErrUnknownAdditionalPropertiesTypes:          "Unknown type of additionalProperties (%s)",
-	ErrUnexpectedConstraint:                      "The %q constraint can't be used for the %q type",
+	// ErrUnknownAdditionalPropertiesTypes:          "Unknown type of additionalProperties (%s)",
+	ErrUnexpectedConstraint: "The %q constraint can't be used for the %q type",
 
 	// checker
 	ErrChecker:                               `Checker error`,

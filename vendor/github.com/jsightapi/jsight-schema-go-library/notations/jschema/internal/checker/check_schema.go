@@ -85,6 +85,7 @@ func (c checkSchema) checkNode(node schema.Node, ss map[string]schema.Type) {
 		if err := c.ensureShortcutKeysAreValid(node); err != nil {
 			panic(err)
 		}
+		c.checkAdditionalPropertiesConstraint(node, ss)
 	case *schema.MixedNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
@@ -272,6 +273,22 @@ func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]sc
 		}
 		c.foundTypeNames[typeName] = struct{}{}
 		c.collectAllowedJsonTypes(getType(typeName, c.rootSchema, ss).RootNode(), ss) // can panic
+	}
+}
+
+func (c *checkSchema) checkAdditionalPropertiesConstraint(node schema.Node, ss map[string]schema.Type) {
+	cnstr := node.Constraint(constraint.AdditionalPropertiesConstraintType)
+	if c == nil {
+		return
+	}
+
+	ap, ok := cnstr.(*constraint.AdditionalProperties)
+	if !ok {
+		return
+	}
+
+	if ap.Mode() == constraint.AdditionalPropertiesMustBeUserType {
+		getType(ap.TypeName().String(), c.rootSchema, ss)
 	}
 }
 

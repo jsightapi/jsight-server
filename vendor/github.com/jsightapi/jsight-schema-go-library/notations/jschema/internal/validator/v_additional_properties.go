@@ -48,7 +48,7 @@ func newAdditionalPropertiesValidator(
 			v.feedFunc = v.feedLiteral
 		}
 
-	case constraint.AdditionalPropertiesMustBeType:
+	case constraint.AdditionalPropertiesMustBeUserType:
 		schem := parentValidator.(*objectValidator).rootSchema
 		return NodeValidatorList(
 			schem.MustType(c.TypeName().String()).RootNode(), // can panic

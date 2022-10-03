@@ -284,6 +284,7 @@ func (c *userTypesCollector) collect(node internalSchema.Node) {
 
 	switch n := node.(type) {
 	case *internalSchema.ObjectNode:
+		c.collectUserTypesFromAdditionalPropertiesOfConstraint(node)
 		c.collectUserTypesObjectNode(n)
 
 	case *internalSchema.ArrayNode:
@@ -351,6 +352,22 @@ func (c *userTypesCollector) collectUserTypesFromAllOfConstraint(node internalSc
 		if name[0] == '@' {
 			c.addType(name)
 		}
+	}
+}
+
+func (c *userTypesCollector) collectUserTypesFromAdditionalPropertiesOfConstraint(node internalSchema.Node) {
+	cnstr := node.Constraint(constraint.AdditionalPropertiesConstraintType)
+	if c == nil {
+		return
+	}
+
+	ap, ok := cnstr.(*constraint.AdditionalProperties)
+	if !ok {
+		return
+	}
+
+	if ap.Mode() == constraint.AdditionalPropertiesMustBeUserType {
+		c.addType(ap.TypeName().String())
 	}
 }
 

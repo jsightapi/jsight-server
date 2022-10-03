@@ -143,6 +143,11 @@ func collectJSightContentRules(node jschemaLib.ASTNode, usedUserTypes *StringSet
 				usedUserTypes.Add(i.Value)
 			}
 
+		case "additionalProperties":
+			if v.Value[0] == '@' {
+				usedUserTypes.Add(v.Value)
+			}
+
 		case "or":
 			for _, i := range v.Items {
 				var userType string
