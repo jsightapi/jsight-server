@@ -36,6 +36,8 @@ various tasks related to processing the JSight API language.
 **JSight API language** – you've never designed API so fast. We mean it. [Compare JSight with Open
 API](#scroll--jsight-api-language).
 
+Supported standards: [HTTP REST](#scroll--jsight-api-language), [JSON-RPC 2.0](#json-rpc-20-new-feature).
+
 Currently, the **JSight Server API** allows you to perform only one task:
 
 1. Parsing code in the JSight API language, which results in a JSON structure  containing all
@@ -43,15 +45,16 @@ Currently, the **JSight Server API** allows you to perform only one task:
 
 The following features are also planned in the near future:
 
-1. Converting from JSight API to OpenAPI.
-2. Converting from OpenAPI to JSight API.
-3. API documentation generation in MarkDown format.
-4. API documentation generation in PDF format.
-5. Generation of API server code stubs for different programming languages ​​(Java, PHP, Go,
+1. Support for other types of API: gRPC, Kafka, RabbitMQ, WebSocket. 
+2. Converting from JSight API to OpenAPI.
+3. Converting from OpenAPI to JSight API.
+4. API documentation generation in MarkDown format.
+5. API documentation generation in PDF format.
+6. Generation of API server code stubs for different programming languages ​​(Java, PHP, Go,
    Node.js, Python, C++ etc.). 
-6. Generation of API clients for different programming languages ​​(JavaScript, Java, PHP, Go,
+7. Generation of API clients for different programming languages ​​(JavaScript, Java, PHP, Go,
    Python, C++ etc.).
-7. And many other features.
+8. And many other features.
 
 > :fire: If you have any ideas or suggestions, please share with us:
 > 
@@ -385,8 +388,8 @@ For more information on configuring the JSight Server, see the
 
 ## :scroll: &nbsp; JSight API language
 
-The JSight API language allows you to specify REST APIs with incredible speed and convenience. More
-information can be found in the [Quick
+The JSight API language allows you to specify REST and JSON-RPC APIs with incredible speed and
+convenience. More information can be found in the [Quick
 Tutorial](https://jsight.io/docs/jsight-api-0-3-quick-tutorial) or in the [language
 specification](https://jsight.io/docs/jsight-api-0-3). Here we give examples of the same API
 described using JSight API and OpenAPI.
@@ -1528,6 +1531,130 @@ We did not describe this API in OpenAPI. It is too complicated and very long…
 
 </div>
 	
+</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+#### JSON-RPC 2.0. New Feature!
+
+<details><summary>Example 9. JSON-RPC 2.0</summary>
+
+<table align="center">
+<thead>
+<tr>
+  <th width="50%">
+    JSight API 0.3
+  </th>
+  <th>
+    OpenRPC 1.2.1
+  </th>
+</tr>
+</thead>
+<tbody>
+<tr valign="top">
+<td>
+
+```
+JSIGHT 0.3
+URL / 
+  Protocol json-rpc-2.0
+  Method listPets // List all pets
+    Params
+      [
+        20 // Limit (how many items to return).
+      ]
+    Result
+      [       // An array of pets
+        {     // Pet
+          "id": 123,
+          "name": "Tom"
+        }
+      ]
+ 
+```
+
+The JSON-RPC API is as simple to describe as the REST API.
+
+More about JSON-RPC 2.0 support: [Quick Tutorial. JSON-RPC 2.0
+support](https://jsight.io/docs/jsight-api-0-3-quick-tutorial/lesson10).
+
+<div align="center">
+
+:star: **Star us on GitHub — it motivates us a lot!**
+
+</div>
+
+</td>
+<td>
+
+```
+{
+  "openrpc": "1.2.1",
+  "info": {
+    "version": "",
+    "title": ""
+  },
+  "methods": [
+    {
+      "name": "listPets",
+      "description": "List all pets",
+      "params": [
+        {
+          "name": "limit",
+          "description": "How many items to return",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "result": {
+        "name": "pets",
+        "description": "An array of pets",
+        "schema": {
+          "type": "array",
+          "items": {
+            "title": "Pet",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "examples": [
+        {
+          "name": "listPetExample",
+          "description": "List pet example",
+          "params": [
+            {
+              "name": "limit",
+              "value": 20
+            }
+          ],
+          "result": {
+            "name": "listPetResultExample",
+            "value": [
+              {
+                "id": 123,
+                "name": "Tom"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
 </td>
 </tr>
 </tbody>
