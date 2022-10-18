@@ -2,7 +2,6 @@ package schema
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -25,13 +24,23 @@ func (s Schema) TypesList() map[string]Type {
 	return s.types
 }
 
-// Type returns *Schema or panic if not found.
-func (s Schema) Type(name string) *Schema { // todo confuses that here is returning Schema, instead Type. So historically. Perhaps it is worth remaking?
+// MustType returns *Schema or panic if not found.
+// Deprecated: use Schema.MustType instead
+func (s Schema) MustType(name string) *Schema {
 	t, ok := s.types[name]
 	if ok {
 		return t.schema
 	}
 	panic(errors.Format(errors.ErrTypeNotFound, name))
+}
+
+// Type returns specified type's schema.
+func (s Schema) Type(name string) (*Schema, errors.Err) {
+	t, ok := s.types[name]
+	if ok {
+		return t.schema, nil
+	}
+	return nil, errors.Format(errors.ErrTypeNotFound, name)
 }
 
 func (s Schema) RootNode() Node {
@@ -65,22 +74,4 @@ func (s *Schema) AddType(n string, t Type) {
 
 func (s *Schema) SetRootNode(node Node) {
 	s.rootNode = node
-}
-
-func (s Schema) String() string {
-	var str strings.Builder
-
-	if len(s.types) != 0 {
-		str.WriteString("Types:\n")
-		for name, typ := range s.types {
-			str.WriteString("\t" + name + "\n")
-			str.WriteString(typ.schema.rootNode.IndentedTreeString(2) + "\n")
-		}
-	}
-
-	if s.rootNode != nil {
-		str.WriteString("Schema root node:\n" + s.rootNode.IndentedTreeString(1) + "\n")
-	}
-
-	return str.String()
 }

@@ -14,61 +14,65 @@ type AdditionalPropertiesMode int
 const (
 	AdditionalPropertiesCanBeAny AdditionalPropertiesMode = iota
 	AdditionalPropertiesMustBeSchemaType
-	AdditionalPropertiesMustBeType
+	AdditionalPropertiesMustBeUserType
 	AdditionalPropertiesNotAllowed
 )
 
 type AdditionalProperties struct {
 	schemaType jschema.SchemaType // only for AdditionalPropertiesMustBeSchemaType
-	typeName   bytes.Bytes        // only for AdditionalPropertiesMustBeType
+	typeName   bytes.Bytes        // only for AdditionalPropertiesMustBeUserType
 	astNode    jschema.RuleASTNode
 	mode       AdditionalPropertiesMode
 }
 
-var _ Constraint = AdditionalProperties{}
+var (
+	_ Constraint = AdditionalProperties{}
+	_ Constraint = (*AdditionalProperties)(nil)
+)
 
 // NewAdditionalProperties create an additional properties constraint.
 // Depends on `ruleValue` value, might return nil.
 // Might panic if got unknown JSON type.
 //
 // Handle next cases:
-//  {additionalProperties: "any"}
-//  {additionalProperties: true}
-//  {additionalProperties: false} - in that case this function will return nil.
-//  {additionalProperties: "@Foo"}
-//  {additionalProperties: "string"}
+//
+//	{additionalProperties: "any"}
+//	{additionalProperties: true}
+//	{additionalProperties: false} - in that case this function will return nil.
+//	{additionalProperties: "@Foo"}
+//	{additionalProperties: "string"}
 func NewAdditionalProperties(ruleValue bytes.Bytes) *AdditionalProperties {
 	c := &AdditionalProperties{}
 
 	c.astNode = newEmptyRuleASTNode()
 	c.astNode.Source = jschema.RuleASTNodeSourceManual
 
-	txt := ruleValue.Unquote() // must be type name or "any" or jschema type.
+	txt := ruleValue.Unquote()
 	txtStr := txt.String()
 	switch {
 	case txt.OneOf("any", "true"):
 		if txt.String() == "true" {
-			c.astNode.JSONType = jschema.JSONTypeBoolean
+			c.astNode.TokenType = jschema.TokenTypeBoolean
 			c.astNode.Value = "true"
 		} else {
-			c.astNode.JSONType = jschema.JSONTypeString
+			c.astNode.TokenType = jschema.TokenTypeString
 			c.astNode.Value = txtStr
 		}
 		c.mode = AdditionalPropertiesCanBeAny
 
 	case txt.String() == "false":
-		c.astNode.JSONType = jschema.JSONTypeBoolean
+		c.astNode.TokenType = jschema.TokenTypeBoolean
 		c.astNode.Value = "false"
 		c.mode = AdditionalPropertiesNotAllowed
 
 	case txt.IsUserTypeName():
-		c.astNode.JSONType = jschema.JSONTypeString
+		c.astNode.TokenType = jschema.TokenTypeString
 		c.astNode.Value = txtStr
-		c.mode = AdditionalPropertiesMustBeType
+		c.mode = AdditionalPropertiesMustBeUserType
 		c.typeName = txt
 
 	case jschema.IsValidType(txtStr):
-		c.astNode.JSONType = jschema.JSONTypeString
+		c.astNode.TokenType = jschema.TokenTypeString
 		c.astNode.Value = txtStr
 		c.mode = AdditionalPropertiesMustBeSchemaType
 		c.schemaType = jschema.SchemaType(txtStr)
@@ -98,7 +102,7 @@ func (c AdditionalProperties) String() string {
 	case AdditionalPropertiesMustBeSchemaType:
 		buf.WriteString(string(c.schemaType))
 
-	case AdditionalPropertiesMustBeType:
+	case AdditionalPropertiesMustBeUserType:
 		buf.WriteString(c.typeName.String())
 
 	case AdditionalPropertiesNotAllowed:

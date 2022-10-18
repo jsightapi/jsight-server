@@ -10,12 +10,14 @@ import (
 // RequiredKeys constraint is specific constraint. It cannot be created directly by jSchema language rule.
 // It is indirectly influenced by rule "optional" in object's children. All the children keys, that are not marked as
 // "optional"=true, are treated as required and go to the RequiredKeys constraint of the parent object.
-
 type RequiredKeys struct {
 	keys []string
 }
 
-var _ Constraint = RequiredKeys{}
+var (
+	_ Constraint = RequiredKeys{}
+	_ Constraint = (*RequiredKeys)(nil)
+)
 
 func NewRequiredKeys() *RequiredKeys {
 	return &RequiredKeys{
@@ -46,11 +48,11 @@ func (c *RequiredKeys) AddKey(key string) {
 func (c RequiredKeys) ASTNode() jschema.RuleASTNode {
 	const source = jschema.RuleASTNodeSourceManual
 
-	n := newRuleASTNode(jschema.JSONTypeArray, "", source)
+	n := newRuleASTNode(jschema.TokenTypeArray, "", source)
 	n.Items = make([]jschema.RuleASTNode, 0, len(c.keys))
 
 	for _, s := range c.keys {
-		n.Items = append(n.Items, newRuleASTNode(jschema.JSONTypeString, s, source))
+		n.Items = append(n.Items, newRuleASTNode(jschema.TokenTypeString, s, source))
 	}
 
 	return n

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
@@ -41,8 +42,88 @@ func (n baseNode) Type() json.Type {
 	return n.jsonType
 }
 
-func (n *baseNode) SetRealType(s string) {
+func (n baseNode) SchemaType() jschema.SchemaType {
+	for k, v := range constraintToSchemaTypeMap {
+		if n.constraints.Has(k) {
+			return v
+		}
+	}
+	return jschema.SchemaType(n.jsonType.String())
+}
+
+var constraintToSchemaTypeMap = map[constraint.Type]jschema.SchemaType{
+	constraint.AnyConstraintType:      jschema.SchemaTypeAny,
+	constraint.DateConstraintType:     jschema.SchemaTypeDate,
+	constraint.DateTimeConstraintType: jschema.SchemaTypeDateTime,
+	constraint.UuidConstraintType:     jschema.SchemaTypeUUID,
+	constraint.UriConstraintType:      jschema.SchemaTypeURI,
+	constraint.EmailConstraintType:    jschema.SchemaTypeEmail,
+}
+
+func (n *baseNode) SetRealType(s string) bool {
+	// Make sure current real type is compatible with node type.
+	avail, ok := compatibleTypes[s]
+	if !ok {
+		return false
+	}
+
+	if _, ok := avail[n.jsonType]; !ok {
+		return false
+	}
+
 	n.realType = s
+	return true
+}
+
+var compatibleTypes = map[string]map[json.Type]struct{}{
+	"mixed": availableJSONTypes(
+		json.TypeObject,
+		json.TypeArray,
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+		json.TypeMixed,
+	),
+	"enum": availableJSONTypes(
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+	),
+	"any": availableJSONTypes(
+		json.TypeObject,
+		json.TypeArray,
+		json.TypeString,
+		json.TypeInteger,
+		json.TypeFloat,
+		json.TypeBoolean,
+		json.TypeNull,
+		json.TypeMixed,
+	),
+	"decimal":  availableJSONTypes(json.TypeFloat),
+	"email":    availableJSONTypes(json.TypeString),
+	"uri":      availableJSONTypes(json.TypeString),
+	"uuid":     availableJSONTypes(json.TypeString),
+	"date":     availableJSONTypes(json.TypeString),
+	"datetime": availableJSONTypes(json.TypeString),
+	"object":   availableJSONTypes(json.TypeObject),
+	"array":    availableJSONTypes(json.TypeArray),
+	"string":   availableJSONTypes(json.TypeString),
+	"integer":  availableJSONTypes(json.TypeInteger),
+	"float":    availableJSONTypes(json.TypeFloat),
+	"boolean":  availableJSONTypes(json.TypeBoolean),
+	"null":     availableJSONTypes(json.TypeNull),
+}
+
+func availableJSONTypes(tt ...json.Type) map[json.Type]struct{} {
+	res := map[json.Type]struct{}{}
+	for _, t := range tt {
+		res[t] = struct{}{}
+	}
+	return res
 }
 
 func (n *baseNode) RealType() string {
@@ -68,7 +149,7 @@ func (n baseNode) BasisLexEventOfSchemaForNode() lexeme.LexEvent {
 	return n.schemaLexEvent
 }
 
-// return *Constraint or nil (if not found)
+// Constraint returns requested Constraint if found.
 func (n baseNode) Constraint(t constraint.Type) constraint.Constraint {
 	if n.constraints == nil {
 		return nil
@@ -98,7 +179,7 @@ func (n *baseNode) DeleteConstraint(t constraint.Type) {
 	n.constraints.Delete(t)
 }
 
-// return map or nil
+// ConstraintMap returns all constraints.
 func (n baseNode) ConstraintMap() *Constraints {
 	return n.constraints
 }

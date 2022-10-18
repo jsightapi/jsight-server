@@ -13,7 +13,12 @@ type Optional struct {
 	value bool
 }
 
-var _ Constraint = Optional{}
+var (
+	_ Constraint = Optional{}
+	_ Constraint = (*Optional)(nil)
+	_ BoolKeeper = Optional{}
+	_ BoolKeeper = (*Optional)(nil)
+)
 
 func NewOptional(ruleValue bytes.Bytes) *Optional {
 	c := Optional{}
@@ -48,5 +53,5 @@ func (c Optional) Bool() bool {
 }
 
 func (c Optional) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
 }

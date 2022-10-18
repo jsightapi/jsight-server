@@ -13,7 +13,10 @@ type ExclusiveMinimum struct {
 	exclusive bool
 }
 
-var _ Constraint = ExclusiveMinimum{}
+var (
+	_ Constraint = ExclusiveMinimum{}
+	_ Constraint = (*ExclusiveMinimum)(nil)
+)
 
 func NewExclusiveMinimum(ruleValue bytes.Bytes) *ExclusiveMinimum {
 	c := ExclusiveMinimum{}
@@ -26,10 +29,7 @@ func NewExclusiveMinimum(ruleValue bytes.Bytes) *ExclusiveMinimum {
 }
 
 func (ExclusiveMinimum) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (ExclusiveMinimum) Type() Type {
@@ -51,5 +51,5 @@ func (c ExclusiveMinimum) IsExclusive() bool {
 }
 
 func (c ExclusiveMinimum) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.exclusive), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.exclusive), jschema.RuleASTNodeSourceManual)
 }

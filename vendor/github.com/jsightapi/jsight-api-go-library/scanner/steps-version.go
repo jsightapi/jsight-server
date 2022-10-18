@@ -1,10 +1,10 @@
-package scanner
+package scanner //nolint:dupl
 
 import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateV(s *Scanner, c byte) *jerr.JAPIError {
+func stateV(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'e':
 		s.step = stateVe
@@ -14,7 +14,7 @@ func stateV(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateVe(s *Scanner, c byte) *jerr.JAPIError {
+func stateVe(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'r':
 		s.step = stateVer
@@ -24,7 +24,7 @@ func stateVe(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateVer(s *Scanner, c byte) *jerr.JAPIError {
+func stateVer(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 's':
 		s.step = stateVers
@@ -34,7 +34,7 @@ func stateVer(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateVers(s *Scanner, c byte) *jerr.JAPIError {
+func stateVers(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'i':
 		s.step = stateVersi
@@ -44,7 +44,7 @@ func stateVers(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateVersi(s *Scanner, c byte) *jerr.JAPIError {
+func stateVersi(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'o':
 		s.step = stateVersio
@@ -54,7 +54,7 @@ func stateVersi(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateVersio(s *Scanner, c byte) *jerr.JAPIError {
+func stateVersio(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'n':
 		s.found(KeywordEnd)

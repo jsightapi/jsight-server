@@ -44,7 +44,8 @@ func (c *checkSchema) checkType(name string, typ schema.Type, ss map[string]sche
 			return
 		}
 
-		if documentError, ok := r.(errors.DocumentError); ok { // return an error with the full set of bytes of the root schema
+		// Return an error with the full set of bytes of the root schema.
+		if documentError, ok := r.(errors.DocumentError); ok {
 			documentError.SetFile(typ.RootFile())
 			documentError.SetIndex(documentError.Index() + typ.Begin())
 			documentError.SetIncorrectUserType(name)
@@ -70,7 +71,6 @@ func (c checkSchema) checkNode(node schema.Node, ss map[string]schema.Type) {
 	defer lexeme.CatchLexEventError(node.BasisLexEventOfSchemaForNode())
 	switch node := node.(type) {
 	case *schema.LiteralNode:
-		// c.log.Default(node.IndentedNodeString(0))
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
 		c.checkLiteralNode(node, ss)
@@ -78,10 +78,14 @@ func (c checkSchema) checkNode(node schema.Node, ss map[string]schema.Type) {
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
 		c.checkArrayItems(node)
+		c.checkArrayNode(node)
 	case *schema.ObjectNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
-		c.ensureShortcutKeysAreValid(node)
+		if err := c.ensureShortcutKeysAreValid(node); err != nil {
+			panic(err)
+		}
+		c.checkAdditionalPropertiesConstraint(node, ss)
 	case *schema.MixedNode:
 		c.checkCompatibilityOfConstraints(node)
 		c.checkLinksOfNode(node, ss) // can panic
@@ -105,7 +109,7 @@ func (c checkSchema) checkLiteralNode(node schema.Node, ss map[string]schema.Typ
 	var err errors.Error
 
 	for _, checker := range checkerList {
-		err = checker.check(node.BasisLexEventOfSchemaForNode())
+		err = checker.Check(node.BasisLexEventOfSchemaForNode())
 		if err != nil {
 			errorsCount++
 		}
@@ -135,12 +139,26 @@ func (c checkSchema) checkArrayItems(node schema.Node) {
 
 	if typesList := arrayNode.Constraint(constraint.TypesListConstraintType); typesList != nil {
 		for _, name := range typesList.(*constraint.TypesList).Names() {
-			typeRootNode := c.rootSchema.Type(name).RootNode() // can panic
+			typeRootNode := c.rootSchema.MustType(name).RootNode() // can panic
 
 			if arrayNode, ok := typeRootNode.(*schema.ArrayNode); ok {
 				c.checkArrayItems(arrayNode)
 			}
 		}
+	}
+}
+
+func (checkSchema) checkArrayNode(node schema.Node) {
+	arrayNode := node.(*schema.ArrayNode) //nolint:errcheck // We're sure about this type.
+
+	length := uint(arrayNode.Len())
+
+	if cnstr := arrayNode.Constraint(constraint.MinItemsConstraintType); cnstr != nil {
+		cnstr.(*constraint.MinItems).ValidateTheArray(length)
+	}
+
+	if cnstr := arrayNode.Constraint(constraint.MaxItemsConstraintType); cnstr != nil {
+		cnstr.(*constraint.MaxItems).ValidateTheArray(length)
 	}
 }
 
@@ -178,33 +196,52 @@ func (c *checkSchema) checkLinksOfNode(node schema.Node, ss map[string]schema.Ty
 	}
 }
 
-func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) {
-	var lex lexeme.LexEvent
-
-	defer func() {
-		r := recover()
-		if r == nil {
-			return
+func (c *checkSchema) ensureShortcutKeysAreValid(node *schema.ObjectNode) error {
+	for _, v := range node.Keys().Data {
+		if !v.IsShortcut {
+			continue
 		}
 
-		err, ok := r.(errors.Errorf)
-		if !ok {
-			panic(r)
+		s, err := c.rootSchema.Type(v.Key)
+		if err != nil {
+			return lexeme.NewLexEventError(v.Lex, err)
 		}
+		actualType := actualRootType(s, c.rootSchema)
 
-		if err.Code() != errors.ErrTypeNotFound {
-			panic(r)
+		if actualType != json.TypeString {
+			return lexeme.NewLexEventError(
+				v.Lex,
+				errors.Format(errors.ErrInvalidKeyShortcutType, v.Key, actualType),
+			)
 		}
+	}
+	return nil
+}
 
-		panic(lexeme.NewLexEventError(lex, err))
-	}()
+func actualRootType(s, root *schema.Schema) json.Type {
+	t := s.RootNode().Type()
+	if t != json.TypeMixed {
+		return t
+	}
 
-	node.Keys().EachSafe(func(k string, v schema.InnerObjectNodeKey) {
-		if v.IsShortcut {
-			lex = v.Lex
-			c.rootSchema.Type(k) // can panic
+	// mixed type for example: @aaa | @bbb
+	if n, ok := s.RootNode().(*schema.MixedValueNode); ok {
+		types := make(map[json.Type]struct{}, 2)
+		var tt json.Type
+		for _, tn := range n.GetTypes() {
+			ss, err := root.Type(tn)
+			if err != nil {
+				return json.TypeMixed
+			}
+			tt = actualRootType(ss, root)
+			types[tt] = struct{}{}
 		}
-	})
+		if len(types) == 1 { // all USER TYPES (example: @aaa | @bbb) have the same type (example: string)
+			return tt
+		}
+	}
+
+	return json.TypeMixed
 }
 
 func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]schema.Type) {
@@ -217,7 +254,7 @@ func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]sc
 		// Check all user types are defined.
 		if typesConstraint := node.Constraint(constraint.TypesListConstraintType); typesConstraint != nil {
 			for _, typeName := range typesConstraint.(*constraint.TypesList).Names() {
-				c.rootSchema.Type(typeName) // can panic
+				c.rootSchema.MustType(typeName) // can panic
 			}
 		}
 		return
@@ -239,9 +276,25 @@ func (c *checkSchema) collectAllowedJsonTypes(node schema.Node, ss map[string]sc
 	}
 }
 
+func (c *checkSchema) checkAdditionalPropertiesConstraint(node schema.Node, ss map[string]schema.Type) {
+	cnstr := node.Constraint(constraint.AdditionalPropertiesConstraintType)
+	if c == nil {
+		return
+	}
+
+	ap, ok := cnstr.(*constraint.AdditionalProperties)
+	if !ok {
+		return
+	}
+
+	if ap.Mode() == constraint.AdditionalPropertiesMustBeUserType {
+		getType(ap.TypeName().String(), c.rootSchema, ss)
+	}
+}
+
 func getType(n string, rootSchema *schema.Schema, ss map[string]schema.Type) (ret *schema.Schema) {
 	getFromRoot := func() *schema.Schema {
-		return rootSchema.Type(n)
+		return rootSchema.MustType(n)
 	}
 
 	getFromMap := func() *schema.Schema {

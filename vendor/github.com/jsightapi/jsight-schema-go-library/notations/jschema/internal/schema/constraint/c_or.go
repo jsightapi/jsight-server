@@ -5,13 +5,16 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 )
 
+// Or constraint.
 // Used for compile-time checking.
-
 type Or struct {
 	source jschema.RuleASTNodeSource
 }
 
-var _ Constraint = Or{}
+var (
+	_ Constraint = Or{}
+	_ Constraint = (*Or)(nil)
+)
 
 func NewOr(s jschema.RuleASTNodeSource) *Or {
 	return &Or{

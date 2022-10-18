@@ -11,7 +11,12 @@ import (
 
 type Email struct{}
 
-var _ Constraint = Email{}
+var (
+	_ Constraint       = Email{}
+	_ Constraint       = (*Email)(nil)
+	_ LiteralValidator = Email{}
+	_ LiteralValidator = (*Email)(nil)
+)
 
 func NewEmail() *Email {
 	return &Email{}

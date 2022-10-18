@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateH(s *Scanner, c byte) *jerr.JAPIError {
+func stateH(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'e':
 		s.step = stateHe
@@ -14,7 +14,7 @@ func stateH(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHe(s *Scanner, c byte) *jerr.JAPIError {
+func stateHe(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'a':
 		s.step = stateHea
@@ -24,7 +24,7 @@ func stateHe(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHea(s *Scanner, c byte) *jerr.JAPIError {
+func stateHea(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'd':
 		s.step = stateHead
@@ -34,7 +34,7 @@ func stateHea(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHead(s *Scanner, c byte) *jerr.JAPIError {
+func stateHead(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'e':
 		s.step = stateHeade
@@ -44,7 +44,7 @@ func stateHead(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHeade(s *Scanner, c byte) *jerr.JAPIError {
+func stateHeade(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'r':
 		s.step = stateHeader
@@ -54,7 +54,7 @@ func stateHeade(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHeader(s *Scanner, c byte) *jerr.JAPIError {
+func stateHeader(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 's':
 		s.found(KeywordEnd)
@@ -66,7 +66,7 @@ func stateHeader(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateHeaderBody(s *Scanner, c byte) *jerr.JAPIError {
+func stateHeaderBody(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case ContextOpenSign:
 		s.found(ContextOpen)

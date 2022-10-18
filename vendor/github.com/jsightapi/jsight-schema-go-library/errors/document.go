@@ -36,7 +36,10 @@ type DocumentError struct {
 	nl byte
 }
 
-var _ Error = DocumentError{}
+var (
+	_ Error = DocumentError{}
+	_ error = DocumentError{}
+)
 
 func NewDocumentError(file *fs.File, err Err) DocumentError {
 	return DocumentError{
@@ -96,34 +99,34 @@ func (e *DocumentError) SetMessage(message string) {
 
 // The method performs preparatory calculations, the results of which are used in other methods.
 func (e *DocumentError) preparation() {
-	if !e.prepared {
-		if e.file == nil {
-			panic("The file is not specified")
-		}
-		e.length = bytes.Index(len(e.file.Content()))
-		e.detectNewLineSymbol()
-		e.prepared = true
+	if e.prepared {
+		return
 	}
+
+	if e.file == nil {
+		panic("The file is not specified")
+	}
+	e.length = bytes.Index(len(e.file.Content()))
+	e.detectNewLineSymbol()
+	e.prepared = true
 }
 
 func (e *DocumentError) detectNewLineSymbol() {
 	content := e.file.Content()
 	e.nl = '\n' // default new line
 	var found bool
-	var i bytes.Index = 0
-	for i < e.length {
-		c := content[i]
-		if c == '\n' || c == '\r' {
+	for _, c := range content {
+		if bytes.IsNewLine(c) {
 			e.nl = c
 			found = true
 		} else if found { // first symbol after new line
 			break
 		}
-		i++
 	}
 }
 
-// Before calling this method, you must run the e.preparation()
+// lineBeginning
+// Before calling this method, you must run the e.preparation().
 func (e DocumentError) lineBeginning() bytes.Index {
 	content := e.file.Content()
 	i := e.index
@@ -143,7 +146,8 @@ func (e DocumentError) lineBeginning() bytes.Index {
 	return i
 }
 
-// Before calling this method, you must run the e.preparation()
+// lineEnd
+// Before calling this method, you must run the e.preparation().
 func (e DocumentError) lineEnd() bytes.Index {
 	content := e.file.Content()
 	i := e.index
@@ -193,6 +197,8 @@ func (e *DocumentError) Line() uint {
 
 // SourceSubString returns empty string, if cannot determine the source sub-string.
 func (e *DocumentError) SourceSubString() string {
+	const maxLength = 200
+
 	if e.file == nil || len(e.file.Content()) == 0 {
 		return ""
 	}
@@ -202,7 +208,6 @@ func (e *DocumentError) SourceSubString() string {
 	content := e.file.Content()
 	begin := e.lineBeginning()
 	end := e.lineEnd()
-	maxLength := bytes.Index(200)
 
 	if end-begin > maxLength {
 		end = begin + maxLength - 3
@@ -237,7 +242,10 @@ func (e *DocumentError) String() string {
 	if e.file != nil {
 		filename := e.file.Name()
 		if e.hasIndex {
-			return fmt.Sprintf("%s: %s\n\tin line %d on file %s\n\t> %s\n\t--%s", prefix, e.message, e.Line(), filename, e.SourceSubString(), e.pointerToTheErrorCharacter())
+			return fmt.Sprintf(`%s: %s
+	in line %d on file %s
+	> %s
+	--%s`, prefix, e.message, e.Line(), filename, e.SourceSubString(), e.pointerToTheErrorCharacter())
 		} else if filename != "" {
 			return fmt.Sprintf("%s: %s\n\tin file %s", prefix, e.message, filename)
 		}

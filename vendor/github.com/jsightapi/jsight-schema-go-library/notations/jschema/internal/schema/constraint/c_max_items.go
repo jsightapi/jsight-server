@@ -1,6 +1,8 @@
 package constraint
 
 import (
+	"strconv"
+
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -8,21 +10,19 @@ import (
 )
 
 type MaxItems struct {
-	value    *json.Number
-	rawValue bytes.Bytes
+	value uint
 }
 
-var _ Constraint = MaxItems{}
+var (
+	_ Constraint     = MaxItems{}
+	_ Constraint     = (*MaxItems)(nil)
+	_ ArrayValidator = MaxItems{}
+	_ ArrayValidator = (*MaxItems)(nil)
+)
 
 func NewMaxItems(ruleValue bytes.Bytes) *MaxItems {
-	number, err := json.NewIntegerNumber(ruleValue)
-	if err != nil {
-		panic(err)
-	}
-
 	return &MaxItems{
-		rawValue: ruleValue,
-		value:    number,
+		value: parseUint(ruleValue, MaxItemsConstraintType),
 	}
 }
 
@@ -35,20 +35,23 @@ func (MaxItems) Type() Type {
 }
 
 func (c MaxItems) String() string {
-	return MaxItemsConstraintType.String() + ": " + c.value.String()
+	return MaxItemsConstraintType.String() + ": " + strconv.FormatUint(uint64(c.value), 10)
 }
 
 func (c MaxItems) ValidateTheArray(numberOfChildren uint) {
-	length := json.NewNumberFromUint(numberOfChildren)
-	if length.GreaterThan(c.value) {
+	if numberOfChildren > c.value {
 		panic(errors.ErrConstraintMaxItemsValidation)
 	}
 }
 
-func (c MaxItems) Value() *json.Number {
+func (c MaxItems) Value() uint {
 	return c.value
 }
 
 func (c MaxItems) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(
+		jschema.TokenTypeNumber,
+		strconv.FormatUint(uint64(c.value), 10),
+		jschema.RuleASTNodeSourceManual,
+	)
 }

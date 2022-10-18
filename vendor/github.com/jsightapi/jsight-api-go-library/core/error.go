@@ -6,6 +6,6 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (core *JApiCore) japiError(msg string, i bytes.Index) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, core.file, i)
+func (core *JApiCore) japiError(msg string, i bytes.Index) *jerr.JApiError {
+	return jerr.NewJApiError(msg, core.scanner.File(), i)
 }

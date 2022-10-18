@@ -5,19 +5,19 @@ import (
 )
 
 // scanner goes into comment mode
-func (s *Scanner) startComment() *jerr.JAPIError {
+func (s *Scanner) startComment() *jerr.JApiError {
 	s.stepStack.Push(s.step)
 	s.step = stateCommentStarted
 	return nil
 }
 
 // byte that "ended" comment (eof, break) should be scanned as part of previous step
-func (s *Scanner) endCommentLine(c byte) *jerr.JAPIError {
+func (s *Scanner) endCommentLine(c byte) *jerr.JApiError {
 	s.step = s.stepStack.Pop()
 	return s.step(s, c)
 }
 
-func stateCommentStarted(s *Scanner, c byte) *jerr.JAPIError {
+func stateCommentStarted(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case CommentSign:
 		s.step = stateCommentDouble
@@ -27,7 +27,7 @@ func stateCommentStarted(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateCommentDouble(s *Scanner, c byte) *jerr.JAPIError {
+func stateCommentDouble(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case CommentSign:
 		s.step = stateCommentBlock
@@ -37,7 +37,7 @@ func stateCommentDouble(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateSingleComment(s *Scanner, c byte) *jerr.JAPIError {
+func stateSingleComment(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseNewLine(c), EOF:
 		return s.endCommentLine(c)
@@ -46,7 +46,7 @@ func stateSingleComment(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateCommentBlock(s *Scanner, c byte) *jerr.JAPIError {
+func stateCommentBlock(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case EOF:
 		return s.japiErrorUnexpectedChar("not found boundary end symbols", "###")
@@ -58,7 +58,7 @@ func stateCommentBlock(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateCommentOnceClosed(s *Scanner, c byte) *jerr.JAPIError {
+func stateCommentOnceClosed(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case CommentSign:
 		s.step = stateCommentTwiceClosed
@@ -69,7 +69,7 @@ func stateCommentOnceClosed(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateCommentTwiceClosed(s *Scanner, c byte) *jerr.JAPIError {
+func stateCommentTwiceClosed(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case CommentSign:
 		// end comment block

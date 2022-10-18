@@ -11,40 +11,45 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 )
 
-type Uuid struct{}
+type UUID struct{}
 
-var _ Constraint = Uuid{}
+var (
+	_ Constraint       = UUID{}
+	_ Constraint       = (*UUID)(nil)
+	_ LiteralValidator = UUID{}
+	_ LiteralValidator = (*UUID)(nil)
+)
 
-func NewUuid() *Uuid {
-	return &Uuid{}
+func NewUuid() *UUID {
+	return &UUID{}
 }
 
-func (Uuid) IsJsonTypeCompatible(t json.Type) bool {
+func (UUID) IsJsonTypeCompatible(t json.Type) bool {
 	return t == json.TypeString
 }
 
-func (Uuid) Type() Type {
+func (UUID) Type() Type {
 	return UuidConstraintType
 }
 
-func (Uuid) String() string {
+func (UUID) String() string {
 	return UuidConstraintType.String()
 }
 
-func (Uuid) Validate(value jbytes.Bytes) {
-	err := ParseBytes(value.Unquote())
+func (UUID) Validate(value jbytes.Bytes) {
+	err := parseBytes(value.Unquote())
 	if err != nil {
 		panic(errors.Format(errors.ErrInvalidUuid, err))
 	}
 }
 
-func (Uuid) ASTNode() jschema.RuleASTNode {
+func (UUID) ASTNode() jschema.RuleASTNode {
 	return newEmptyRuleASTNode()
 }
 
-// all of the following on the basis of github.com/google/uuid
-
-func ParseBytes(b []byte) error { //nolint:gocyclo // For now it's okay.
+// parseBytes parse UUID bytes.
+// All the following on the basis of github.com/google/uuid.
+func parseBytes(b []byte) error { //nolint:gocyclo // For now it's okay.
 	switch len(b) {
 	case 36: // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 	case 36 + 9: // urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -85,6 +90,12 @@ func ParseBytes(b []byte) error { //nolint:gocyclo // For now it's okay.
 	return nil
 }
 
+func xtob(x1, x2 byte) bool {
+	b1 := xvalues[x1]
+	b2 := xvalues[x2]
+	return b1 != 255 && b2 != 255
+}
+
 var xvalues = [256]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -102,10 +113,4 @@ var xvalues = [256]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-}
-
-func xtob(x1, x2 byte) bool {
-	b1 := xvalues[x1]
-	b2 := xvalues[x2]
-	return b1 != 255 && b2 != 255
 }

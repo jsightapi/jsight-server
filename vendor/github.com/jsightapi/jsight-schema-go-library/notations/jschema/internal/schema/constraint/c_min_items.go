@@ -1,6 +1,8 @@
 package constraint
 
 import (
+	"strconv"
+
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -8,21 +10,19 @@ import (
 )
 
 type MinItems struct {
-	value    *json.Number
-	rawValue bytes.Bytes
+	value uint
 }
 
-var _ Constraint = MinItems{}
+var (
+	_ Constraint     = MinItems{}
+	_ Constraint     = (*MinItems)(nil)
+	_ ArrayValidator = MinItems{}
+	_ ArrayValidator = (*MinItems)(nil)
+)
 
 func NewMinItems(ruleValue bytes.Bytes) *MinItems {
-	number, err := json.NewIntegerNumber(ruleValue)
-	if err != nil {
-		panic(err)
-	}
-
 	return &MinItems{
-		rawValue: ruleValue,
-		value:    number,
+		value: parseUint(ruleValue, MinItemsConstraintType),
 	}
 }
 
@@ -35,20 +35,23 @@ func (MinItems) Type() Type {
 }
 
 func (c MinItems) String() string {
-	return MinItemsConstraintType.String() + ": " + c.value.String()
+	return MinItemsConstraintType.String() + ": " + strconv.FormatUint(uint64(c.value), 10)
 }
 
 func (c MinItems) ValidateTheArray(numberOfChildren uint) {
-	length := json.NewNumberFromUint(numberOfChildren)
-	if length.LessThan(c.value) {
+	if numberOfChildren < c.value {
 		panic(errors.ErrConstraintMinItemsValidation)
 	}
 }
 
-func (c MinItems) Value() *json.Number {
+func (c MinItems) Value() uint {
 	return c.value
 }
 
 func (c MinItems) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(
+		jschema.TokenTypeNumber,
+		strconv.FormatUint(uint64(c.value), 10),
+		jschema.RuleASTNodeSourceManual,
+	)
 }

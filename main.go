@@ -9,6 +9,7 @@ import (
 
 	"github.com/jsightapi/datagram"
 	"github.com/jsightapi/jsight-api-go-library/kit"
+	"github.com/jsightapi/jsight-schema-go-library/fs"
 )
 
 func main() {
@@ -38,7 +39,7 @@ func jdocExchangeFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		j := kit.NewJapiFromBytes(b)
+		j := kit.NewJApiFromFile(fs.NewFile("root", b))
 		je := j.ValidateJAPI()
 
 		if getBoolEnv("JSIGHT_SERVER_STATISTICS") {

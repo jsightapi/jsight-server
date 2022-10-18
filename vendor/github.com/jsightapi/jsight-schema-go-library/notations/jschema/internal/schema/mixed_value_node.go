@@ -15,26 +15,39 @@ type MixedValueNode struct {
 	schemaType string
 	value      string
 
+	types []string
+
 	baseNode
 }
 
-var _ Node = &MixedValueNode{}
+var _ Node = (*MixedValueNode)(nil)
 
 func NewMixedValueNode(lex lexeme.LexEvent) *MixedValueNode {
 	n := MixedValueNode{
 		baseNode: newBaseNode(lex),
 	}
 	n.setJsonType(json.TypeMixed)
+	n.realType = json.TypeMixed.String()
 	return &n
+}
+
+func (*MixedValueNode) SetRealType(string) bool {
+	// Mixed value node is always have mixed type.
+	return true
 }
 
 func (n *MixedValueNode) AddConstraint(c constraint.Constraint) {
 	switch t := c.(type) {
 	case *constraint.TypeConstraint:
 		n.addTypeConstraint(t)
+		n.types = []string{t.Bytes().String()}
 
 	case *constraint.Or:
 		n.addOrConstraint(t)
+
+	case *constraint.TypesList:
+		n.types = t.Names()
+		n.baseNode.AddConstraint(t)
 
 	default:
 		n.baseNode.AddConstraint(t)
@@ -85,23 +98,6 @@ func (n *MixedValueNode) Grow(lex lexeme.LexEvent) (Node, bool) {
 	return n, false
 }
 
-func (n *MixedValueNode) IndentedTreeString(depth int) string {
-	return n.IndentedNodeString(depth)
-}
-
-func (n *MixedValueNode) IndentedNodeString(depth int) string {
-	indent := strings.Repeat("\t", depth)
-
-	var str strings.Builder
-	str.WriteString(indent + "* " + n.Type().String() + "\n")
-
-	n.constraints.EachSafe(func(_ constraint.Type, v constraint.Constraint) {
-		str.WriteString(indent + "* " + v.String() + "\n")
-	})
-
-	return str.String()
-}
-
 func (n *MixedValueNode) ASTNode() (jschema.ASTNode, error) {
 	an := astNodeFromNode(n)
 
@@ -111,4 +107,8 @@ func (n *MixedValueNode) ASTNode() (jschema.ASTNode, error) {
 	}
 	an.Value = n.value
 	return an, nil
+}
+
+func (n *MixedValueNode) GetTypes() []string {
+	return n.types
 }

@@ -9,15 +9,15 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (s Scanner) japiError(msg string, i bytes.Index) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, s.file, i)
+func (s Scanner) japiError(msg string, i bytes.Index) *jerr.JApiError {
+	return jerr.NewJApiError(msg, s.file, i)
 }
 
-func (s Scanner) japiErrorBasic(msg string) *jerr.JAPIError {
-	return jerr.NewJAPIError(msg, s.file, s.curIndex)
+func (s Scanner) japiErrorBasic(msg string) *jerr.JApiError {
+	return jerr.NewJApiError(msg, s.file, s.curIndex)
 }
 
-func (s Scanner) japiErrorUnexpectedChar(where string, expected string) *jerr.JAPIError {
+func (s Scanner) japiErrorUnexpectedChar(where string, expected string) *jerr.JApiError {
 	var msg string
 	if s.curIndex < s.dataSize {
 		r, _ := utf8.DecodeRune(s.data[s.curIndex:])

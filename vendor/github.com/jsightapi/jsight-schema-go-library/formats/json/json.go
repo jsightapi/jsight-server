@@ -3,24 +3,20 @@ package json
 import (
 	stdErrors "errors"
 	"io"
-	"sync"
 
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
+	"github.com/jsightapi/jsight-schema-go-library/internal/sync"
 )
 
 type Document struct {
 	file    *fs.File
 	scanner *scanner
 
-	checkErr error
-
-	len uint
-
-	lenOnce   sync.Once
-	checkOnce sync.Once
+	lenOnce   sync.ErrOnceWithValue[uint]
+	checkOnce sync.ErrOnce
 
 	allowTrailingNonSpaceCharacters bool
 }
@@ -28,7 +24,7 @@ type Document struct {
 var _ jschema.Document = &Document{}
 
 // New creates a JSON document with specified name and content.
-func New(name string, content []byte, oo ...Option) jschema.Document {
+func New[T fs.FileContent](name string, content T, oo ...Option) jschema.Document {
 	return FromFile(fs.NewFile(name, content), oo...)
 }
 
@@ -60,11 +56,9 @@ func (d *Document) NextLexeme() (lexeme.LexEvent, error) {
 }
 
 func (d *Document) Len() (uint, error) {
-	var err error
-	d.lenOnce.Do(func() {
-		d.len, err = d.computeLen()
+	return d.lenOnce.Do(func() (uint, error) {
+		return d.computeLen()
 	})
-	return d.len, err
 }
 
 func (d *Document) computeLen() (length uint, err error) {
@@ -89,10 +83,9 @@ func (d *Document) computeLen() (length uint, err error) {
 }
 
 func (d *Document) Check() error {
-	d.checkOnce.Do(func() {
-		d.checkErr = d.check()
+	return d.checkOnce.Do(func() error {
+		return d.check()
 	})
-	return d.checkErr
 }
 
 func (d *Document) check() error {

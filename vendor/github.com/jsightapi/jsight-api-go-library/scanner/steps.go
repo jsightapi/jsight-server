@@ -4,14 +4,14 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateRoot(s *Scanner, c byte) *jerr.JAPIError {
+func stateRoot(s *Scanner, c byte) *jerr.JApiError {
 	if c == CommentSign {
 		return s.startComment()
 	}
 	return stateExpectKeyword(s, c)
 }
 
-func stateExpectKeyword(s *Scanner, c byte) *jerr.JAPIError {
+func stateExpectKeyword(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseNewLine(c), caseWhitespace(c), EOF:
 		return nil
@@ -25,65 +25,65 @@ func stateExpectKeyword(s *Scanner, c byte) *jerr.JAPIError {
 		s.found(ContextClose)
 		s.step = stateContextClosed
 		return nil
-	case 'U': // URL
+	case 'B': // Body, BaseUrl
 		s.found(KeywordBegin)
-		s.step = stateU
-		return nil
-	case 'R': // URL
-		s.found(KeywordBegin)
-		s.step = stateR
-		return nil
-	case 'G': // GET
-		s.found(KeywordBegin)
-		s.step = stateG
-		return nil
-	case 'P': // POST, PUT, PATCH, Path, PASTE
-		s.found(KeywordBegin)
-		s.step = stateP
+		s.step = stateB
 		return nil
 	case 'D': // DELETE, Description
 		s.found(KeywordBegin)
 		s.step = stateD
 		return nil
-	case 'S': // SERVER
+	case 'E': // ENUM
 		s.found(KeywordBegin)
-		s.step = stateS
+		s.step = stateE
 		return nil
-	case 'I': // INFO
+	case 'G': // GET
+		s.found(KeywordBegin)
+		s.step = stateG
+		return nil
+	case 'H': // Headers
+		s.found(KeywordBegin)
+		s.step = stateH
+		return nil
+	case 'I': // INFO, INCLUDE
 		s.found(KeywordBegin)
 		s.step = stateI
-		return nil
-	case 'T': // Title, TYPE
-		s.found(KeywordBegin)
-		s.step = stateT
-		return nil
-	case 'V': // Version
-		s.found(KeywordBegin)
-		s.step = stateV
 		return nil
 	case 'J': // JSIGHT
 		s.found(KeywordBegin)
 		s.step = stateJ
 		return nil
-	case 'E': // ENUM
+	case 'M': // MACRO, Method
 		s.found(KeywordBegin)
-		s.step = stateE
+		s.step = stateM
+		return nil
+	case 'P': // POST, PUT, PATCH, Path, PASTE, Protocol, Params
+		s.found(KeywordBegin)
+		s.step = stateP
 		return nil
 	case 'Q': // Query
 		s.found(KeywordBegin)
 		s.step = stateQ
 		return nil
-	case 'M': // MACRO
+	case 'R': // Request, Result
 		s.found(KeywordBegin)
-		s.step = stateM
+		s.step = stateR
 		return nil
-	case 'B': // Body, BaseUrl
+	case 'S': // SERVER
 		s.found(KeywordBegin)
-		s.step = stateB
+		s.step = stateS
 		return nil
-	case 'H': // Headers
+	case 'T': // Title, TYPE, TAG, Tags
 		s.found(KeywordBegin)
-		s.step = stateH
+		s.step = stateT
+		return nil
+	case 'U': // URL
+		s.found(KeywordBegin)
+		s.step = stateU
+		return nil
+	case 'V': // Version
+		s.found(KeywordBegin)
+		s.step = stateV
 		return nil
 	case '1', '2', '3', '4', '5': // HTTP responses
 		s.found(KeywordBegin)
@@ -93,7 +93,7 @@ func stateExpectKeyword(s *Scanner, c byte) *jerr.JAPIError {
 	return s.japiErrorUnexpectedChar("at directive beginning", "")
 }
 
-func stateB(s *Scanner, c byte) *jerr.JAPIError {
+func stateB(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'o': // Body
 		s.step = stateBo
@@ -102,11 +102,11 @@ func stateB(s *Scanner, c byte) *jerr.JAPIError {
 		s.step = stateBa
 		return nil
 	default:
-		return s.japiErrorUnexpectedChar("in keyword Body/BaseUrl", "o")
+		return s.japiErrorUnexpectedChar("in directive name", "")
 	}
 }
 
-func stateD(s *Scanner, c byte) *jerr.JAPIError {
+func stateD(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'E': // DELETE
 		s.step = stateDE
@@ -115,11 +115,24 @@ func stateD(s *Scanner, c byte) *jerr.JAPIError {
 		s.step = stateDe
 		return nil
 	default:
-		return s.japiErrorUnexpectedChar("in keyword DELETE", "E")
+		return s.japiErrorUnexpectedChar("in directive name", "")
 	}
 }
 
-func stateP(s *Scanner, c byte) *jerr.JAPIError {
+func stateM(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case 'A': // MACRO
+		s.step = stateMA
+		return nil
+	case 'e': // Method
+		s.step = stateMe
+		return nil
+	default:
+		return s.japiErrorUnexpectedChar("in directive name", "")
+	}
+}
+
+func stateP(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'O': // POST
 		s.step = statePO
@@ -130,15 +143,18 @@ func stateP(s *Scanner, c byte) *jerr.JAPIError {
 	case 'A': // PATCH, PASTE
 		s.step = statePA
 		return nil
-	case 'a': // Path
+	case 'a': // Path, Params
 		s.step = statePa
 		return nil
+	case 'r': // Protocol
+		s.step = statePr
+		return nil
 	default:
-		return s.japiErrorUnexpectedChar("in keyword ", "'O', 'U', 'A', 'a')")
+		return s.japiErrorUnexpectedChar("in directive name", "")
 	}
 }
 
-func statePA(s *Scanner, c byte) *jerr.JAPIError {
+func statePA(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'S': // PASTE
 		s.step = statePAS
@@ -147,11 +163,47 @@ func statePA(s *Scanner, c byte) *jerr.JAPIError {
 		s.step = statePAT
 		return nil
 	default:
-		return s.japiErrorUnexpectedChar("in keyword PATCH", "T")
+		return s.japiErrorUnexpectedChar("in directive name", "")
 	}
 }
 
-func stateT(s *Scanner, c byte) *jerr.JAPIError {
+func statePa(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case 't': // Path
+		s.step = statePat
+		return nil
+	case 'r': // Params
+		s.step = statePar
+		return nil
+	default:
+		return s.japiErrorUnexpectedChar("in directive name", "")
+	}
+}
+
+func stateR(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case 'e': // Request, Result
+		s.step = stateRe
+		return nil
+	default:
+		return s.japiErrorUnexpectedChar("in directive name", "")
+	}
+}
+
+func stateRe(s *Scanner, c byte) *jerr.JApiError {
+	switch c {
+	case 'q': // Request
+		s.step = stateReq
+		return nil
+	case 's': // Result
+		s.step = stateRes
+		return nil
+	default:
+		return s.japiErrorUnexpectedChar("in directive name", "")
+	}
+}
+
+func stateT(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'i': // Title
 		s.step = stateTi
@@ -159,14 +211,20 @@ func stateT(s *Scanner, c byte) *jerr.JAPIError {
 	case 'Y': // TYPE
 		s.step = stateTy
 		return nil
+	case 'A': // TAG
+		s.step = stateTA
+		return nil
+	case 'a': // Tags
+		s.step = stateTa
+		return nil
 	default:
-		return s.japiErrorUnexpectedChar("in keyword Title", "'Y' or 'i'")
+		return s.japiErrorUnexpectedChar("in directive name", "")
 	}
 }
 
 // this is only good until schema takes up whole body.
 // if we later need to continue body after schema, we can make processSchema() take 'nextStep' func as a parameter.
-func stateSchemaClosed(s *Scanner, c byte) *jerr.JAPIError {
+func stateSchemaClosed(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c):
 		s.foundAt(s.curIndex-1, SchemaEnd)
@@ -181,24 +239,9 @@ func stateSchemaClosed(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateJsonArrayClosed(s *Scanner, c byte) *jerr.JAPIError {
-	switch c {
-	case caseWhitespace(c):
-		s.found(JsonArrayEnd)
-		s.step = stateBodyEnded
-		return nil
-	case caseNewLine(c), EOF:
-		s.found(JsonArrayEnd)
-		s.step = stateExpectKeyword
-		return nil
-	default:
-		return s.japiErrorUnexpectedChar("after json array", "")
-	}
-}
-
 // any directive's body, not the "Body" directive
 // this state allows comments, because body was properly ended at least with whitespace
-func stateBodyEnded(s *Scanner, c byte) *jerr.JAPIError {
+func stateBodyEnded(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c):
 		return nil
@@ -212,7 +255,7 @@ func stateBodyEnded(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateContextClosed(s *Scanner, c byte) *jerr.JAPIError {
+func stateContextClosed(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c), EOF:
 		return nil
@@ -226,7 +269,7 @@ func stateContextClosed(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateContextOpenedOnNewline(s *Scanner, c byte) *jerr.JAPIError {
+func stateContextOpenedOnNewline(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c):
 		return nil
@@ -236,6 +279,6 @@ func stateContextOpenedOnNewline(s *Scanner, c byte) *jerr.JAPIError {
 	case CommentSign:
 		return s.startComment()
 	default:
-		return s.japiErrorUnexpectedChar("after explicit context open", "")
+		return s.japiErrorBasic(jerr.ApartFromTheOpeningParenthesis)
 	}
 }

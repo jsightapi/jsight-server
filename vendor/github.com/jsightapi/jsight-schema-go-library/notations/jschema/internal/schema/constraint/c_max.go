@@ -13,7 +13,12 @@ type Max struct {
 	exclusive bool
 }
 
-var _ Constraint = Max{}
+var (
+	_ Constraint       = Max{}
+	_ Constraint       = (*Max)(nil)
+	_ LiteralValidator = Max{}
+	_ LiteralValidator = (*Max)(nil)
+)
 
 func NewMax(ruleValue bytes.Bytes) *Max {
 	number, err := json.NewNumber(ruleValue)
@@ -22,17 +27,13 @@ func NewMax(ruleValue bytes.Bytes) *Max {
 	}
 
 	return &Max{
-		rawValue:  ruleValue,
-		max:       number,
-		exclusive: false,
+		rawValue: ruleValue,
+		max:      number,
 	}
 }
 
 func (Max) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (Max) Type() Type {
@@ -51,6 +52,10 @@ func (c *Max) SetExclusive(exclusive bool) {
 	c.exclusive = exclusive
 }
 
+func (c *Max) Exclusive() bool {
+	return c.exclusive
+}
+
 func (c Max) Validate(value bytes.Bytes) {
 	jsonNumber, err := json.NewNumber(value)
 	if err != nil {
@@ -58,7 +63,7 @@ func (c Max) Validate(value bytes.Bytes) {
 	}
 	if c.exclusive {
 		if c.max.LessThanOrEqual(jsonNumber) {
-			panic(errors.Format(errors.ErrConstraintValidation, MaxConstraintType.String(), c.max.String(), "(exclusive)"))
+			panic(errors.Format(errors.ErrConstraintValidation, MaxConstraintType.String(), c.max.String(), "(exclusive)")) //nolint:lll
 		}
 	} else {
 		if c.max.LessThan(jsonNumber) {
@@ -68,5 +73,9 @@ func (c Max) Validate(value bytes.Bytes) {
 }
 
 func (c Max) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+}
+
+func (c *Max) Value() *json.Number {
+	return c.max
 }

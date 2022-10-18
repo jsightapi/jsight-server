@@ -19,7 +19,7 @@ func newErrorInfo(e error) errorInfo {
 		Message: e.Error(),
 	}
 
-	var je *jerr.JAPIError
+	var je *jerr.JApiError
 
 	if errors.As(e, &je) {
 		r.Line = int(je.Line())

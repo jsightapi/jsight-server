@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateBo(s *Scanner, c byte) *jerr.JAPIError {
+func stateBo(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'd':
 		s.step = stateBod
@@ -14,7 +14,7 @@ func stateBo(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateBod(s *Scanner, c byte) *jerr.JAPIError {
+func stateBod(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case 'y':
 		s.found(KeywordEnd)
@@ -26,7 +26,7 @@ func stateBod(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateBodyBodyOrKeyword(s *Scanner, c byte) *jerr.JAPIError {
+func stateBodyBodyOrKeyword(s *Scanner, c byte) *jerr.JApiError {
 	if !s.isDirectiveParameterHasTypeOrAnyOrEmpty() {
 		if s.isDirectiveParameterHasRegexNotation() {
 			s.stepStack.Push(stateRegex)
@@ -40,7 +40,7 @@ func stateBodyBodyOrKeyword(s *Scanner, c byte) *jerr.JAPIError {
 	return s.step(s, c)
 }
 
-func stateBodyBody(s *Scanner, c byte) *jerr.JAPIError {
+func stateBodyBody(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case caseWhitespace(c), caseNewLine(c):
 		return nil

@@ -9,12 +9,15 @@ import (
 type Type uint8
 
 const (
-	TypeUndefined Type = iota // default value for literal and mixed nodes
+	// TypeUndefined default value for literal and mixed nodes.
+	TypeUndefined Type = iota
 	TypeObject
 	TypeArray
 	TypeString
 	TypeInteger
-	TypeFloat // To be precise, there is no separate "Integer" and "Float" in JSON, there is a single "Number" type. But in our case, we will assume that there is.
+	// TypeFloat to be precise, there is no separate "Integer" and "Float" in JSON,
+	// there is a single "Number" type. But in our case, we will assume that there is.
+	TypeFloat
 	TypeBoolean
 	TypeNull
 
@@ -84,7 +87,7 @@ func (t Type) IsLiteralType() bool {
 	return false
 }
 
-func (t Type) ToJSONType() string {
+func (t Type) ToTokenType() string {
 	switch t { //nolint:exhaustive // We return an empty string.
 	case TypeObject:
 		return "object"
@@ -99,7 +102,7 @@ func (t Type) ToJSONType() string {
 	case TypeNull:
 		return "null"
 	case TypeMixed:
-		return "shortcut"
+		return "reference"
 	}
 	return ""
 }

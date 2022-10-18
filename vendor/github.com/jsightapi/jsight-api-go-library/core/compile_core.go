@@ -7,27 +7,37 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (core *JApiCore) compileCore() *jerr.JAPIError {
+func (core *JApiCore) compileCore() *jerr.JApiError {
 	if je := core.collectMacro(); je != nil {
 		return je
 	}
+
 	if je := core.checkMacroForRecursion(); je != nil {
 		return je
 	}
+
 	if je := core.processPaste(); je != nil {
+		return je
+	}
+
+	if je := core.collectRules(); je != nil {
+		return je
+	}
+
+	if je := core.collectTags(); je != nil {
 		return je
 	}
 
 	core.collectUserTypes()
 
-	if err := core.compileUserTypes(); err != nil {
-		return err
+	if je := core.compileUserTypes(); je != nil {
+		return je
 	}
 
 	return core.collectPaths(core.directivesWithPastes)
 }
 
-func (core *JApiCore) checkMacroForRecursion() *jerr.JAPIError {
+func (core *JApiCore) checkMacroForRecursion() *jerr.JApiError {
 	for macroName, macro := range core.macro {
 		if je := findPaste(macroName, macro); je != nil {
 			return je
@@ -36,9 +46,9 @@ func (core *JApiCore) checkMacroForRecursion() *jerr.JAPIError {
 	return nil
 }
 
-func findPaste(macroName string, d *directive.Directive) *jerr.JAPIError {
+func findPaste(macroName string, d *directive.Directive) *jerr.JApiError {
 	if d.Type() == directive.Paste {
-		switch d.Parameter("Name") {
+		switch d.NamedParameter("Name") {
 		case "":
 			return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "Name"))
 
@@ -46,8 +56,8 @@ func findPaste(macroName string, d *directive.Directive) *jerr.JAPIError {
 			return d.KeywordError("recursion is prohibited")
 		}
 	} else if d.Children != nil {
-		for i := 0; i != len(d.Children); i++ {
-			if je := findPaste(macroName, d.Children[i]); je != nil {
+		for _, c := range d.Children {
+			if je := findPaste(macroName, c); je != nil {
 				return je
 			}
 		}
@@ -56,9 +66,9 @@ func findPaste(macroName string, d *directive.Directive) *jerr.JAPIError {
 }
 
 func (core *JApiCore) collectUserTypes() {
-	for i := 0; i != len(core.directivesWithPastes); i++ {
-		if core.directivesWithPastes[i].Type() == directive.Type {
-			core.catalog.AddRawUserType(core.directivesWithPastes[i])
+	for _, d := range core.directivesWithPastes {
+		if d.Type() == directive.Type {
+			core.catalog.AddRawUserType(d)
 		}
 	}
 }

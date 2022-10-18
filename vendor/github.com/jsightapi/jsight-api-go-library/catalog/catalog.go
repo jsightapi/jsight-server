@@ -8,14 +8,13 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/directive"
 )
 
-const JDocExchangeFileSchemaVersion = "1.0.0"
+const JDocExchangeVersion = "2.0.0"
 
 // Catalog is the main result of processing .jst file, represents all accumulated Api data more closely to API terms.
 // Has no direct connection to Directives but operates with models with similar structure, but in API terms.
 // Has flat URL structure, each URL is unique and indicates a separate Resource.
 // Each Resource has Requests — available http methods and their properties.
 // Each Resource or Request has it its own complex properties, which can be added through dedicated methods.
-
 type Catalog struct {
 	rawUserTypes *directive.Directives
 
@@ -28,7 +27,10 @@ type Catalog struct {
 	// UserTypes contains information about defined user types.
 	UserTypes *UserTypes
 
-	ResourceMethods *ResourceMethods
+	// UserEnums contains information about defined user enums.
+	UserEnums *UserRules
+
+	Interactions *Interactions
 
 	Tags *Tags
 
@@ -42,21 +44,22 @@ func (c *Catalog) ToJson() ([]byte, error) {
 }
 
 func (c *Catalog) ToJsonIndent() ([]byte, error) {
-	return json.MarshalIndent(c, "", "\t")
+	return json.MarshalIndent(c, "", "  ")
 }
 
 func NewCatalog() *Catalog {
 	return &Catalog{
-		rawUserTypes:    &directive.Directives{},
-		Servers:         &Servers{},
-		UserTypes:       &UserTypes{},
-		ResourceMethods: &ResourceMethods{},
-		Tags:            &Tags{},
+		rawUserTypes: &directive.Directives{},
+		Servers:      &Servers{},
+		UserTypes:    &UserTypes{},
+		UserEnums:    &UserRules{},
+		Interactions: &Interactions{},
+		Tags:         &Tags{},
 	}
 }
 
 func (c *Catalog) AddRawUserType(d *directive.Directive) {
-	c.rawUserTypes.Set(d.Parameter("Name"), d)
+	c.rawUserTypes.Set(d.NamedParameter("Name"), d)
 }
 
 func (c *Catalog) GetRawUserTypes() *directive.Directives {
@@ -69,16 +72,17 @@ func (*Catalog) Read(coords directive.Coords) bytes.Bytes {
 
 func (c *Catalog) MarshalJSON() ([]byte, error) {
 	var data struct {
-		Info                          *Info            `json:"info,omitempty"`
-		Servers                       *Servers         `json:"servers,omitempty"`
-		UserTypes                     *UserTypes       `json:"userTypes,omitempty"`
-		ResourceMethods               *ResourceMethods `json:"resourceMethods"`
-		Tags                          *Tags            `json:"tags"`
-		JDocExchangeFileSchemaVersion string           `json:"jdocExchangeFileSchemaVersion"`
-		JSightVersion                 string           `json:"jsight"`
+		Tags                *Tags         `json:"tags"`
+		Info                *Info         `json:"info,omitempty"`
+		Servers             *Servers      `json:"servers,omitempty"`
+		UserTypes           *UserTypes    `json:"userTypes,omitempty"`
+		UserEnums           *UserRules    `json:"userEnums,omitempty"`
+		Interactions        *Interactions `json:"interactions"`
+		JSightVersion       string        `json:"jsight"`
+		JdocExchangeVersion string        `json:"jdocExchangeVersion"`
 	}
 
-	data.JDocExchangeFileSchemaVersion = JDocExchangeFileSchemaVersion
+	data.JdocExchangeVersion = JDocExchangeVersion
 	data.JSightVersion = c.JSightVersion
 	data.Info = c.Info
 	if c.Servers.Len() > 0 {
@@ -87,7 +91,10 @@ func (c *Catalog) MarshalJSON() ([]byte, error) {
 	if c.UserTypes.Len() > 0 {
 		data.UserTypes = c.UserTypes
 	}
-	data.ResourceMethods = c.ResourceMethods
+	if c.UserEnums.Len() > 0 {
+		data.UserEnums = c.UserEnums
+	}
+	data.Interactions = c.Interactions
 	data.Tags = c.Tags
 
 	return json.Marshal(data)

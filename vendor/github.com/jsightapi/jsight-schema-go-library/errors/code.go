@@ -11,12 +11,15 @@ const (
 	ErrGeneric    ErrorCode = 0
 	ErrImpossible ErrorCode = 1
 
-	// main & common
-	ErrUserTypeFound      ErrorCode = 101
-	ErrUnknownType        ErrorCode = 102
-	ErrUnknownJSchemaType ErrorCode = 103
+	// Main & common.
 
-	// validator
+	ErrUserTypeFound             ErrorCode = 101
+	ErrUnknownType               ErrorCode = 102
+	ErrUnknownJSchemaType        ErrorCode = 103
+	ErrInfinityRecursionDetected ErrorCode = 104
+
+	// Validator.
+
 	ErrValidator                       ErrorCode = 201
 	ErrEmptySchema                     ErrorCode = 202
 	ErrEmptyJson                       ErrorCode = 203
@@ -30,65 +33,75 @@ const (
 	ErrInvalidKeyType                  ErrorCode = 211
 	ErrUnexpectedLexInMixedValidator   ErrorCode = 212
 
-	// scanner
+	// Scanner.
+
 	ErrInvalidCharacter                      ErrorCode = 301
 	ErrInvalidCharacterInAnnotationObjectKey ErrorCode = 302
 	ErrUnexpectedEOF                         ErrorCode = 303
 	ErrAnnotationNotAllowed                  ErrorCode = 304
 
-	// schema
+	// Schema.
+
 	ErrNodeGrow                 ErrorCode = 401
 	ErrDuplicateKeysInSchema    ErrorCode = 402
 	ErrDuplicationOfNameOfTypes ErrorCode = 403
 
-	// node
+	// Node.
+
 	ErrDuplicateRule ErrorCode = 501
 
-	// constraint
-	ErrUnknownRule                      ErrorCode = 601
-	ErrConstraintValidation             ErrorCode = 602
-	ErrConstraintStringLengthValidation ErrorCode = 603
-	ErrInvalidValueOfConstraint         ErrorCode = 604
-	ErrZeroPrecision                    ErrorCode = 605
-	ErrEmptyEmail                       ErrorCode = 606
-	ErrInvalidEmail                     ErrorCode = 607
-	ErrConstraintMinItemsValidation     ErrorCode = 608
-	ErrConstraintMaxItemsValidation     ErrorCode = 609
-	ErrDoesNotMatchAnyOfTheEnumValues   ErrorCode = 610
-	ErrDoesNotMatchRegularExpression    ErrorCode = 611
-	ErrInvalidUri                       ErrorCode = 612
-	ErrInvalidDateTime                  ErrorCode = 613
-	ErrInvalidUuid                      ErrorCode = 614
-	ErrInvalidConst                     ErrorCode = 615
-	ErrInvalidDate                      ErrorCode = 616
+	// Constraint
 
-	// loader
+	ErrUnknownRule                                 ErrorCode = 601
+	ErrConstraintValidation                        ErrorCode = 602
+	ErrConstraintStringLengthValidation            ErrorCode = 603
+	ErrInvalidValueOfConstraint                    ErrorCode = 604
+	ErrZeroPrecision                               ErrorCode = 605
+	ErrEmptyEmail                                  ErrorCode = 606
+	ErrInvalidEmail                                ErrorCode = 607
+	ErrConstraintMinItemsValidation                ErrorCode = 608
+	ErrConstraintMaxItemsValidation                ErrorCode = 609
+	ErrDoesNotMatchAnyOfTheEnumValues              ErrorCode = 610
+	ErrDoesNotMatchRegularExpression               ErrorCode = 611
+	ErrInvalidUri                                  ErrorCode = 612
+	ErrInvalidDateTime                             ErrorCode = 613
+	ErrInvalidUuid                                 ErrorCode = 614
+	ErrInvalidConst                                ErrorCode = 615
+	ErrInvalidDate                                 ErrorCode = 616
+	ErrValueOfOneConstraintGreaterThanAnother      ErrorCode = 617
+	ErrValueOfOneConstraintGreaterOrEqualToAnother ErrorCode = 618
+
+	// Loader.
+
 	ErrInvalidSchemaName                ErrorCode = 701
 	ErrInvalidSchemaNameInAllOfRule     ErrorCode = 702
 	ErrUnacceptableRecursionInAllOfRule ErrorCode = 703
 	ErrUnacceptableUserTypeInAllOfRule  ErrorCode = 704
 	ErrConflictAdditionalProperties     ErrorCode = 705
 
-	// rule loader
+	// Rule loader.
+
 	ErrLoader                           ErrorCode = 801
 	ErrIncorrectRuleValueType           ErrorCode = 802
 	ErrIncorrectRuleWithoutExample      ErrorCode = 803
 	ErrIncorrectRuleForSeveralNode      ErrorCode = 804
 	ErrLiteralValueExpected             ErrorCode = 805
-	ErrArrayWasExpectedInEnumRule       ErrorCode = 806
+	ErrInvalidValueInEnumRule           ErrorCode = 806
 	ErrIncorrectArrayItemTypeInEnumRule ErrorCode = 807
 	ErrUnacceptableValueInAllOfRule     ErrorCode = 808
 	ErrTypeNameNotFoundInAllOfRule      ErrorCode = 809
 	ErrDuplicationInEnumRule            ErrorCode = 810
 
-	// "or" rule loader
+	// "or" rule loader.
+
 	ErrArrayWasExpectedInOrRule       ErrorCode = 901
 	ErrEmptyArrayInOrRule             ErrorCode = 902
 	ErrOneElementInArrayInOrRule      ErrorCode = 903
 	ErrIncorrectArrayItemTypeInOrRule ErrorCode = 904
 	ErrEmptyRuleSet                   ErrorCode = 905
 
-	// compiler
+	// Compiler.
+
 	ErrRuleOptionalAppliesOnlyToObjectProperties ErrorCode = 1101
 	ErrCannotSpecifyOtherRulesWithTypeReference  ErrorCode = 1102
 	ErrShouldBeNoOtherRulesInSetWithOr           ErrorCode = 1103
@@ -104,38 +117,53 @@ const (
 	ErrNotFoundRuleEnum                          ErrorCode = 1113
 	ErrNotFoundRuleOr                            ErrorCode = 1114
 	ErrIncompatibleTypes                         ErrorCode = 1115
-	ErrUnknownAdditionalPropertiesTypes          ErrorCode = 1116
-	ErrUnexpectedConstraint                      ErrorCode = 1117
+	// ErrUnknownAdditionalPropertiesTypes          ErrorCode = 1116
 
-	// checker
+	ErrUnexpectedConstraint ErrorCode = 1117
+
+	// Checker.
+
 	ErrChecker                               ErrorCode = 1201
 	ErrElementNotFoundInArray                ErrorCode = 1203
 	ErrIncorrectConstraintValueForEmptyArray ErrorCode = 1204
 
-	// link checker
+	// Link checker.
+
 	ErrIncorrectUserType                              ErrorCode = 1301
 	ErrTypeNotFound                                   ErrorCode = 1302
 	ErrImpossibleToDetermineTheJsonTypeDueToRecursion ErrorCode = 1303
+	ErrInvalidKeyShortcutType                         ErrorCode = 1304
 
-	// sdk
+	// SDK.
+
 	ErrEmptyType                          ErrorCode = 1401
 	ErrUnnecessaryLexemeAfterTheEndOfEnum ErrorCode = 1402
 
-	// regex
+	// Regex.
+
 	ErrRegexUnexpectedStart ErrorCode = 1500
 	ErrRegexUnexpectedEnd   ErrorCode = 1501
+	ErrRegexInvalid         ErrorCode = 1502
+
+	// Enum.
+
+	ErrEnumArrayExpected  ErrorCode = 1600
+	ErrEnumIsHoldRuleName ErrorCode = 1601
+	ErrEnumRuleNotFound   ErrorCode = 1602
+	ErrNotAnEnumRule      ErrorCode = 1603
 )
 
 var errorFormat = map[ErrorCode]string{
 	// old error format
 	ErrGeneric: "%s",
 
-	ErrImpossible: "The error should not occur during regular operation. May appear only in the process of unfinished code refactoring.",
+	ErrImpossible: "The error should not occur during regular operation. May appear only in the process of unfinished code refactoring.", //nolint:lll
 
 	// main & common
-	ErrUserTypeFound:      "Found an invalid reference to the type",
-	ErrUnknownType:        "Unknown type %q",
-	ErrUnknownJSchemaType: "Unknown JSchema type %q",
+	ErrUserTypeFound:             "Found an invalid reference to the type",
+	ErrUnknownType:               "Unknown type %q",
+	ErrUnknownJSchemaType:        "Unknown JSchema type %q",
+	ErrInfinityRecursionDetected: "Infinity recursion detected %s",
 
 	// validator
 	ErrValidator:                       "Validator error",
@@ -163,25 +191,27 @@ var errorFormat = map[ErrorCode]string{
 	ErrDuplicationOfNameOfTypes: "Duplication of the name of the types (%s)",
 
 	// node
-	ErrDuplicateRule: `Duplicate "%s" rule`,
+	ErrDuplicateRule: "Duplicate %q rule",
 
 	// constraint
-	ErrUnknownRule:                      `Unknown rule "%s"`,
-	ErrConstraintValidation:             `Invalid value for "%s" = %s constraint %s`,
-	ErrConstraintStringLengthValidation: `Invalid string length for "%s" = "%s" constraint`,
-	ErrInvalidValueOfConstraint:         `Invalid value of "%s" constraint`,
-	ErrZeroPrecision:                    `Precision can't be zero`,
-	ErrEmptyEmail:                       `Empty email`,
-	ErrInvalidEmail:                     `Invalid email (%s)`,
-	ErrConstraintMinItemsValidation:     `The number of array elements does not match the "minItems" rule`,
-	ErrConstraintMaxItemsValidation:     `The number of array elements does not match the "maxItems" rule`,
-	ErrDoesNotMatchAnyOfTheEnumValues:   `Does not match any of the enumeration values`,
-	ErrDoesNotMatchRegularExpression:    `Does not match regular expression`,
-	ErrInvalidUri:                       `Invalid URI (%s)`,
-	ErrInvalidDateTime:                  `Date/Time parsing error`,
-	ErrInvalidUuid:                      `UUID parsing error: %s`,
-	ErrInvalidConst:                     "Does not match expected value (%s)",
-	ErrInvalidDate:                      `Date parsing error (%s)`,
+	ErrUnknownRule:                                 `Unknown rule "%s"`,
+	ErrConstraintValidation:                        "Invalid value for %q = %s constraint %s",
+	ErrConstraintStringLengthValidation:            "Invalid string length for %q = %q constraint",
+	ErrInvalidValueOfConstraint:                    "Invalid value of %q constraint",
+	ErrZeroPrecision:                               "Precision can't be zero",
+	ErrEmptyEmail:                                  "Empty email",
+	ErrInvalidEmail:                                "Invalid email (%s)",
+	ErrConstraintMinItemsValidation:                `The number of array elements does not match the "minItems" rule`,
+	ErrConstraintMaxItemsValidation:                `The number of array elements does not match the "maxItems" rule`,
+	ErrDoesNotMatchAnyOfTheEnumValues:              "Does not match any of the enumeration values",
+	ErrDoesNotMatchRegularExpression:               "Does not match regular expression",
+	ErrInvalidUri:                                  "Invalid URI (%s)",
+	ErrInvalidDateTime:                             "Date/Time parsing error",
+	ErrInvalidUuid:                                 "UUID parsing error: %s",
+	ErrInvalidConst:                                "Does not match expected value (%s)",
+	ErrInvalidDate:                                 "Date parsing error (%s)",
+	ErrValueOfOneConstraintGreaterThanAnother:      "Value of constraint %q should be less or equal to value of %q constraint", //nolint:lll
+	ErrValueOfOneConstraintGreaterOrEqualToAnother: "Value of constraint %q should be less than value of %q constraint",
 
 	// loader
 	ErrInvalidSchemaName:                "Invalid schema name (%s)",
@@ -194,11 +224,11 @@ var errorFormat = map[ErrorCode]string{
 	ErrLoader:                           "Loader error", // error somewhere in the loader code
 	ErrIncorrectRuleValueType:           "Incorrect rule value type",
 	ErrIncorrectRuleWithoutExample:      "You cannot place a RULE on line without EXAMPLE",
-	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.",
+	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.", //nolint:lll
 	ErrLiteralValueExpected:             "Literal value expected",
-	ErrArrayWasExpectedInEnumRule:       `An array was expected as a value for the "enum"`,
+	ErrInvalidValueInEnumRule:           `An array or rule name was expected as a value for the "enum"`,
 	ErrIncorrectArrayItemTypeInEnumRule: `Incorrect array item type in "enum". Only literals are allowed.`,
-	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`,
+	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`, //nolint:lll
 	ErrTypeNameNotFoundInAllOfRule:      `Type name not found in "allOf" rule`,
 	ErrDuplicationInEnumRule:            `%s value duplicates in "enum"`,
 
@@ -225,8 +255,8 @@ var errorFormat = map[ErrorCode]string{
 	ErrNotFoundRuleEnum:                          `Not found the rule "enum" for the "enum" type`,
 	ErrNotFoundRuleOr:                            `Not found the rule "or" for the "mixed" type`,
 	ErrIncompatibleTypes:                         `Incompatible value of example and "type" rule (%s)`,
-	ErrUnknownAdditionalPropertiesTypes:          "Unknown type of additionalProperties (%s)",
-	ErrUnexpectedConstraint:                      "The %q constraint can't be used for the %q type",
+	// ErrUnknownAdditionalPropertiesTypes:          "Unknown type of additionalProperties (%s)",
+	ErrUnexpectedConstraint: "The %q constraint can't be used for the %q type",
 
 	// checker
 	ErrChecker:                               `Checker error`,
@@ -234,15 +264,23 @@ var errorFormat = map[ErrorCode]string{
 	ErrIncorrectConstraintValueForEmptyArray: `Incorrect constraint value for empty array`,
 
 	// link checker
-	ErrIncorrectUserType: `Incorrect type of user type`,
-	ErrTypeNotFound:      `Type "%s" not found`,
-	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type "%s"`,
+	ErrIncorrectUserType: "Incorrect type of user type",
+	ErrTypeNotFound:      "Type %q not found",
+	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type %q`, //nolint:lll
+	ErrInvalidKeyShortcutType:                         "Key shortcut %q should be string but %q given",
 
 	// sdk
 	ErrEmptyType:                          `Type "%s" must not be empty`,
 	ErrUnnecessaryLexemeAfterTheEndOfEnum: `An unnecessary non-space character after the end of the enum`,
 	ErrRegexUnexpectedStart:               "Regex should starts with '/' character, but found %s",
 	ErrRegexUnexpectedEnd:                 "Regex should ends with '/' character, but found %s",
+	ErrRegexInvalid:                       "Invalid regex %s",
+
+	// enum
+	ErrEnumArrayExpected:  `An array was expected as a value for the "enum"`,
+	ErrEnumIsHoldRuleName: "Can't append specific value to enum initialized with rule name",
+	ErrEnumRuleNotFound:   "Enum rule %q not found",
+	ErrNotAnEnumRule:      "Rule %q not an Enum",
 }
 
 func (c ErrorCode) Code() ErrorCode {

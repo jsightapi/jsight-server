@@ -68,11 +68,14 @@ type Schema interface {
 
 // ASTNode an AST node.
 type ASTNode struct {
-	// JSONType corresponding JSON type for this AST node's value.
-	JSONType JSONType
+	// TokenType corresponding JSON type for this AST node's value.
+	TokenType TokenType
 
 	// SchemaType corresponding schema type for this AST node's value.
 	SchemaType string
+
+	// Key a node key (if this is the property of the object).
+	Key string
 
 	// Value a node value.
 	// Make sense only for scalars and shortcuts.
@@ -84,13 +87,9 @@ type ASTNode struct {
 	// Rules a map of attached rules.
 	Rules *RuleASTNodes
 
-	// Properties contains all object properties.
-	// Make sense only for objects.
-	Properties *ASTNodes
-
-	// Items contains all array items.
-	// Make sense only for arrays.
-	Items []ASTNode
+	// Children contains all array items and object properties.
+	// Make sense only for arrays and object.
+	Children []ASTNode
 
 	// IsKeyShortcut will be true if this property key is shortcut.
 	// Make sense only for AST nodes which are represents object property.
@@ -105,16 +104,9 @@ type ASTNodes struct {
 	mx    sync.RWMutex
 }
 
-func NewASTNodes(data map[string]ASTNode, order []string) *ASTNodes {
-	return &ASTNodes{
-		data:  data,
-		order: order,
-	}
-}
-
 type RuleASTNode struct {
-	// JSONType corresponding JSON type for this AST node's value.
-	JSONType JSONType
+	// TokenType corresponding JSON type for this AST node's value.
+	TokenType TokenType
 
 	// Value a node value.
 	// Make sense only for scalars and shortcuts.
@@ -170,7 +162,18 @@ type RuleASTNodes struct {
 }
 
 // Rule represents a custom user-defined rule.
-type Rule interface{}
+type Rule interface {
+	// Len returns length of this rule in bytes.
+	// Might return ParsingError if rule isn't valid.
+	Len() (uint, error)
+
+	// Check checks this rule is valid.
+	// Can return ParsingError if rule isn't valid.
+	Check() error
+
+	// GetAST returns a root AST node for this schema.
+	GetAST() (ASTNode, error)
+}
 
 // ParsingError indicates something bad was happened during parsing.
 type ParsingError interface {

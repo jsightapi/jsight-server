@@ -1,11 +1,11 @@
 # github.com/davecgh/go-spew v1.1.0
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/jsightapi/datagram v0.0.0-20220518133429-389893b2d914
+# github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
 ## explicit; go 1.18
 github.com/jsightapi/datagram
-# github.com/jsightapi/jsight-api-go-library v1.0.0
-## explicit; go 1.18
+# github.com/jsightapi/jsight-api-go-library v1.0.1-0.20221003140528-d0bec831f71d
+## explicit; go 1.19
 github.com/jsightapi/jsight-api-go-library/catalog
 github.com/jsightapi/jsight-api-go-library/core
 github.com/jsightapi/jsight-api-go-library/directive
@@ -13,16 +13,18 @@ github.com/jsightapi/jsight-api-go-library/jerr
 github.com/jsightapi/jsight-api-go-library/kit
 github.com/jsightapi/jsight-api-go-library/notation
 github.com/jsightapi/jsight-api-go-library/scanner
-# github.com/jsightapi/jsight-schema-go-library v1.0.0
-## explicit; go 1.18
+# github.com/jsightapi/jsight-schema-go-library v1.0.1-0.20221003140029-c68c810f065f
+## explicit; go 1.19
 github.com/jsightapi/jsight-schema-go-library
 github.com/jsightapi/jsight-schema-go-library/bytes
 github.com/jsightapi/jsight-schema-go-library/errors
 github.com/jsightapi/jsight-schema-go-library/formats/json
 github.com/jsightapi/jsight-schema-go-library/fs
+github.com/jsightapi/jsight-schema-go-library/internal/ds
 github.com/jsightapi/jsight-schema-go-library/internal/json
 github.com/jsightapi/jsight-schema-go-library/internal/lexeme
-github.com/jsightapi/jsight-schema-go-library/internal/scanner
+github.com/jsightapi/jsight-schema-go-library/internal/panics
+github.com/jsightapi/jsight-schema-go-library/internal/sync
 github.com/jsightapi/jsight-schema-go-library/kit
 github.com/jsightapi/jsight-schema-go-library/notations/internal
 github.com/jsightapi/jsight-schema-go-library/notations/jschema
@@ -34,6 +36,7 @@ github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/
 github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/validator
 github.com/jsightapi/jsight-schema-go-library/notations/regex
 github.com/jsightapi/jsight-schema-go-library/reader
+github.com/jsightapi/jsight-schema-go-library/rules/enum
 # github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb
 ## explicit
 github.com/lucasjones/reggen

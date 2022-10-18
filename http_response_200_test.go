@@ -20,7 +20,7 @@ func Test_httpResponse200(t *testing.T) {
 			assert.Equal(t, http.StatusOK, r.Code)
 			assert.Len(t, r.Header(), 2)
 			assert.Equal(t, "application/json", r.Header().Get("Content-Type"))
-			assert.Equal(t, catalog.JDocExchangeFileSchemaVersion, r.Header().Get("X-Jdoc-Exchange-File-Schema-Version"))
+			assert.Equal(t, catalog.JDocExchangeVersion, r.Header().Get("X-Jdoc-Exchange-Version"))
 			assert.Equal(t, content, r.Body.String())
 		})
 
@@ -32,7 +32,7 @@ func Test_httpResponse200(t *testing.T) {
 			assert.Equal(t, http.StatusOK, r.Code)
 			assert.Len(t, r.Header(), 2)
 			assert.Equal(t, "application/json", r.Header().Get("Content-Type"))
-			assert.Equal(t, catalog.JDocExchangeFileSchemaVersion, r.Header().Get("X-Jdoc-Exchange-File-Schema-Version"))
+			assert.Equal(t, catalog.JDocExchangeVersion, r.Header().Get("X-Jdoc-Exchange-Version"))
 			assert.Equal(t, "", r.Body.String())
 		})
 	})

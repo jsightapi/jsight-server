@@ -15,7 +15,12 @@ type Regex struct {
 	expression string
 }
 
-var _ Constraint = Regex{}
+var (
+	_ Constraint       = Regex{}
+	_ Constraint       = (*Regex)(nil)
+	_ LiteralValidator = Regex{}
+	_ LiteralValidator = (*Regex)(nil)
+)
 
 func NewRegex(value bytes.Bytes) *Regex {
 	var str string // decoded json string. JSON "aaa\\bbb" to string "aaa\bbb".
@@ -49,5 +54,5 @@ func (c Regex) Validate(value bytes.Bytes) {
 }
 
 func (c Regex) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeString, c.expression, jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeString, c.expression, jschema.RuleASTNodeSourceManual)
 }

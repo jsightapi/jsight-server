@@ -2,7 +2,7 @@ package regex
 
 import (
 	stdErrors "errors"
-	"sync"
+	"regexp"
 
 	"github.com/lucasjones/reggen"
 
@@ -10,38 +10,61 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/fs"
-	"github.com/jsightapi/jsight-schema-go-library/internal/scanner"
+	"github.com/jsightapi/jsight-schema-go-library/internal/sync"
 )
 
 type Schema struct {
 	file *fs.File
 
-	compileErr  error
-	pattern     string
-	compileOnce sync.Once
+	pattern       string
+	compileOnce   sync.ErrOnce
+	generatorOnce sync.ErrOnceWithValue[*reggen.Generator]
+	generatorSeed int64
 }
 
 var _ jschema.Schema = &Schema{}
 
-// New creates a Regex schema with specified name and content.
-func New(name string, content []byte) *Schema {
-	return FromFile(fs.NewFile(name, content))
-}
+type Option func(*Schema)
 
-// FromFile creates a Regex schema from file.
-func FromFile(f *fs.File) *Schema {
-	return &Schema{
-		file: f,
+// WithGeneratorSeed pass specific seed to regex example generator.
+// Necessary for test.
+func WithGeneratorSeed(seed int64) Option {
+	return func(s *Schema) {
+		s.generatorSeed = seed
 	}
 }
 
+// New creates a Regex schema with specified name and content.
+func New[T fs.FileContent](name string, content T, oo ...Option) *Schema {
+	return FromFile(fs.NewFile(name, content), oo...)
+}
+
+// FromFile creates a Regex schema from file.
+func FromFile(f *fs.File, oo ...Option) *Schema {
+	s := &Schema{
+		file: f,
+	}
+
+	for _, o := range oo {
+		o(s)
+	}
+
+	return s
+}
+
 func (s *Schema) Pattern() (string, error) {
-	return s.pattern, s.compile()
+	if err := s.compile(); err != nil {
+		return "", err
+	}
+	return s.pattern, nil
 }
 
 func (s *Schema) Len() (uint, error) {
+	if err := s.compile(); err != nil {
+		return 0, err
+	}
 	// Add 2 for beginning and ending '/' character.
-	return uint(len(s.pattern)) + 2, s.compile()
+	return uint(len(s.pattern)) + 2, nil
 }
 
 func (s *Schema) Example() ([]byte, error) {
@@ -53,11 +76,19 @@ func (s *Schema) Example() ([]byte, error) {
 }
 
 func (s *Schema) generateExample() ([]byte, error) {
-	str, err := reggen.Generate(s.pattern, 1)
+	g, err := s.generatorOnce.Do(func() (*reggen.Generator, error) {
+		g, err := reggen.NewGenerator(s.pattern)
+		if err != nil {
+			return nil, err
+		}
+		g.SetSeed(s.generatorSeed)
+		return g, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return []byte(str), nil
+
+	return []byte(g.Generate(1)), nil
 }
 
 func (*Schema) AddType(string, jschema.Schema) error {
@@ -79,13 +110,16 @@ func (*Schema) Validate(jschema.Document) error {
 }
 
 func (s *Schema) GetAST() (jschema.ASTNode, error) {
+	if err := s.compile(); err != nil {
+		return jschema.ASTNode{}, err
+	}
 	return jschema.ASTNode{
 		IsKeyShortcut: false,
-		JSONType:      jschema.JSONTypeString,
+		TokenType:     jschema.TokenTypeString,
 		SchemaType:    string(jschema.SchemaTypeString),
 		Rules:         nil,
 		Value:         "/" + s.pattern + "/",
-	}, s.compile()
+	}, nil
 }
 
 func (*Schema) UsedUserTypes() ([]string, error) {
@@ -94,10 +128,9 @@ func (*Schema) UsedUserTypes() ([]string, error) {
 }
 
 func (s *Schema) compile() error {
-	s.compileOnce.Do(func() {
-		s.compileErr = s.doCompile()
+	return s.compileOnce.Do(func() error {
+		return s.doCompile()
 	})
-	return s.compileErr
 }
 
 func (s *Schema) doCompile() error {
@@ -131,11 +164,18 @@ loop:
 		idx := uint(len(content) - 1)
 		return s.newDocumentError(errors.ErrRegexUnexpectedEnd, idx, content[idx])
 	}
+
+	if _, err := regexp.Compile(s.pattern); err != nil {
+		e := errors.Format(errors.ErrRegexInvalid, content)
+		err := errors.NewDocumentError(s.file, e)
+		err.SetIndex(bytes.Index(0))
+		return err
+	}
 	return nil
 }
 
 func (s *Schema) newDocumentError(code errors.ErrorCode, idx uint, c byte) errors.DocumentError {
-	e := errors.Format(code, scanner.QuoteChar(c))
+	e := errors.Format(code, bytes.QuoteChar(c))
 	err := errors.NewDocumentError(s.file, e)
 	err.SetIndex(bytes.Index(idx))
 	return err

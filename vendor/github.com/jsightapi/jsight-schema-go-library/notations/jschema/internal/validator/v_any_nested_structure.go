@@ -1,8 +1,6 @@
 package validator
 
 import (
-	"fmt"
-
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
 )
@@ -48,8 +46,4 @@ func (v *anyNestedStructure) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool
 	}
 
 	return nil, false
-}
-
-func (v anyNestedStructure) log() string {
-	return fmt.Sprintf("%s [%p]", v.node_.Type().String(), v.node_)
 }

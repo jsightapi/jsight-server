@@ -15,7 +15,9 @@ type Nullable struct {
 
 var (
 	_ Constraint = Nullable{}
+	_ Constraint = (*Nullable)(nil)
 	_ BoolKeeper = Nullable{}
+	_ BoolKeeper = (*Nullable)(nil)
 )
 
 func NewNullable(ruleValue bytes.Bytes) *Nullable {
@@ -48,5 +50,5 @@ func (c Nullable) Bool() bool {
 }
 
 func (c Nullable) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeBoolean, strconv.FormatBool(c.value), jschema.RuleASTNodeSourceManual)
 }

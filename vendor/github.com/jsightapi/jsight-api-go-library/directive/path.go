@@ -11,11 +11,11 @@ func (d Directive) Path() (string, error) {
 	var path string
 
 	switch {
-	case d.Type() == Url:
-		path = d.Parameter("Path")
+	case d.Type() == URL:
+		path = d.NamedParameter("Path")
 
 	case d.Type().IsHTTPRequestMethod():
-		path = d.Parameter("Path")
+		path = d.NamedParameter("Path")
 		if path == "" {
 			if d.Parent == nil {
 				return "", errors.New(jerr.PathNotFound)

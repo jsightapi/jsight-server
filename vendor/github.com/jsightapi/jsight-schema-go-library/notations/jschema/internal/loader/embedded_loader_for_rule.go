@@ -8,15 +8,17 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
-// This class is responsible for creating constraints for SCHEMA internal representation nodes from the RULES described
-// in the SCHEMA file.
-
+// ruleLoader responsible for creating constraints for SCHEMA internal representation
+// nodes from the RULES described in the SCHEMA file.
 type ruleLoader struct {
 	// A node to add constraint.
 	node schema.Node
 
 	// rootSchema a scheme into which types can be added from the "or" rule.
 	rootSchema *schema.Schema
+
+	// rules all available rules.
+	rules map[string]jschema.Rule
 
 	// stateFunc a function for running a state machine (the current state of the
 	// state machine) to parse RULE that occur in the schema.
@@ -34,11 +36,18 @@ type ruleLoader struct {
 	nodesPerCurrentLineCount uint
 }
 
-func newRuleLoader(node schema.Node, nodesPerCurrentLineCount uint, rootSchema *schema.Schema) *ruleLoader {
-	rl := new(ruleLoader)
-	rl.node = node
-	rl.rootSchema = rootSchema
-	rl.nodesPerCurrentLineCount = nodesPerCurrentLineCount
+func newRuleLoader(
+	node schema.Node,
+	nodesPerCurrentLineCount uint,
+	rootSchema *schema.Schema,
+	rules map[string]jschema.Rule,
+) *ruleLoader {
+	rl := &ruleLoader{
+		node:                     node,
+		rootSchema:               rootSchema,
+		nodesPerCurrentLineCount: nodesPerCurrentLineCount,
+		rules:                    rules,
+	}
 	rl.stateFunc = rl.begin
 	return rl
 }
@@ -91,7 +100,19 @@ func (rl *ruleLoader) commentTextEnd(lex lexeme.LexEvent) {
 func (rl *ruleLoader) ruleKeyOrObjectEnd(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ObjectKeyBegin, lexeme.NewLine:
-		return
+	case lexeme.ObjectKeyEnd:
+		rl.ruleNameLex = lex
+		rl.stateFunc = rl.ruleValueBegin
+	case lexeme.ObjectEnd:
+		rl.stateFunc = rl.commentTextBegin
+	default:
+		panic(errors.ErrLoader)
+	}
+}
+
+func (rl *ruleLoader) objectEndAfterRuleName(lex lexeme.LexEvent) {
+	switch lex.Type() {
+	case lexeme.ObjectKeyBegin, lexeme.ObjectValueEnd, lexeme.NewLine:
 	case lexeme.ObjectKeyEnd:
 		rl.ruleNameLex = lex
 		rl.stateFunc = rl.ruleValueBegin
@@ -103,12 +124,10 @@ func (rl *ruleLoader) ruleKeyOrObjectEnd(lex lexeme.LexEvent) {
 }
 
 func (rl *ruleLoader) ruleValueBegin(lex lexeme.LexEvent) {
-	switch lex.Type() {
-	case lexeme.ObjectValueBegin:
-		rl.stateFunc = rl.ruleValue
-	default:
+	if lex.Type() != lexeme.ObjectValueBegin {
 		panic(errors.ErrLoader)
 	}
+	rl.stateFunc = rl.ruleValue
 }
 
 func (rl *ruleLoader) ruleValue(lex lexeme.LexEvent) {
@@ -120,52 +139,52 @@ func (rl *ruleLoader) ruleValue(lex lexeme.LexEvent) {
 
 	ruleName := rl.ruleNameLex.Value().TrimSpaces().Unquote().String()
 
-	if ruleName == "or" { //nolint:gocritic // todo rewrite this logic to switch
+	switch ruleName {
+	case "or":
 		rl.node.AddConstraint(constraint.NewTypesList(jschema.RuleASTNodeSourceManual))
 		rl.node.AddConstraint(constraint.NewOr(jschema.RuleASTNodeSourceManual)) // Used for compile-time checking.
-		rl.embeddedValueLoader = newOrValueLoader(rl.node, rl.rootSchema)
+		rl.embeddedValueLoader = newOrValueLoader(rl.node, rl.rootSchema, rl.rules)
 		rl.stateFunc = rl.loadEmbeddedValue
 		rl.stateFunc(lex)
-		return
-	} else if ruleName == "enum" {
+
+	case "enum":
 		enumConstraint := constraint.NewEnum()
 		rl.node.AddConstraint(enumConstraint)
-		rl.embeddedValueLoader = newEnumValueLoader(enumConstraint)
+		rl.embeddedValueLoader = newEnumValueLoader(enumConstraint, rl.rules)
 		rl.stateFunc = rl.loadEmbeddedValue
 		rl.stateFunc(lex)
-		return
-	} else if ruleName == "allOf" {
+
+	case "allOf":
 		allOfConstraint := constraint.NewAllOf()
 		rl.node.AddConstraint(allOfConstraint)
 		rl.embeddedValueLoader = newAllOfValueLoader(allOfConstraint)
 		rl.stateFunc = rl.loadEmbeddedValue
 		rl.stateFunc(lex)
-		return
-	} else if lex.Type() == lexeme.LiteralBegin {
-		rl.stateFunc = rl.ruleValueLiteral
-		return
-	}
 
-	panic(errors.ErrIncorrectRuleValueType)
+	default:
+		if lex.Type() != lexeme.LiteralBegin {
+			panic(errors.ErrIncorrectRuleValueType)
+		}
+
+		rl.stateFunc = rl.ruleValueLiteral
+	}
 }
 
 func (rl *ruleLoader) ruleValueLiteral(ruleValue lexeme.LexEvent) {
-	switch ruleValue.Type() {
-	case lexeme.LiteralEnd:
-		c := constraint.NewConstraintFromRule(rl.ruleNameLex, ruleValue.Value(), rl.node.Value()) // can panic
-		rl.node.AddConstraint(c)
-
-		rl.stateFunc = rl.ruleValueEnd
-	default:
+	if ruleValue.Type() != lexeme.LiteralEnd {
 		panic(errors.ErrLoader)
 	}
+	c := constraint.NewConstraintFromRule(rl.ruleNameLex, ruleValue.Value(), rl.node.Value()) // can panic
+	rl.node.AddConstraint(c)
+
+	rl.stateFunc = rl.ruleValueEnd
 }
 
 func (rl *ruleLoader) loadEmbeddedValue(lex lexeme.LexEvent) {
 	if lex.Type() == lexeme.NewLine {
 		return
 	}
-	if !rl.embeddedValueLoader.load(lex) {
+	if !rl.embeddedValueLoader.Load(lex) {
 		rl.embeddedValueLoader = nil
 		rl.stateFunc = rl.ruleValueEnd
 	}
@@ -175,6 +194,8 @@ func (rl *ruleLoader) ruleValueEnd(lex lexeme.LexEvent) {
 	switch lex.Type() {
 	case lexeme.ObjectValueEnd:
 		rl.stateFunc = rl.ruleKeyOrObjectEnd
+	case lexeme.MixedValueEnd:
+		rl.stateFunc = rl.objectEndAfterRuleName
 	default:
 		panic(errors.ErrLoader)
 	}

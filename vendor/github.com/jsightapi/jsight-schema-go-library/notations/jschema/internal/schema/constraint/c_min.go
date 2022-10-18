@@ -13,7 +13,12 @@ type Min struct {
 	exclusive bool
 }
 
-var _ Constraint = Min{}
+var (
+	_ Constraint       = Min{}
+	_ Constraint       = (*Min)(nil)
+	_ LiteralValidator = Min{}
+	_ LiteralValidator = (*Min)(nil)
+)
 
 func NewMin(ruleValue bytes.Bytes) *Min {
 	number, err := json.NewNumber(ruleValue)
@@ -22,17 +27,13 @@ func NewMin(ruleValue bytes.Bytes) *Min {
 	}
 
 	return &Min{
-		rawValue:  ruleValue,
-		min:       number,
-		exclusive: false,
+		rawValue: ruleValue,
+		min:      number,
 	}
 }
 
 func (Min) IsJsonTypeCompatible(t json.Type) bool {
-	if t == json.TypeInteger || t == json.TypeFloat {
-		return true
-	}
-	return false
+	return t == json.TypeInteger || t == json.TypeFloat
 }
 
 func (Min) Type() Type {
@@ -49,6 +50,10 @@ func (c Min) String() string {
 
 func (c *Min) SetExclusive(exclusive bool) {
 	c.exclusive = exclusive
+}
+
+func (c *Min) Exclusive() bool {
+	return c.exclusive
 }
 
 func (c Min) Validate(value bytes.Bytes) {
@@ -73,5 +78,9 @@ func (c Min) Validate(value bytes.Bytes) {
 }
 
 func (c Min) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(jschema.TokenTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+}
+
+func (c *Min) Value() *json.Number {
+	return c.min
 }

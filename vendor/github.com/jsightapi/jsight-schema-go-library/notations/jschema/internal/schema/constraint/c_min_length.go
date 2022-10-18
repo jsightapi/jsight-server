@@ -1,6 +1,8 @@
 package constraint
 
 import (
+	"strconv"
+
 	jschema "github.com/jsightapi/jsight-schema-go-library"
 	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
@@ -8,21 +10,19 @@ import (
 )
 
 type MinLength struct {
-	value    *json.Number
-	rawValue bytes.Bytes
+	value uint
 }
 
-var _ Constraint = MinLength{}
+var (
+	_ Constraint       = MinLength{}
+	_ Constraint       = (*MinLength)(nil)
+	_ LiteralValidator = MinLength{}
+	_ LiteralValidator = (*MinLength)(nil)
+)
 
 func NewMinLength(ruleValue bytes.Bytes) *MinLength {
-	number, err := json.NewIntegerNumber(ruleValue)
-	if err != nil {
-		panic(err)
-	}
-
 	return &MinLength{
-		rawValue: ruleValue,
-		value:    number,
+		value: parseUint(ruleValue, MinLengthConstraintType),
 	}
 }
 
@@ -35,21 +35,28 @@ func (MinLength) Type() Type {
 }
 
 func (c MinLength) String() string {
-	return MinLengthConstraintType.String() + ": " + c.value.String()
+	return MinLengthConstraintType.String() + ": " + strconv.FormatUint(uint64(c.value), 10)
 }
 
 func (c MinLength) Validate(value bytes.Bytes) {
-	length := len(value.Unquote())
-	jsonLength := json.NewNumberFromInt(length)
-	if jsonLength.LessThan(c.value) {
+	length := uint(len(value.Unquote()))
+	if length < c.value {
 		panic(errors.Format(
 			errors.ErrConstraintStringLengthValidation,
 			MinLengthConstraintType.String(),
-			c.value.String(),
+			strconv.FormatUint(uint64(c.value), 10),
 		))
 	}
 }
 
 func (c MinLength) ASTNode() jschema.RuleASTNode {
-	return newRuleASTNode(jschema.JSONTypeNumber, c.rawValue.String(), jschema.RuleASTNodeSourceManual)
+	return newRuleASTNode(
+		jschema.TokenTypeNumber,
+		strconv.FormatUint(uint64(c.value), 10),
+		jschema.RuleASTNodeSourceManual,
+	)
+}
+
+func (c MinLength) Value() uint {
+	return c.value
 }

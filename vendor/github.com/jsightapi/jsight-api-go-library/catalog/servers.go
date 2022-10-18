@@ -7,12 +7,12 @@ import (
 )
 
 type Server struct {
-	BaseUrlVariables *baseUrlVariables `json:"baseUrlVariables,omitempty"`
+	BaseUrlVariables *baseURLVariables `json:"baseUrlVariables,omitempty"`
 	Annotation       string            `json:"annotation,omitempty"`
 	BaseUrl          string            `json:"baseUrl"`
 }
 
-type baseUrlVariables struct {
+type baseURLVariables struct {
 	Schema    *Schema             `json:"schema"`
 	Directive directive.Directive `json:"-"`
 }

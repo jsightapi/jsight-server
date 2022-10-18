@@ -16,8 +16,4 @@ type validator interface {
 	// node returns this validator node.
 	// For debug/log only.
 	node() schema.Node
-
-	// log formats this validator for logging.
-	// For debug/log only.
-	log() string
 }

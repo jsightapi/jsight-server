@@ -9,15 +9,14 @@ import (
 
 func newASTNode() jschema.ASTNode {
 	return jschema.ASTNode{
-		Rules:      &jschema.RuleASTNodes{},
-		Properties: &jschema.ASTNodes{},
+		Rules: &jschema.RuleASTNodes{},
 	}
 }
 
 func astNodeFromNode(n Node) jschema.ASTNode {
 	an := newASTNode()
 
-	an.JSONType = n.Type().ToJSONType()
+	an.TokenType = n.Type().ToTokenType()
 	an.SchemaType = getASTNodeSchemaType(n)
 	an.Rules = collectASTRules(n.ConstraintMap())
 	an.Comment = n.Comment()
@@ -31,7 +30,7 @@ func getASTNodeSchemaType(n Node) string {
 	}
 
 	if n.Constraint(constraint.OrConstraintType) != nil {
-		return jschema.JSONTypeMixed
+		return string(jschema.SchemaTypeMixed)
 	}
 
 	if c := n.Constraint(constraint.TypeConstraintType); c != nil {
@@ -41,7 +40,7 @@ func getASTNodeSchemaType(n Node) string {
 	}
 
 	if n.Constraint(constraint.PrecisionConstraintType) != nil {
-		return "decimal"
+		return string(jschema.SchemaTypeDecimal)
 	}
 
 	return n.Type().String()
@@ -58,7 +57,7 @@ func collectASTRules(cc *Constraints) *jschema.RuleASTNodes {
 			types, ok := cc.Get(constraint.TypesListConstraintType)
 			if !ok {
 				//goland:noinspection GoErrorStringFormat
-				return errors.New(`Can't collect rules: "types" constraint is required with "or"" constraint`) //nolint:stylecheck // It's okay.
+				return errors.New(`Can't collect rules: "types" constraint is required with "or"" constraint`)
 			}
 
 			nn.Set(constraint.OrConstraintType.String(), types.ASTNode())

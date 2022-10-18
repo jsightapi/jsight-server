@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func stateResponseKeywordStarted(s *Scanner, c byte) *jerr.JAPIError {
+func stateResponseKeywordStarted(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		s.step = stateResponseKeywordSecond
@@ -14,7 +14,7 @@ func stateResponseKeywordStarted(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateResponseKeywordSecond(s *Scanner, c byte) *jerr.JAPIError {
+func stateResponseKeywordSecond(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		s.found(KeywordEnd)
@@ -26,7 +26,7 @@ func stateResponseKeywordSecond(s *Scanner, c byte) *jerr.JAPIError {
 	}
 }
 
-func stateResponseBodyOrKeyword(s *Scanner, c byte) *jerr.JAPIError {
+func stateResponseBodyOrKeyword(s *Scanner, c byte) *jerr.JApiError {
 	if !s.isDirectiveParameterHasTypeOrAnyOrEmpty() {
 		if s.isDirectiveParameterHasRegexNotation() {
 			s.stepStack.Push(stateRegex)
@@ -40,7 +40,7 @@ func stateResponseBodyOrKeyword(s *Scanner, c byte) *jerr.JAPIError {
 	return s.step(s, c)
 }
 
-func stateResponseBody(s *Scanner, c byte) *jerr.JAPIError {
+func stateResponseBody(s *Scanner, c byte) *jerr.JApiError {
 	switch c {
 	case ContextOpenSign:
 		s.found(ContextOpen)
@@ -49,7 +49,7 @@ func stateResponseBody(s *Scanner, c byte) *jerr.JAPIError {
 		return nil
 	case CommentSign:
 		return s.startComment()
-	case 'B', 'H', 'P': // directives: Body, Header, PASTE
+	case 'B', 'H', 'P', 'I': // directives: Body, Header, PASTE, INCLUDE
 		return stateExpectKeyword(s, c)
 	default:
 		s.step = s.stepStack.Pop()

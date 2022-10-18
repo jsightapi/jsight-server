@@ -4,7 +4,7 @@ import (
 	"github.com/jsightapi/jsight-api-go-library/jerr"
 )
 
-func (core *JApiCore) processCurrentDirective() *jerr.JAPIError {
+func (core *JApiCore) processCurrentDirective() *jerr.JApiError {
 	if core.currentDirective == nil {
 		return nil // directive already processed, i.e. by ContextClose before next keyword or when includes happen
 	}

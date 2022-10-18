@@ -2,6 +2,7 @@ package loader
 
 import (
 	jschema "github.com/jsightapi/jsight-schema-go-library"
+	"github.com/jsightapi/jsight-schema-go-library/bytes"
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/json"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
@@ -9,12 +10,12 @@ import (
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema/constraint"
 )
 
-// Schema compilation works with each node's constraints. This process adjust constraints so that they were in peace
-// with each other. For example, if node has "precision" constraint, we have to add to this node "decimal" constraint,
-// because only decimal can have precision. Another interesting example: if key-value node doesn't have an "optional"
-// constraint, we have to add to parent object "required key" constraint, because this node's key is required in the
-// object.
-
+// schemaCompiler works with each node's constraints. This process adjust constraints
+// so that they were in peace with each other. For example, if node has "precision"
+// constraint, we have to add to this node "decimal" constraint, because only
+// decimal can have precision. Another interesting example: if key-value node doesn't
+// have an "optional" constraint, we have to add to parent object "required key"
+// constraint, because this node's key is required in the object.
 type schemaCompiler struct {
 	rootSchema               *schema.Schema
 	areKeysOptionalByDefault bool
@@ -45,11 +46,13 @@ func (compile schemaCompiler) compileNode(node schema.Node, indexOfNode int) {
 	if err := compile.allowedConstraintCheck(node); err != nil {
 		panic(err)
 	}
-	compile.anyConstraint(node)                    // can panic
+	compile.anyConstraint(node) // can panic
+	if err := compile.checkPairConstraints(node); err != nil {
+		panic(err)
+	}
 	compile.exclusiveMinimumConstraint(node)       // can panic
 	compile.exclusiveMaximumConstraint(node)       // can panic
 	compile.optionalConstraints(node, indexOfNode) // can panic
-	compile.precisionConstraint(node)              // can panic
 
 	if branchingNode, ok := node.(schema.BranchNode); ok {
 		compile.emptyArray(node) // can panic
@@ -61,7 +64,7 @@ func (compile schemaCompiler) compileNode(node schema.Node, indexOfNode int) {
 
 func (schemaCompiler) falseConstraints(node schema.Node) {
 	node.ConstraintMap().Filter(func(k constraint.Type, c constraint.Constraint) bool {
-		if k == constraint.NullableConstraintType || k == constraint.ConstType {
+		if k == constraint.NullableConstraintType || k == constraint.ConstConstraintType {
 			if b, ok := c.(constraint.BoolKeeper); ok && !b.Bool() {
 				return false
 			}
@@ -164,7 +167,7 @@ func (schemaCompiler) enumConstraint(node schema.Node) {
 	if node.Constraint(constraint.OptionalConstraintType) != nil {
 		n--
 	}
-	if node.Constraint(constraint.ConstType) != nil {
+	if node.Constraint(constraint.ConstConstraintType) != nil {
 		n--
 	}
 	if node.Constraint(constraint.NullableConstraintType) != nil {
@@ -181,86 +184,122 @@ func (schemaCompiler) enumConstraint(node schema.Node) {
 	}
 }
 
-func (schemaCompiler) typeConstraint(node schema.Node) { //nolint:gocyclo // todo try to make this more readable
+func (compile schemaCompiler) typeConstraint(node schema.Node) {
 	c := node.Constraint(constraint.TypeConstraintType)
-	if c != nil {
-		typeConstraint := c.(*constraint.TypeConstraint) //nolint:errcheck // We sure about that.
-		val := typeConstraint.Bytes().Unquote()
+	if c == nil {
+		return
+	}
 
-		if val.IsUserTypeName() {
-			n := node.NumberOfConstraints()
-			if node.Constraint(constraint.OptionalConstraintType) != nil {
-				n--
-			}
-			if node.Constraint(constraint.NullableConstraintType) != nil {
-				n--
-			}
-			if n != 1 {
-				panic(errors.ErrCannotSpecifyOtherRulesWithTypeReference)
-			}
+	typeConstraint := c.(*constraint.TypeConstraint) //nolint:errcheck // We sure about that.
+	val := typeConstraint.Bytes().Unquote()
 
-			if _, ok := node.(schema.BranchNode); ok {
-				// Since "req.jschema.rules.type.reference 0.2" we didn't allow
-				// empty object and arrays as well for the type constraint.
-				panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
-			}
+	if val.IsUserTypeName() {
+		compile.typeConstraintForUserType(node, typeConstraint, val.String())
+	} else {
+		compile.typeConstraintForJSONTypes(node, val)
+	}
 
-			if _, ok := node.(*schema.MixedValueNode); ok && !typeConstraint.IsGenerated() {
-				// Since "req.jschema.rules.type.reference 0.2" we didn't allow
-				// empty object and arrays as well for the type constraint.
-				panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
-			}
+	node.DeleteConstraint(constraint.TypeConstraintType)
+}
 
-			c := constraint.NewTypesList(jschema.RuleASTNodeSourceManual)
-			c.AddName(val.String(), val.String(), jschema.RuleASTNodeSourceManual)
+func (schemaCompiler) typeConstraintForUserType(
+	node schema.Node,
+	typeConstraint *constraint.TypeConstraint,
+	val string,
+) {
+	n := node.NumberOfConstraints()
+	if node.Constraint(constraint.OptionalConstraintType) != nil {
+		n--
+	}
+	if node.Constraint(constraint.NullableConstraintType) != nil {
+		n--
+	}
+	if n != 1 {
+		panic(errors.ErrCannotSpecifyOtherRulesWithTypeReference)
+	}
 
-			node.AddConstraint(c) // can panic: Unable to add constraint
-		} else {
-			valStr := val.String()
+	if _, ok := node.(schema.BranchNode); ok {
+		// Since "req.jschema.rules.type.reference 0.2" we didn't allow
+		// empty object and arrays as well for the type constraint.
+		panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
+	}
 
-			switch valStr {
-			case "mixed":
-				typesListConstraint := node.Constraint(constraint.TypesListConstraintType)
-				if typesListConstraint == nil {
-					panic(errors.ErrNotFoundRuleOr)
-				}
+	if _, ok := node.(*schema.MixedValueNode); ok && !typeConstraint.IsGenerated() {
+		panic(errors.ErrInvalidChildNodeTogetherWithTypeReference)
+	}
 
-				if typesListConstraint.(*constraint.TypesList).Len() < 2 {
-					panic(errors.ErrNotFoundRuleOr)
-				}
-			case "enum":
-				if node.Constraint(constraint.EnumConstraintType) == nil {
-					panic(errors.ErrNotFoundRuleEnum)
-				}
-			case "any":
-				node.AddConstraint(constraint.NewAny())
-			case "decimal":
-				if node.Constraint(constraint.PrecisionConstraintType) == nil {
-					panic(errors.ErrNotFoundRulePrecision)
-				}
-			case "email":
-				node.AddConstraint(constraint.NewEmail()) // can panic: Unable to add constraint
-			case "uri":
-				node.AddConstraint(constraint.NewUri())
-			case "uuid":
-				node.AddConstraint(constraint.NewUuid())
-			case "date":
-				node.AddConstraint(constraint.NewDate())
-			case "datetime":
-				node.AddConstraint(constraint.NewDateTime())
-			default: // object, array, string, integer, float, boolean or null
-				t := json.NewJsonType(val)                         // can panic
-				if mixedNode, ok := node.(*schema.MixedNode); ok { // defined json type for mixed node
-					mixedNode.SetJsonType(t)
-				} else if t != node.Type() { // check json type for non-mixed node
-					panic(errors.Format(errors.ErrIncompatibleTypes, t.String()))
-				}
-			}
-			node.SetRealType(valStr)
+	c := constraint.NewTypesList(jschema.RuleASTNodeSourceManual)
+	c.AddName(val, val, jschema.RuleASTNodeSourceManual)
+
+	node.AddConstraint(c) // can panic: Unable to add constraint
+}
+
+func (schemaCompiler) typeConstraintForJSONTypes(node schema.Node, val bytes.Bytes) {
+	valStr := val.String()
+
+	h, ok := jsonTypesHandler[valStr]
+	if ok {
+		h(node)
+	} else {
+		t := json.NewJsonType(val)                         // can panic
+		if mixedNode, ok := node.(*schema.MixedNode); ok { // defined json type for mixed node
+			mixedNode.SetJsonType(t)
+		} else if t != node.Type() { // check json type for non-mixed node
+			panic(errors.Format(errors.ErrIncompatibleTypes, t.String()))
+		}
+	}
+	if !node.SetRealType(valStr) {
+		panic(errors.Format(errors.ErrIncompatibleTypes, valStr))
+	}
+}
+
+var jsonTypesHandler = map[string]func(node schema.Node){
+	"mixed": func(node schema.Node) {
+		typesListConstraint := node.Constraint(constraint.TypesListConstraintType)
+		if typesListConstraint == nil {
+			panic(errors.ErrNotFoundRuleOr)
 		}
 
-		node.DeleteConstraint(constraint.TypeConstraintType)
-	}
+		if typesListConstraint.(*constraint.TypesList).Len() < 2 {
+			panic(errors.ErrNotFoundRuleOr)
+		}
+	},
+
+	constraint.EnumConstraintType.String(): func(node schema.Node) {
+		if node.Constraint(constraint.EnumConstraintType) == nil {
+			panic(errors.ErrNotFoundRuleEnum)
+		}
+	},
+
+	"any": func(node schema.Node) {
+		node.AddConstraint(constraint.NewAny())
+	},
+
+	"decimal": func(node schema.Node) {
+		if node.Constraint(constraint.PrecisionConstraintType) == nil {
+			panic(errors.ErrNotFoundRulePrecision)
+		}
+	},
+
+	"email": func(node schema.Node) {
+		node.AddConstraint(constraint.NewEmail()) // can panic: Unable to add constraint
+	},
+
+	"uri": func(node schema.Node) {
+		node.AddConstraint(constraint.NewUri())
+	},
+
+	"uuid": func(node schema.Node) {
+		node.AddConstraint(constraint.NewUuid())
+	},
+
+	"date": func(node schema.Node) {
+		node.AddConstraint(constraint.NewDate())
+	},
+
+	"datetime": func(node schema.Node) {
+		node.AddConstraint(constraint.NewDateTime())
+	},
 }
 
 func (schemaCompiler) allowedConstraintCheck(node schema.Node) (err error) {
@@ -297,7 +336,7 @@ func (schemaCompiler) allowedConstraintCheck(node schema.Node) (err error) {
 		},
 
 		constraint.AnyConstraintType: {
-			constraint.ConstType,
+			constraint.ConstConstraintType,
 		},
 	}
 
@@ -314,29 +353,121 @@ func (schemaCompiler) allowedConstraintCheck(node schema.Node) (err error) {
 }
 
 func (schemaCompiler) anyConstraint(node schema.Node) {
-	if node.Constraint(constraint.AnyConstraintType) != nil {
-		// check for a permissible constraints
-		n := node.NumberOfConstraints()
-		n-- // AnyConstraintType - checked above
-		if node.Constraint(constraint.OptionalConstraintType) != nil {
-			n--
-		}
-		if node.Constraint(constraint.NullableConstraintType) != nil {
-			n--
-		}
-		if node.Constraint(constraint.ConstType) != nil {
-			n--
-		}
-		if n != 0 {
-			panic(errors.ErrShouldBeNoOtherRulesInSetWithAny)
-		}
+	if node.Constraint(constraint.AnyConstraintType) == nil {
+		return
+	}
 
-		if branchNode, ok := node.(schema.BranchNode); ok {
-			if branchNode.Len() != 0 {
-				panic(errors.ErrInvalidNestedElementsFoundForTypeAny)
-			}
+	// check for a permissible constraints
+	n := node.NumberOfConstraints()
+	n-- // AnyConstraintType - checked above
+	if node.Constraint(constraint.OptionalConstraintType) != nil {
+		n--
+	}
+	if node.Constraint(constraint.NullableConstraintType) != nil {
+		n--
+	}
+	if node.Constraint(constraint.ConstConstraintType) != nil {
+		n--
+	}
+	if n != 0 {
+		panic(errors.ErrShouldBeNoOtherRulesInSetWithAny)
+	}
+
+	if branchNode, ok := node.(schema.BranchNode); ok {
+		if branchNode.Len() != 0 {
+			panic(errors.ErrInvalidNestedElementsFoundForTypeAny)
 		}
 	}
+}
+
+// checkPairConstraints checks some constraints which has pairs such as `min` and `max`,
+// `minLength` and `maxLength`, etc.
+func (compile schemaCompiler) checkPairConstraints(node schema.Node) error {
+	checkers := []func(schema.Node) error{
+		compile.checkMinAndMax,
+		compile.checkMinLengthAndMaxLength,
+		compile.checkMinItemsAndMaxItems,
+	}
+
+	for _, fn := range checkers {
+		if err := fn(node); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinAndMax(node schema.Node) error {
+	minRaw := node.Constraint(constraint.MinConstraintType)
+	maxRaw := node.Constraint(constraint.MaxConstraintType)
+
+	if minRaw == nil || maxRaw == nil {
+		return nil
+	}
+
+	min := minRaw.(*constraint.Min) //nolint:errcheck // We're sure about this type.
+	max := maxRaw.(*constraint.Max) //nolint:errcheck // We're sure about this type.
+
+	if min.Exclusive() || max.Exclusive() {
+		if min.Value().GreaterThanOrEqual(max.Value()) {
+			return errors.Format(
+				errors.ErrValueOfOneConstraintGreaterOrEqualToAnother,
+				"min",
+				"max",
+			)
+		}
+	} else {
+		if min.Value().GreaterThan(max.Value()) {
+			return errors.Format(
+				errors.ErrValueOfOneConstraintGreaterThanAnother,
+				"min",
+				"max",
+			)
+		}
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinLengthAndMaxLength(node schema.Node) error {
+	minLengthRaw := node.Constraint(constraint.MinLengthConstraintType)
+	maxLengthRaw := node.Constraint(constraint.MaxLengthConstraintType)
+
+	if minLengthRaw == nil || maxLengthRaw == nil {
+		return nil
+	}
+
+	minLength := minLengthRaw.(*constraint.MinLength) //nolint:errcheck // We're sure about this type.
+	maxLength := maxLengthRaw.(*constraint.MaxLength) //nolint:errcheck // We're sure about this type.
+
+	if minLength.Value() > maxLength.Value() {
+		return errors.Format(
+			errors.ErrValueOfOneConstraintGreaterThanAnother,
+			"minLength",
+			"maxLength",
+		)
+	}
+	return nil
+}
+
+func (schemaCompiler) checkMinItemsAndMaxItems(node schema.Node) error {
+	minItemsRaw := node.Constraint(constraint.MinItemsConstraintType)
+	maxItemsRaw := node.Constraint(constraint.MaxItemsConstraintType)
+
+	if minItemsRaw == nil || maxItemsRaw == nil {
+		return nil
+	}
+
+	minItems := minItemsRaw.(*constraint.MinItems) //nolint:errcheck // We're sure about this type.
+	maxItems := maxItemsRaw.(*constraint.MaxItems) //nolint:errcheck // We're sure about this type.
+
+	if minItems.Value() > maxItems.Value() {
+		return errors.Format(
+			errors.ErrValueOfOneConstraintGreaterThanAnother,
+			"minItems",
+			"maxItems",
+		)
+	}
+	return nil
 }
 
 func (schemaCompiler) exclusiveMinimumConstraint(node schema.Node) {
@@ -370,20 +501,19 @@ func (schemaCompiler) exclusiveMaximumConstraint(node schema.Node) {
 func (compile schemaCompiler) optionalConstraints(node schema.Node, indexOfNode int) {
 	optional := node.Constraint(constraint.OptionalConstraintType)
 	parentNode := node.Parent()
+	objectNode, ok := parentNode.(*schema.ObjectNode)
+
 	if optional == nil {
-		if objectNode, ok := parentNode.(*schema.ObjectNode); ok {
-			if !compile.areKeysOptionalByDefault {
-				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Name)
-			}
+		if ok && !compile.areKeysOptionalByDefault {
+			addRequiredKey(objectNode, objectNode.Key(indexOfNode).Key)
 		}
 	} else {
-		if objectNode, ok := parentNode.(*schema.ObjectNode); ok {
-			if !optional.(constraint.BoolKeeper).Bool() {
-				addRequiredKey(objectNode, objectNode.Key(indexOfNode).Name)
-			}
-			node.DeleteConstraint(constraint.OptionalConstraintType)
-		} else {
+		if !ok {
 			panic(errors.ErrRuleOptionalAppliesOnlyToObjectProperties)
+		}
+
+		if !optional.(constraint.BoolKeeper).Bool() {
+			addRequiredKey(objectNode, objectNode.Key(indexOfNode).Key)
 		}
 	}
 }
@@ -400,24 +530,25 @@ func (schemaCompiler) precisionConstraint(node schema.Node) {
 
 	t := c.(*constraint.TypeConstraint).Bytes().Unquote().String()
 	if t != "decimal" {
-		panic(errors.Format(errors.ErrUnexpectedConstraint, "precision", t))
+		panic(errors.Format(errors.ErrUnexpectedConstraint, constraint.PrecisionConstraintType, t))
 	}
 }
 
 func (schemaCompiler) emptyArray(node schema.Node) {
-	if arrayNode, ok := node.(*schema.ArrayNode); ok {
-		if arrayNode.Len() == 0 {
-			zero := json.NewNumberFromUint(0)
-			if min := node.Constraint(constraint.MinItemsConstraintType); min != nil {
-				if !min.(constraint.ArrayValidator).Value().Equal(zero) {
-					panic(errors.ErrIncorrectConstraintValueForEmptyArray)
-				}
-			}
-			if max := node.Constraint(constraint.MaxItemsConstraintType); max != nil {
-				if !max.(constraint.ArrayValidator).Value().Equal(zero) {
-					panic(errors.ErrIncorrectConstraintValueForEmptyArray)
-				}
-			}
+	arrayNode, ok := node.(*schema.ArrayNode)
+
+	if !ok || arrayNode.Len() != 0 {
+		return
+	}
+
+	if min := node.Constraint(constraint.MinItemsConstraintType); min != nil {
+		if min.(constraint.ArrayValidator).Value() != 0 {
+			panic(errors.ErrIncorrectConstraintValueForEmptyArray)
+		}
+	}
+	if max := node.Constraint(constraint.MaxItemsConstraintType); max != nil {
+		if max.(constraint.ArrayValidator).Value() != 0 {
+			panic(errors.ErrIncorrectConstraintValueForEmptyArray)
 		}
 	}
 }

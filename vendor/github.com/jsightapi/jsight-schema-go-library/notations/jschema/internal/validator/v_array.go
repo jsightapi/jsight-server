@@ -1,8 +1,6 @@
 package validator
 
 import (
-	"fmt"
-
 	"github.com/jsightapi/jsight-schema-go-library/errors"
 	"github.com/jsightapi/jsight-schema-go-library/internal/lexeme"
 	"github.com/jsightapi/jsight-schema-go-library/notations/jschema/internal/schema"
@@ -77,8 +75,4 @@ func (v *arrayValidator) feed(jsonLexeme lexeme.LexEvent) ([]validator, bool) {
 	}
 
 	panic(errors.ErrUnexpectedLexInArrayValidator)
-}
-
-func (v arrayValidator) log() string {
-	return fmt.Sprintf("array [%p]", v.node_)
 }

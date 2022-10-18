@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   docker: circleci/docker@2.0.3
-  common: jsight/common-ci@1.3.5
+  common: jsight/common-ci@1.3.7
   jira: circleci/jira@1.3.1
 
 parameters:
@@ -31,6 +31,7 @@ workflows:
           env: dev
           image: jsight/dev-jsight-server:<< pipeline.parameters.image-tag >>
           notification-message: Dev JSight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          trigger-mark: 'pipe << pipeline.number >>'
           post-steps:
             - jira/notify:
                 job_type: deployment
@@ -93,6 +94,23 @@ workflows:
                 environment_type: production
                 environment: Production
 
+
+  crazy:
+    when:
+      equal: [ crazy, << pipeline.git.branch >> ]
+    jobs:
+      - docker/publish:
+          <<: *base-publish
+          tag: '<< pipeline.parameters.image-tag >>'
+      - common/trigger-deployment:
+          <<: *base-trigger
+          env: crazy
+          notification-message: Crazy Jsight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+          post-steps:
+            - jira/notify:
+                job_type: deployment
+                environment_type: testing
+                environment: Experimental
 
   ci_test:
     when:
