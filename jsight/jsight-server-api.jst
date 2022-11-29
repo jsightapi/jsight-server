@@ -87,7 +87,7 @@ TYPE @httpInteractionId
   "http GET /cats/{id}" // {regex: "^http (?:GET|POST|PUT|PATCH|DELETE) \/.*"}
 
 TYPE @jsonRpcInteractionId
-  "json-rpc-2.0 /cats foo" // {regex: "^json-rpc-2.0 \/.* .+"}
+  "json-rpc-2.0 cats foo" // {regex: "^json-rpc-2.0 .* .+"}
 
 #---------------------------------------------- TAG -----------------------------------------------
 
@@ -175,10 +175,10 @@ TYPE @httpInteraction
   ],
   "annotation" : "Retrieve cats' list.",                   // {optional: true}
   "description": "Allows to retrieve all the cats' list.", // {optional: true}
-  // Request
+  # Request
   "query"  : @query,        // {optional: true}
   "request": @httpRequest,  // {optional: true}
-  // Answers
+  # Answers
   "responses": [ /* {optional: true} 
                   - An array is used because there can be multiple responses with the same code. */
     @httpResponse
@@ -216,7 +216,7 @@ TYPE @httpResponse
 {
   "code"      : @httpResponseCode,
   "annotation": "Description of the successful response.", // {optional: true}
-  "headers": {
+  "headers": { // {optional: true}
     "schema": @schema
   },
   "body": {
@@ -357,7 +357,7 @@ TYPE @ruleNameEnum
                     "precision",
                     "minLength",
                     "maxLength",
-                    "regexp",
+                    "regex",
                     "minItems",
                     "maxItems",
                     "or",
@@ -390,4 +390,4 @@ TYPE @serializeFormat
   "json" // {enum: ["json", "plainString", "binary", "htmlFormEncoded", "noFormat"]}
 
 TYPE @regexSchema
-  "/Hello, World!/" // {regex: "/.*/"}
+  "Hello, World!"
