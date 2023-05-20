@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	"github.com/jsightapi/jsight-api-core/jerr"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jsightapi/datagram"
+	"github.com/jsightapi/jsight-api-core/jerr"
 	"github.com/jsightapi/jsight-api-core/kit"
 	"github.com/jsightapi/jsight-schema-core/fs"
 )
@@ -16,9 +17,14 @@ import (
 func main() {
 	http.HandleFunc("/", jdocExchangeFile)
 
+	server := &http.Server{
+		Addr:        ":8080",
+		ReadTimeout: 5 * time.Second,
+	}
+
 	log.Print("The server is running on the port :8080")
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }
