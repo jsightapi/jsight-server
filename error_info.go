@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 
-	"github.com/jsightapi/jsight-api-go-library/jerr"
+	"github.com/jsightapi/jsight-api-core/jerr"
 )
 
 type errorInfo struct {
@@ -22,8 +22,8 @@ func newErrorInfo(e error) errorInfo {
 	var je *jerr.JApiError
 
 	if errors.As(e, &je) {
-		r.Line = int(je.Line())
-		r.Index = int(je.Index())
+		r.Line = je.Line.Int()
+		r.Index = je.Index.Int()
 	}
 
 	return r

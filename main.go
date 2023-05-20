@@ -2,14 +2,15 @@ package main
 
 import (
 	"errors"
+	"github.com/jsightapi/jsight-api-core/jerr"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/jsightapi/datagram"
-	"github.com/jsightapi/jsight-api-go-library/kit"
-	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-api-core/kit"
+	"github.com/jsightapi/jsight-schema-core/fs"
 )
 
 func main() {
@@ -39,26 +40,10 @@ func jdocExchangeFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		j := kit.NewJApiFromFile(fs.NewFile("root", b))
-		je := j.ValidateJAPI()
+		j, je := kit.NewJApiFromFile(fs.NewFile("root", b))
 
 		if getBoolEnv("JSIGHT_SERVER_STATISTICS") {
-			d := datagram.New()
-			d.Append("cid", r.Header.Get("X-Browser-UUID")) // Client ID
-			d.Append("cip", getIP(r))                       // Client IP
-			d.Append("at", "1")                             // Application Type
-			d.AppendTruncatable("pt", j.Title())            // Project title
-			d.Append("ps", strconv.Itoa(len(b)))            // Project size
-			if je != nil {
-				d.AppendTruncatable("pem", je.Error())                      // Project error message
-				d.Append("pel", strconv.FormatUint(uint64(je.Line()), 10))  // Project error line
-				d.Append("pei", strconv.FormatUint(uint64(je.Index()), 10)) // Project error index
-			}
-
-			err = sendToStatisticServer(d.Pack())
-			if err != nil {
-				log.Print("... " + err.Error())
-			}
+			sendDatagram(r, len(b), j, je)
 		}
 
 		if je != nil {
@@ -76,5 +61,24 @@ func jdocExchangeFile(w http.ResponseWriter, r *http.Request) {
 
 	default:
 		httpResponse409(w, errors.New("HTTP POST request required"))
+	}
+}
+
+func sendDatagram(r *http.Request, projectSize int, j kit.JApi, je *jerr.JApiError) {
+	d := datagram.New()
+	d.Append("cid", r.Header.Get("X-Browser-UUID")) // Client ID
+	d.Append("cip", getIP(r))                       // Client IP
+	d.Append("at", "1")                             // Application Type
+	d.AppendTruncatable("pt", j.Title())            // Project title
+	d.Append("ps", strconv.Itoa(projectSize))       // Project size
+	if je != nil {
+		d.AppendTruncatable("pem", je.Error())                    // Project error message
+		d.Append("pel", strconv.FormatUint(uint64(je.Line), 10))  // Project error line
+		d.Append("pei", strconv.FormatUint(uint64(je.Index), 10)) // Project error index
+	}
+
+	err := sendToStatisticServer(d.Pack())
+	if err != nil {
+		log.Print("... " + err.Error())
 	}
 }

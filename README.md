@@ -1767,8 +1767,8 @@ https://github.com/jsightapi/jsight-server/releases.
 
 JSight Server depends on the following components:
 
-- [JSight Schema Go Library](https://github.com/jsightapi/jsight-schema-go-library),
-- [JSight API Go Library](https://github.com/jsightapi/jsight-api-go-library).
+- [JSight Schema Go Library](https://github.com/jsightapi/jsight-schema-core),
+- [JSight API Go Library](https://github.com/jsightapi/jsight-api-core).
 
 These dependencies are described in the file [go.mod](./go.mod).
 

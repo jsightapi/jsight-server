@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jsightapi/jsight-api-go-library/catalog"
+	"github.com/jsightapi/jsight-api-core/catalog"
 )
 
 func httpResponse200(w http.ResponseWriter, b []byte) {

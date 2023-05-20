@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jsightapi/jsight-api-go-library/jerr"
-	"github.com/jsightapi/jsight-schema-go-library/fs"
+	"github.com/jsightapi/jsight-api-core/jerr"
+	"github.com/jsightapi/jsight-schema-core/fs"
 	"github.com/stretchr/testify/assert"
 )
 
