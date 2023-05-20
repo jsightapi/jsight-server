@@ -5,6 +5,8 @@ github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707 h1:DvpMxaeajafs
 github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
 github.com/jsightapi/jsight-api-core v0.1.2-0.20230517140214-f895ba8bfad8 h1:5NsDEn1T6DVvNDPTMlJ83mVXLYAkhgC5yc/Iw7gJ7tE=
 github.com/jsightapi/jsight-api-core v0.1.2-0.20230517140214-f895ba8bfad8/go.mod h1:7KInx42QN1JhDpnQSTJ4LFEIk6Vuq8U4y17ncoZE5xQ=
+github.com/jsightapi/jsight-api-core v0.1.2-0.20230520130248-c19e74ae348f h1:Y+5se3aa24qe+ZfTedZ7hwV87IBLjr78vWqNxMn4gQ0=
+github.com/jsightapi/jsight-api-core v0.1.2-0.20230520130248-c19e74ae348f/go.mod h1:7KInx42QN1JhDpnQSTJ4LFEIk6Vuq8U4y17ncoZE5xQ=
 github.com/jsightapi/jsight-schema-core v0.1.2-0.20230517092740-1dbc4fc1bfae h1:O9Zr7JTg+MCJer3LzfdptJoA4t3wkTunyL39cFCkIu4=
 github.com/jsightapi/jsight-schema-core v0.1.2-0.20230517092740-1dbc4fc1bfae/go.mod h1:xa10zCMwh27lFUzVoA1ozjJ5lWPyTOWQTgB47l79I/k=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=
