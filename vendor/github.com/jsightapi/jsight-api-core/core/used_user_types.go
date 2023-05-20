@@ -1,13 +1,13 @@
 package core
 
 import (
+	stdErrors "errors"
 	"fmt"
 
 	schema "github.com/jsightapi/jsight-schema-core"
 
-	"github.com/jsightapi/jsight-api-core/jerr"
-
 	"github.com/jsightapi/jsight-api-core/catalog"
+	"github.com/jsightapi/jsight-api-core/jerr"
 )
 
 func fetchUsedUserTypes(ut schema.Schema, userTypes *catalog.UserSchemas) ([]string, error) {
@@ -49,6 +49,10 @@ func (f *usedUserTypeFetcher) fetch(ut schema.Schema) error {
 		f.alreadyProcessed[t] = struct{}{}
 		f.usedUserTypes = append(f.usedUserTypes, t)
 		if err := f.fetch(f.userTypes.GetValue(t)); err != nil {
+			var ute userTypeError
+			if stdErrors.As(err, &ute) {
+				return ute
+			}
 			sErr := userTypeError{
 				err:          err,
 				userTypeName: t,

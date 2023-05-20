@@ -4,7 +4,7 @@ github.com/davecgh/go-spew/spew
 # github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
 ## explicit; go 1.18
 github.com/jsightapi/datagram
-# github.com/jsightapi/jsight-api-core v0.1.2-0.20230517140214-f895ba8bfad8
+# github.com/jsightapi/jsight-api-core v0.1.2-0.20230520130248-c19e74ae348f
 ## explicit; go 1.18
 github.com/jsightapi/jsight-api-core/catalog
 github.com/jsightapi/jsight-api-core/core
