@@ -1,6 +1,0 @@
-.idea
-*.iml
-/vendor
-/testdata/_*
-*.exe
-/validator-cli
