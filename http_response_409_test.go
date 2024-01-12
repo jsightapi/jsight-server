@@ -17,7 +17,7 @@ func Test_httpResponse409(t *testing.T) {
 
 		assert.Equal(t, http.StatusConflict, r.Code)
 		assert.Len(t, r.Header(), 1)
-		assert.Equal(t, "application/json", r.Header().Get("Content-Type"))
+		assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
 		assert.Equal(t, `{"Status":"Error","Message":"fake error","Line":0,"Index":0}`, r.Body.String())
 	})
 

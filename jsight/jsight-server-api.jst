@@ -2,7 +2,7 @@ JSIGHT 0.3
 
 INFO
   Title "JSight Server API"
-  Version "2.0.0"
+  Version "2.1.0"
   Description
   (
     # Introduction
@@ -18,31 +18,41 @@ INFO
     - easy for reading by man (will be used for functional automatically tests).
 
     # Format size optimization options (for the future)
-    
+
     1. Discard fields that are easily calculated, for example, the json Type field is easily calculated from the content.
     2. Frequent fields should be named with one letter, for example, 't' instead of 'type'.
     3. Abandon structures that are easily calculated, for example, 'allOf'.
   )
 
-POST /parse-jsight
+POST /convert-jsight
   Description
     You should send JSight code in request.
 
+  Query
+  {
+    "to": "jdoc-2.0", // {enum: ["jdoc-2.0", "openapi-3.0.3"]}
+    "format": "json" // {optional: true, enum: ["json", "yaml"]}
+  }
+
   Request
     Headers
-        {
-            "X-Browser-UUID": "123e4567-e89b-12d3-a456-426614174000"
-        }
+    {
+      "X-Browser-UUID": "123e4567-e89b-12d3-a456-426614174000"
+    }
+
     Body any # JSight code
 
-  200 @jdocExchange // Successfully parsed response.
+  200 // Successfully parsed response.
     Headers
-        {
-            "X-Jdoc-Exchange-Version": "2.0.0"
-        }
+    {
+      "X-Jdoc-Exchange-Version": "2.0.0",
+      "Content-Type": "application/json; charset=utf-8" // {enum: ["application/json; charset=utf-8", "application/yaml; charset=utf-8"]}
+    }
+
+    Body @jdocExchange
 
   409 @error // Any parsing error.
-    
+
 TYPE @error
 {
     "Status": "Error", // {const: true}
@@ -130,7 +140,7 @@ TYPE @tagHttpInteractionGroup
 }
 
 #--------------------------------------------- JSON RPC -------------------------------------------
-  
+
 TYPE @jsonRpcInteraction
 {
   "id"           : "json-rpc-2.0 /cats foo", // {type: "@jsonRpcInteractionId"}
@@ -179,7 +189,7 @@ TYPE @httpInteraction
   "query"  : @query,        // {optional: true}
   "request": @httpRequest,  // {optional: true}
   # Answers
-  "responses": [ /* {optional: true} 
+  "responses": [ /* {optional: true}
                   - An array is used because there can be multiple responses with the same code. */
     @httpResponse
   ]
@@ -371,11 +381,11 @@ TYPE @ruleNameEnum
 
 TYPE @tokenTypeEnum
 "object" /* [
-            "object", 
-            "array", 
-            "string", 
-            "number", 
-            "boolean", 
+            "object",
+            "array",
+            "string",
+            "number",
+            "boolean",
             "null",
             "annotation", // This means an interline annotation.
             "reference"   // It is used when a reference is inserted into the example, for example,

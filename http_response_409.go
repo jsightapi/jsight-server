@@ -13,7 +13,7 @@ func httpResponse409(w http.ResponseWriter, e error) {
 		httpResponse500(w, err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusConflict)
 	_, _ = w.Write(b)
 

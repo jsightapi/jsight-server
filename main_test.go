@@ -12,16 +12,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_jdocExchangeFile(t *testing.T) { //nolint:funlen
-	type testCase struct {
-		request  func(*testing.T) *http.Request
-		asserter func(*testing.T, *httptest.ResponseRecorder)
-	}
+type testCase struct {
+	request  func(*testing.T) *http.Request
+	asserter func(*testing.T, *httptest.ResponseRecorder)
+}
 
+func Test_jdocExchangeFile(t *testing.T) {
 	cc := map[string]testCase{
 		http.MethodOptions: {
 			func(t *testing.T) *http.Request {
-				r, err := http.NewRequest(http.MethodOptions, "/", http.NoBody)
+				r, err := http.NewRequest(http.MethodOptions, "/?to=jdoc-2.0", http.NoBody)
 				require.NoError(t, err)
 				return r
 			},
@@ -32,7 +32,7 @@ func Test_jdocExchangeFile(t *testing.T) { //nolint:funlen
 
 		"POST, empty request": {
 			func(t *testing.T) *http.Request {
-				r, err := http.NewRequest(http.MethodPost, "/", http.NoBody)
+				r, err := http.NewRequest(http.MethodPost, "/?to=jdoc-2.0", http.NoBody)
 				require.NoError(t, err)
 				return r
 			},
@@ -43,7 +43,7 @@ func Test_jdocExchangeFile(t *testing.T) { //nolint:funlen
 
 		"POST, with valid schema": {
 			func(t *testing.T) *http.Request {
-				r, err := http.NewRequest(http.MethodPost, "/", strings.NewReader(`
+				r, err := http.NewRequest(http.MethodPost, "/?to=jdoc-2.0", strings.NewReader(`
 JSIGHT 0.3
 
 TYPE @cat
@@ -62,7 +62,7 @@ TYPE @cat
 
 		"POST, with invalid schema": {
 			func(t *testing.T) *http.Request {
-				r, err := http.NewRequest(http.MethodPost, "/", strings.NewReader("invalid"))
+				r, err := http.NewRequest(http.MethodPost, "/?to=jdoc-2.0", strings.NewReader("invalid"))
 				require.NoError(t, err)
 				return r
 			},
@@ -73,6 +73,78 @@ TYPE @cat
 		},
 	}
 
+	appendUnhandledMethod(cc)
+	assertAll(t, cc)
+}
+
+func Test_openapi(t *testing.T) {
+	expectedJSON, err := os.ReadFile("testdata/openapi.json")
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	expectedYAML, err := os.ReadFile("testdata/openapi.yaml")
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	cc := map[string]testCase{
+		http.MethodOptions: {
+			func(t *testing.T) *http.Request {
+				r, err := http.NewRequest(http.MethodOptions, "/?to=openapi-3.0.3", http.NoBody)
+				require.NoError(t, err)
+				return r
+			},
+			func(t *testing.T, r *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusOK, r.Code)
+			},
+		},
+
+		"POST, default format": {
+			func(t *testing.T) *http.Request {
+				r, err := http.NewRequest(http.MethodPost, "/?to=openapi-3.0.3", http.NoBody)
+				require.NoError(t, err)
+				return r
+			},
+			func(t *testing.T, r *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusOK, r.Code)
+				assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
+				assert.Equal(t, expectedJSON, r.Body.Bytes())
+			},
+		},
+
+		"POST, JSON format": {
+			func(t *testing.T) *http.Request {
+				r, err := http.NewRequest(http.MethodPost, "/?to=openapi-3.0.3&format=json", http.NoBody)
+				require.NoError(t, err)
+				return r
+			},
+			func(t *testing.T, r *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusOK, r.Code)
+				assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
+				assert.Equal(t, expectedJSON, r.Body.Bytes())
+			},
+		},
+
+		"POST, YAML format": {
+			func(t *testing.T) *http.Request {
+				r, err := http.NewRequest(http.MethodPost, "/?to=openapi-3.0.3&format=yaml", http.NoBody)
+				require.NoError(t, err)
+				return r
+			},
+			func(t *testing.T, r *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusOK, r.Code)
+				assert.Equal(t, "application/yaml; charset=utf-8", r.Header().Get("Content-Type"))
+				assert.Equal(t, expectedYAML, r.Body.Bytes())
+			},
+		},
+	}
+
+	appendUnhandledMethod(cc)
+	assertAll(t, cc)
+}
+
+func appendUnhandledMethod(cc map[string]testCase) {
 	unhandledMethod := []string{
 		http.MethodGet,
 		http.MethodHead,
@@ -85,23 +157,25 @@ TYPE @cat
 	for _, m := range unhandledMethod {
 		cc[m] = testCase{
 			func(t *testing.T) *http.Request {
-				r, err := http.NewRequest(m, "/", http.NoBody) //nolint:noctx
+				r, err := http.NewRequest(m, "/?to=openapi-3.0.3", http.NoBody) //nolint:noctx
 				require.NoError(t, err)
 				return r
 			},
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusConflict, r.Code)
-				assert.Equal(t, "application/json", r.Header().Get("Content-Type"))
+				assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
 				assert.Equal(t, `{"Status":"Error","Message":"HTTP POST request required","Line":0,"Index":0}`, r.Body.String())
 			},
 		}
 	}
+}
 
+func assertAll(t *testing.T, cc map[string]testCase) {
 	for n, c := range cc {
 		t.Run(fmt.Sprintf("%s, without CORS", n), func(t *testing.T) {
 			r := httptest.NewRecorder()
 
-			jdocExchangeFile(r, c.request(t))
+			convertJSight(r, c.request(t))
 
 			c.asserter(t, r)
 		})
@@ -114,7 +188,7 @@ TYPE @cat
 
 			r := httptest.NewRecorder()
 
-			jdocExchangeFile(r, c.request(t))
+			convertJSight(r, c.request(t))
 
 			c.asserter(t, r)
 			assert.Equal(t, "*", r.Header().Get("Access-Control-Allow-Origin"))
