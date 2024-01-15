@@ -42,14 +42,14 @@ POST /convert-jsight
 
     Body any # JSight code
 
-  200 // Successfully parsed response.
+  200 // Successfully parsed response (@jdocExchange | OpenApiJSON | OpenApiYAML).
     Headers
     {
-      "X-Jdoc-Exchange-Version": "2.0.0",
+      "X-Jdoc-Exchange-Version": "2.0.0", // {optional: true}
       "Content-Type": "application/json; charset=utf-8" // {enum: ["application/json; charset=utf-8", "application/yaml; charset=utf-8"]}
     }
 
-    Body @jdocExchange
+    Body any # @jdocExchange | OpenApiJSON | OpenApiYAML
 
   409 @error // Any parsing error.
 
