@@ -57,7 +57,7 @@ func convertJSight(w http.ResponseWriter, r *http.Request) {
 		case "openapi-3.0.3":
 			convertToOpenAPI(w, r)
 		default:
-			httpResponse409(w, errors.New("not supported"))
+			httpResponse409(w, errors.New(`you must specify the "to" parameter`))
 		}
 	default:
 		httpResponse409(w, errors.New("HTTP POST request required"))
