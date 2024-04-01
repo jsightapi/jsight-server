@@ -1,12 +1,14 @@
 package kit
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/jsightapi/jsight-schema-core/fs"
 	"github.com/jsightapi/jsight-schema-core/reader"
 
 	"github.com/jsightapi/jsight-api-core/catalog"
+	"github.com/jsightapi/jsight-api-core/catalog/ser/openapi"
 	"github.com/jsightapi/jsight-api-core/core"
 	"github.com/jsightapi/jsight-api-core/jerr"
 )
@@ -62,4 +64,20 @@ func (j *JApi) ToJson() ([]byte, error) {
 
 func (j *JApi) ToJsonIndent() ([]byte, error) {
 	return j.Catalog().ToJsonIndent()
+}
+
+func (j *JApi) ToOpenAPIJson() ([]byte, error) {
+	o, err := openapi.NewOpenAPI(j.Catalog())
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(o)
+}
+
+func (j *JApi) ToOpenAPIJsonIndent() ([]byte, error) {
+	o, err := openapi.NewOpenAPI(j.Catalog())
+	if err != nil {
+		return nil, err
+	}
+	return json.MarshalIndent(o, "", "  ")
 }

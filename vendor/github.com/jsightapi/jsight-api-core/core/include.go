@@ -69,7 +69,7 @@ func (core *JApiCore) getIncludedFilePath(keyword *scanner.Lexeme) (string, *jer
 	}
 
 	if errors.Is(err, os.ErrNotExist) {
-		return "", incorrectParameter(keyword, path, "isn't exists")
+		return "", incorrectParameter(keyword, path, "does not exist")
 	}
 	return "", incorrectParameter(keyword, path, err.Error())
 }

@@ -49,6 +49,8 @@ linters-settings:
     settings:
       hugeParam:
         sizeThreshold: 150
+      rangeValCopy:
+        sizeThreshold: 150
   gocyclo:
     min-complexity: 15
   goimports:

@@ -24,13 +24,13 @@ func (s ISchema) TypesList() map[string]Type {
 	return s.types
 }
 
-// MustType returns *Schema or panic if not found.
+// MustType returns *ISchema or panic if not found.
 func (s ISchema) MustType(name string) *ISchema {
 	t, ok := s.types[name]
 	if ok {
 		return t.Schema
 	}
-	panic(errs.ErrTypeNotFound.F(name))
+	panic(errs.ErrUserTypeNotFound.F(name))
 }
 
 // Type returns specified type's schema.
@@ -40,7 +40,7 @@ func (s ISchema) Type(name string) (*ISchema, *errs.Err) {
 		return t.Schema, nil
 	}
 
-	return nil, errs.ErrTypeNotFound.F(name)
+	return nil, errs.ErrUserTypeNotFound.F(name)
 }
 
 func (s ISchema) RootNode() Node {

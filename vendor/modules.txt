@@ -4,16 +4,17 @@ github.com/davecgh/go-spew/spew
 # github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
 ## explicit; go 1.18
 github.com/jsightapi/datagram
-# github.com/jsightapi/jsight-api-core v0.1.2-0.20230520130248-c19e74ae348f
+# github.com/jsightapi/jsight-api-core v0.1.2-0.20240326083641-683ae7f8b225
 ## explicit; go 1.18
 github.com/jsightapi/jsight-api-core/catalog
+github.com/jsightapi/jsight-api-core/catalog/ser/openapi
 github.com/jsightapi/jsight-api-core/core
 github.com/jsightapi/jsight-api-core/directive
 github.com/jsightapi/jsight-api-core/jerr
 github.com/jsightapi/jsight-api-core/kit
 github.com/jsightapi/jsight-api-core/notation
 github.com/jsightapi/jsight-api-core/scanner
-# github.com/jsightapi/jsight-schema-core v0.1.2-0.20230517092740-1dbc4fc1bfae
+# github.com/jsightapi/jsight-schema-core v0.1.2-0.20240320171149-9cac259a1713
 ## explicit; go 1.18
 github.com/jsightapi/jsight-schema-core
 github.com/jsightapi/jsight-schema-core/bytes
@@ -31,6 +32,10 @@ github.com/jsightapi/jsight-schema-core/notations/jschema/ischema/constraint
 github.com/jsightapi/jsight-schema-core/notations/jschema/loader
 github.com/jsightapi/jsight-schema-core/notations/jschema/scanner
 github.com/jsightapi/jsight-schema-core/notations/regex
+github.com/jsightapi/jsight-schema-core/openapi
+github.com/jsightapi/jsight-schema-core/openapi/internal
+github.com/jsightapi/jsight-schema-core/openapi/internal/jsoac
+github.com/jsightapi/jsight-schema-core/openapi/internal/rsoac
 github.com/jsightapi/jsight-schema-core/panics
 github.com/jsightapi/jsight-schema-core/reader
 github.com/jsightapi/jsight-schema-core/rules/enum

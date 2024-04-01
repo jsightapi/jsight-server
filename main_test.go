@@ -78,15 +78,13 @@ TYPE @cat
 }
 
 func Test_openapi(t *testing.T) {
-	expectedJSON, err := os.ReadFile("testdata/openapi.json")
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	expectedYAML, err := os.ReadFile("testdata/openapi.yaml")
-	if err != nil {
-		require.NoError(t, err)
-	}
+	expectedJSON := `{"openapi":"3.0.3","info":{"title":"","version":""},"paths":{}}`
+	expectedYAML := `openapi: 3.0.3
+info:
+  title: ""
+  version: ""
+paths: {}
+`
 
 	cc := map[string]testCase{
 		http.MethodOptions: {
@@ -109,7 +107,7 @@ func Test_openapi(t *testing.T) {
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
 				assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
-				assert.Equal(t, expectedJSON, r.Body.Bytes())
+				assert.JSONEq(t, expectedJSON, r.Body.String())
 			},
 		},
 
@@ -122,7 +120,7 @@ func Test_openapi(t *testing.T) {
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
 				assert.Equal(t, "application/json; charset=utf-8", r.Header().Get("Content-Type"))
-				assert.Equal(t, expectedJSON, r.Body.Bytes())
+				assert.JSONEq(t, expectedJSON, r.Body.String())
 			},
 		},
 
@@ -135,7 +133,7 @@ func Test_openapi(t *testing.T) {
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
 				assert.Equal(t, "application/yaml; charset=utf-8", r.Header().Get("Content-Type"))
-				assert.Equal(t, expectedYAML, r.Body.Bytes())
+				assert.YAMLEq(t, expectedYAML, r.Body.String(), r.Body.String())
 			},
 		},
 	}

@@ -39,6 +39,10 @@ func (e ExchangeRegexSchema) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
+func (e ExchangeRegexSchema) Notation() notation.SchemaNotation {
+	return notation.SchemaNotationRegex
+}
+
 func NewExchangeRegexSchema(regexStr bytes.Bytes) (*ExchangeRegexSchema, error) {
 	s := regex.New("", regexStr)
 	return &ExchangeRegexSchema{RSchema: s}, nil

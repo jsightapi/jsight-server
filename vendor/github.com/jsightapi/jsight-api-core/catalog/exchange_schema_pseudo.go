@@ -13,24 +13,28 @@ import (
 
 type ExchangePseudoSchema struct {
 	schema.Schema
-	Notation notation.SchemaNotation
+	notation notation.SchemaNotation
+}
+
+func (e ExchangePseudoSchema) Notation() notation.SchemaNotation {
+	return e.notation
 }
 
 func NewExchangePseudoSchema(n notation.SchemaNotation) *ExchangePseudoSchema {
 	return &ExchangePseudoSchema{
-		Notation: n,
+		notation: n,
 	}
 }
 
 func (e ExchangePseudoSchema) MarshalJSON() ([]byte, error) {
-	if e.Notation != notation.SchemaNotationAny && e.Notation != notation.SchemaNotationEmpty {
+	if e.notation != notation.SchemaNotationAny && e.notation != notation.SchemaNotationEmpty {
 		return nil, errors.New(jerr.RuntimeFailure)
 	}
 
 	data := struct {
 		Notation notation.SchemaNotation `json:"notation"`
 	}{
-		Notation: e.Notation,
+		Notation: e.notation,
 	}
 
 	return json.Marshal(data)

@@ -141,7 +141,7 @@ const (
 	// Link checker
 
 	ErrIncorrectUserType                              Code = 1301
-	ErrTypeNotFound                                   Code = 1302
+	ErrUserTypeNotFound                               Code = 1302
 	ErrImpossibleToDetermineTheJsonTypeDueToRecursion Code = 1303
 	ErrInvalidKeyShortcutType                         Code = 1304
 
@@ -308,7 +308,7 @@ var errorFormat = map[Code]string{
 
 	// link checker
 	ErrIncorrectUserType: "Incorrect type of user type",
-	ErrTypeNotFound:      "Type %q not found",
+	ErrUserTypeNotFound:  "Type %q not found",
 	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type %q`, //nolint:lll
 	ErrInvalidKeyShortcutType:                         "Key shortcut %q should be string but %q given",
 
