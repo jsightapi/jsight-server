@@ -1891,7 +1891,12 @@ We sincerely thank all those without whom this project would not have been possi
 
 - [Alchemist Accelerator](https://www.alchemistaccelerator.com/),
 - [Lucas Jones](https://github.com/lucasjones) for his
-  [reggen](https://github.com/lucasjones/reggen) library.
+  [reggen](https://github.com/lucasjones/reggen) library,
+- [itchyny](https://github.com/itchyny) for his
+  [json2yaml](https://github.com/itchyny/json2yaml) library,
+- [Stretchr](https://github.com/stretchr) company for
+  [testify](https://github.com/stretchr/testify) library,
+
 
 <div align="center">
 

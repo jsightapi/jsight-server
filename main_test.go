@@ -133,7 +133,7 @@ paths: {}
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
 				assert.Equal(t, "application/yaml; charset=utf-8", r.Header().Get("Content-Type"))
-				assert.YAMLEq(t, expectedYAML, r.Body.String(), r.Body.String())
+				assert.Equal(t, expectedYAML, r.Body.String(), r.Body.String())
 			},
 		},
 	}

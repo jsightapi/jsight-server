@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 
+	"github.com/itchyny/json2yaml"
 	"github.com/jsightapi/jsight-api-core/catalog/ser/openapi"
 	"github.com/jsightapi/jsight-api-core/kit"
-	"gopkg.in/yaml.v3"
 )
 
 func openapiJSON(jAPI kit.JApi) ([]byte, error) {
@@ -36,13 +37,14 @@ func openapiYAML(jAPI kit.JApi) ([]byte, error) {
 	return resp, nil
 }
 
-func jsonToYAML(j []byte) ([]byte, error) {
-	var data any
+func jsonToYAML(jsonData []byte) ([]byte, error) {
+	from := bytes.NewReader(jsonData)
+	to := bytes.NewBuffer(make([]byte, 0, len(jsonData)))
 
-	err := yaml.Unmarshal(j, &data)
+	err := json2yaml.Convert(to, from)
 	if err != nil {
 		return nil, err
 	}
 
-	return yaml.Marshal(data)
+	return to.Bytes(), nil
 }
