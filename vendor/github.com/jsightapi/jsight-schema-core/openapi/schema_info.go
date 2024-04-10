@@ -68,7 +68,7 @@ func (e SchemaInfo) SchemaObject() SchemaObject {
 
 func (e SchemaInfo) Annotation() string {
 	if e.node != nil {
-		return e.node.Comment
+		return jsoac.Normalize(e.node.Comment)
 	}
 	return ""
 }

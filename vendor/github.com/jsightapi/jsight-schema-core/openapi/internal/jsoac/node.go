@@ -3,6 +3,7 @@ package jsoac
 import (
 	schema "github.com/jsightapi/jsight-schema-core"
 	"github.com/jsightapi/jsight-schema-core/errs"
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type Node interface {
@@ -10,7 +11,7 @@ type Node interface {
 }
 
 func newNode(astNode schema.ASTNode) Node {
-	if astNode.SchemaType == stringAny {
+	if astNode.SchemaType == internal.StringAny {
 		return newAny(astNode)
 	}
 

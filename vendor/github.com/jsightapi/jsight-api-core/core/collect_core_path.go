@@ -5,6 +5,46 @@ import (
 	"github.com/jsightapi/jsight-api-core/jerr"
 )
 
+// runs through all directives which has path as a param (URL, Get, etc.)
+// if this directive was not processed during processing of its child Path directive (did not have that child),
+// then it may have unspecified path params, that must be added to core.rawPathVariables for future processing
+// this is a temp workaround, until better architecture for path params is designed
+func (core *JApiCore) addMissedUndefindedPathVariables(dd []*directive.Directive) *jerr.JApiError {
+	for i := 0; i != len(dd); i++ {
+		d := dd[i]
+		switch d.Type() {
+		case directive.URL, directive.Get, directive.Post, directive.Put, directive.Delete, directive.Patch:
+			var used bool
+			for i := 0; i < len(core.rawPathVariables); i++ {
+				if core.rawPathVariables[i].pathDirective.Parent == d {
+					used = true
+				}
+			}
+			if !used { // register this params as rawPathVariables
+				path, err := d.Path()
+				if err != nil {
+					return d.KeywordError(err.Error())
+				}
+
+				pp, err := PathParameters(path)
+				if err != nil {
+					return d.KeywordError(err.Error())
+				}
+
+				core.rawPathVariables = append(core.rawPathVariables, rawPathVariable{
+					pathDirective: *d,
+					parameters:    pp,
+					imitated:      true,
+				})
+			}
+
+		default:
+			// does nothing
+		}
+	}
+	return nil
+}
+
 func (core *JApiCore) collectPaths(dd []*directive.Directive) *jerr.JApiError {
 	for i := 0; i != len(dd); i++ {
 		switch dd[i].Type() {
@@ -27,6 +67,7 @@ func (core *JApiCore) collectPaths(dd []*directive.Directive) *jerr.JApiError {
 	return nil
 }
 
+// NOTE: works specifically with Path directive.
 func (core *JApiCore) collectPathVariables(d *directive.Directive) *jerr.JApiError {
 	if d.Annotation != "" {
 		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)

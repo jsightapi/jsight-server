@@ -3,7 +3,10 @@ package jsoac
 import (
 	"encoding/json"
 
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
+
 	schema "github.com/jsightapi/jsight-schema-core"
+
 	"github.com/jsightapi/jsight-schema-core/errs"
 )
 
@@ -39,8 +42,8 @@ func (a *AllOf) append(rule schema.RuleASTNode) {
 }
 
 func (a AllOf) MarshalJSON() ([]byte, error) {
-	b := bufferPool.Get()
-	defer bufferPool.Put(b)
+	b := internal.BufferPool.Get()
+	defer internal.BufferPool.Put(b)
 
 	b.WriteByte('[')
 

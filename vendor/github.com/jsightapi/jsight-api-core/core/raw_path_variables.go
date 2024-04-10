@@ -11,4 +11,8 @@ type rawPathVariable struct {
 	parameters      []PathParameter
 	pathDirective   directive.Directive // to detect and display an error
 	parentDirective directive.Directive
+
+	// temp workaround. true means that this was not gathered from Path directive,
+	// but from URL or Method-directive, imitating real rawPathVariable
+	imitated bool
 }

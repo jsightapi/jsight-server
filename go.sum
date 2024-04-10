@@ -4,10 +4,10 @@ github.com/itchyny/json2yaml v0.1.4 h1:/pErVOXGG5iTyXHi/QKR4y3uzhLjGTEmmJIy97YT+
 github.com/itchyny/json2yaml v0.1.4/go.mod h1:6iudhBZdarpjLFRNj+clWLAkGft+9uCcjAZYXUH9eGI=
 github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707 h1:DvpMxaeajafsBn3NVjcaloatbqupVaIdcV4y8KHunI8=
 github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707/go.mod h1:pBj2DBaAOdg5nWXc09jm6IUQnaE4iKMY1tvsx3RmchY=
-github.com/jsightapi/jsight-api-core v0.1.2-0.20240401111634-106653ada5f9 h1:9kvHo3uoZVhkR5t9ewB6DRVkKZYtAFI7juJqRYayQc0=
-github.com/jsightapi/jsight-api-core v0.1.2-0.20240401111634-106653ada5f9/go.mod h1:+U5lOlYFjAmbPbm+vao/mjQM6ggLzOzVRiOVO+ocVdw=
-github.com/jsightapi/jsight-schema-core v0.1.2-0.20240320171149-9cac259a1713 h1:X3Dr2Y1a4qKeMTwJViJ7JSVD3MdAxlHMirG2CrYxdSM=
-github.com/jsightapi/jsight-schema-core v0.1.2-0.20240320171149-9cac259a1713/go.mod h1:LARaGZOYbAnCd3Azckksdmb0gm8vUzJ94Kvg/JNOf1k=
+github.com/jsightapi/jsight-api-core v0.1.2-0.20240410083846-3896bc999182 h1:AAc9dn0uvJx9RQIxKPJTsRa+UKOLdlD+sgK8az7+pd8=
+github.com/jsightapi/jsight-api-core v0.1.2-0.20240410083846-3896bc999182/go.mod h1:LveuAmON5DHDhqHHknSYLCtqe1V4+UVnk5YKtYStQ+E=
+github.com/jsightapi/jsight-schema-core v0.1.2-0.20240408152708-e7bf8600722c h1:p5sfRnEqeVLr/bnvLhBQ4piRIJkAZQvVYLtbNdu6ieA=
+github.com/jsightapi/jsight-schema-core v0.1.2-0.20240408152708-e7bf8600722c/go.mod h1:LARaGZOYbAnCd3Azckksdmb0gm8vUzJ94Kvg/JNOf1k=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb h1:w1g9wNDIE/pHSTmAaUhv4TZQuPBS6GV3mMz5hkgziIU=
 github.com/lucasjones/reggen v0.0.0-20200904144131-37ba4fa293bb/go.mod h1:5ELEyG+X8f+meRWHuqUOewBOhvHkl7M76pdGEansxW4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

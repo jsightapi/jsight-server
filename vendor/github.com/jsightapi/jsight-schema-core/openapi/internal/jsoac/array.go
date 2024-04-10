@@ -2,6 +2,7 @@ package jsoac
 
 import (
 	schema "github.com/jsightapi/jsight-schema-core"
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type Array struct {
@@ -18,7 +19,7 @@ var _ Node = (*Array)(nil)
 func newArray(astNode schema.ASTNode) *Array {
 	maxItems := newMaxItems(astNode)
 	if len(astNode.Children) == 0 {
-		maxItems = int64Ref(0)
+		maxItems = internal.Int64Ref(0)
 	}
 	a := Array{
 		OADType:     OADTypeArray,

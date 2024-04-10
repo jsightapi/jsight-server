@@ -2,6 +2,7 @@ package jsoac
 
 import (
 	schema "github.com/jsightapi/jsight-schema-core"
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type Object struct {
@@ -30,7 +31,9 @@ func newObject(astNode schema.ASTNode) *Object {
 	}
 
 	for _, an := range astNode.Children {
-		o.appendProperty(an)
+		if !an.IsKeyShortcut {
+			o.appendProperty(an)
+		}
 	}
 
 	return &o
@@ -42,7 +45,7 @@ func (o *Object) appendProperty(astNode schema.ASTNode) {
 
 	o.Properties.append(key, value)
 
-	if !astNode.Rules.Has("optional") || astNode.Rules.GetValue("optional").Value == stringFalse {
+	if !astNode.Rules.Has("optional") || astNode.Rules.GetValue("optional").Value == internal.StringFalse {
 		o.appendToRequired(key)
 	}
 }

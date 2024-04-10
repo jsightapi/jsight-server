@@ -2,6 +2,8 @@ package jsoac
 
 import (
 	"encoding/json"
+
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type ObjectProperties struct {
@@ -29,8 +31,8 @@ func (op *ObjectProperties) append(key string, value Node) {
 }
 
 func (op ObjectProperties) MarshalJSON() ([]byte, error) {
-	b := bufferPool.Get()
-	defer bufferPool.Put(b)
+	b := internal.BufferPool.Get()
+	defer internal.BufferPool.Put(b)
 
 	b.WriteByte('{')
 	length := len(op.properties)

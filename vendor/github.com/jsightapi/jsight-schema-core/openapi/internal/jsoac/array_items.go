@@ -2,6 +2,8 @@ package jsoac
 
 import (
 	"encoding/json"
+
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type ArrayItems struct {
@@ -27,8 +29,8 @@ func (ai *ArrayItems) append(value Node) {
 }
 
 func (ai ArrayItems) MarshalJSON() ([]byte, error) {
-	b := bufferPool.Get()
-	defer bufferPool.Put(b)
+	b := internal.BufferPool.Get()
+	defer internal.BufferPool.Put(b)
 	length := len(ai.items)
 
 	if length > 1 {

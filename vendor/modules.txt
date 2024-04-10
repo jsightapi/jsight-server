@@ -7,7 +7,7 @@ github.com/itchyny/json2yaml
 # github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
 ## explicit; go 1.18
 github.com/jsightapi/datagram
-# github.com/jsightapi/jsight-api-core v0.1.2-0.20240401111634-106653ada5f9
+# github.com/jsightapi/jsight-api-core v0.1.2-0.20240410083846-3896bc999182
 ## explicit; go 1.18
 github.com/jsightapi/jsight-api-core/catalog
 github.com/jsightapi/jsight-api-core/catalog/ser/openapi
@@ -17,7 +17,7 @@ github.com/jsightapi/jsight-api-core/jerr
 github.com/jsightapi/jsight-api-core/kit
 github.com/jsightapi/jsight-api-core/notation
 github.com/jsightapi/jsight-api-core/scanner
-# github.com/jsightapi/jsight-schema-core v0.1.2-0.20240320171149-9cac259a1713
+# github.com/jsightapi/jsight-schema-core v0.1.2-0.20240408152708-e7bf8600722c
 ## explicit; go 1.18
 github.com/jsightapi/jsight-schema-core
 github.com/jsightapi/jsight-schema-core/bytes

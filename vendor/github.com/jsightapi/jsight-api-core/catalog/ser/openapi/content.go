@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"github.com/jsightapi/jsight-api-core/catalog"
+	"github.com/jsightapi/jsight-api-core/notation"
 )
 
 // Content is used in Responses and Requests
@@ -40,8 +41,13 @@ func contentForVariousMediaTypes(schemaObjectsMap map[mediaType][]schemaObject) 
 func contentForSchema(f catalog.SerializeFormat, es catalog.ExchangeSchema) *Content {
 	c := make(Content)
 	mt := formatToMediaType(f)
-	c[mt] = mediaTypeObjectForSchema(es)
-	return &c
+	switch es.Notation() {
+	case notation.SchemaNotationEmpty:
+		return &c // Response with empty is represented by an empty Content
+	default:
+		c[mt] = mediaTypeObjectForSchema(es)
+		return &c
+	}
 }
 
 // func ContentWithMediaTypeObject(mt mediaType, o *MediaTypeObject) *Content {

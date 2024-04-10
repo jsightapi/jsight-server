@@ -3,6 +3,8 @@ package jsoac
 import (
 	"encoding/json"
 
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
+
 	schema "github.com/jsightapi/jsight-schema-core"
 )
 
@@ -18,11 +20,11 @@ func newEnum(astNode schema.ASTNode) *Enum {
 		return enum
 	}
 
-	if astNode.Rules.Has(stringEnum) &&
-		astNode.Rules.GetValue(stringEnum).TokenType == stringArray &&
-		0 < len(astNode.Rules.GetValue(stringEnum).Items) {
+	if astNode.Rules.Has(internal.StringEnum) &&
+		astNode.Rules.GetValue(internal.StringEnum).TokenType == internal.StringArray &&
+		0 < len(astNode.Rules.GetValue(internal.StringEnum).Items) {
 		enum := makeEmptyEnum()
-		for _, s := range astNode.Rules.GetValue(stringEnum).Items {
+		for _, s := range astNode.Rules.GetValue(internal.StringEnum).Items {
 			ex := newExample(s.Value, s.TokenType == "string")
 			bb := ex.jsonValue()
 
@@ -31,9 +33,9 @@ func newEnum(astNode schema.ASTNode) *Enum {
 		return enum
 	}
 
-	if astNode.SchemaType == stringNull {
+	if astNode.SchemaType == internal.StringNull {
 		enum := makeEmptyEnum()
-		ex := newExample(stringNull, false)
+		ex := newExample(internal.StringNull, false)
 		enum.append(ex.jsonValue())
 		return enum
 	}
@@ -52,8 +54,8 @@ func (e *Enum) append(b []byte) {
 }
 
 func (e Enum) MarshalJSON() ([]byte, error) {
-	b := bufferPool.Get()
-	defer bufferPool.Put(b)
+	b := internal.BufferPool.Get()
+	defer internal.BufferPool.Put(b)
 
 	b.WriteByte('[')
 	for i, item := range e.list {

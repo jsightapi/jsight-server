@@ -2,6 +2,8 @@ package jsoac
 
 import (
 	"encoding/json"
+
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type Example struct {
@@ -19,7 +21,7 @@ func newExample(ex string, isString bool) *Example {
 
 func (ex Example) jsonValue() []byte {
 	if ex.isString {
-		return toJSONString(ex.value)
+		return internal.ToJSONString(ex.value)
 	}
 	return []byte(ex.value)
 }

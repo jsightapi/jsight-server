@@ -2,6 +2,7 @@ package jsoac
 
 import (
 	schema "github.com/jsightapi/jsight-schema-core"
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
 type Primitive struct {
@@ -24,7 +25,7 @@ type Primitive struct {
 var _ Node = (*Primitive)(nil)
 
 func oadType(schemaType string, t OADType) *OADType {
-	if schemaType == stringEnum {
+	if schemaType == internal.StringEnum {
 		return nil
 	}
 	return &t

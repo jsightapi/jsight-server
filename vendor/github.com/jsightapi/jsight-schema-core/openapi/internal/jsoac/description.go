@@ -20,12 +20,15 @@ func newDescription(astNode schema.ASTNode) *Description {
 
 func newDescriptionFromString(s string) *Description {
 	if len(s) > 0 {
-		s = regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
-		return &Description{value: s}
+		return &Description{value: Normalize(s)}
 	}
 	return nil
 }
 
 func (ex Description) MarshalJSON() (b []byte, err error) {
 	return json.Marshal(ex.value) // JSON quoted string
+}
+
+func Normalize(s string) string {
+	return regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
 }

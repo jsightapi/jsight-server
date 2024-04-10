@@ -3,6 +3,8 @@ package jsoac
 import (
 	"encoding/json"
 
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
+
 	schema "github.com/jsightapi/jsight-schema-core"
 )
 
@@ -15,7 +17,7 @@ var _ json.Marshaler = &Pattern{}
 
 func newPattern(astNode schema.ASTNode) *Pattern {
 	if astNode.Rules.Has("regex") {
-		return &Pattern{value: toJSONString(astNode.Rules.GetValue("regex").Value)}
+		return &Pattern{value: internal.ToJSONString(astNode.Rules.GetValue("regex").Value)}
 	}
 	return nil
 }

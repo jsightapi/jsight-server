@@ -14,10 +14,7 @@ type dereference struct {
 }
 
 func Dereference(s schema.Schema) []SchemaInformer {
-	d := dereference{
-		userTypes: nil,
-		result:    newSchemaInfoList(),
-	}
+	d := newDereference()
 
 	if st, ok := s.(*jschema.JSchema); ok {
 		d.userTypes = st.UserTypeCollection
@@ -26,6 +23,13 @@ func Dereference(s schema.Schema) []SchemaInformer {
 	d.schema(s)
 
 	return d.result.list()
+}
+
+func newDereference() dereference {
+	return dereference{
+		userTypes: nil,
+		result:    newSchemaInfoList(),
+	}
 }
 
 func (d dereference) schema(s schema.Schema) {
@@ -58,7 +62,7 @@ func (d dereference) jSchema(astNode schema.ASTNode) {
 		info := newJSchemaInfoFromASTNode(astNode)
 		d.result.append(info)
 	case schema.TokenTypeObject:
-		info := newObjectInfo(astNode)
+		info := newObjectInfo(astNode, d.userTypes)
 		d.result.append(info)
 	case schema.TokenTypeShortcut:
 		name := astNode.Value

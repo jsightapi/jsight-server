@@ -6,6 +6,7 @@ import (
 	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 
 	schema "github.com/jsightapi/jsight-schema-core"
+
 	"github.com/jsightapi/jsight-schema-core/errs"
 )
 
@@ -18,6 +19,8 @@ const (
 	additionalPropertiesPrimitive
 	additionalPropertiesFormat
 	additionalPropertiesUserType
+	additionalPropertiesAnyOf
+	additionalPropertiesObject
 )
 
 type AdditionalProperties struct {
@@ -25,38 +28,87 @@ type AdditionalProperties struct {
 	oadType      *OADType
 	format       string
 	userTypeName string
+	node         schema.ASTNode
 }
 
 var _ json.Marshaler = AdditionalProperties{}
 var _ json.Marshaler = &AdditionalProperties{}
 
 func newAdditionalProperties(astNode schema.ASTNode) *AdditionalProperties {
-	if astNode.Rules.Has("additionalProperties") {
-		r := astNode.Rules.GetValue("additionalProperties")
-		switch r.TokenType {
-		case schema.TokenTypeBoolean:
-			return newBooleanAdditionalProperties(r)
-		case schema.TokenTypeString:
-			return newStringAdditionalProperties(r)
-		default:
-			panic(errs.ErrRuntimeFailure.F())
-		}
+	if hasKeyShortcutChild(astNode) {
+		return newKeyShortcutAdditionalProperties(astNode)
+	}
+
+	if ap, ok := astNode.Rules.Get(internal.StringAdditionalProperties); ok {
+		return newBasicAdditionalProperties(ap)
 	}
 
 	// The additionalProperties JSight rule is missing
 	return newFalseAdditionalProperties()
 }
 
+func newBasicAdditionalProperties(ap schema.RuleASTNode) *AdditionalProperties {
+	switch ap.TokenType {
+	case schema.TokenTypeBoolean:
+		return newBooleanAdditionalProperties(ap)
+	case schema.TokenTypeString:
+		return newStringAdditionalProperties(ap)
+	default:
+		panic(errs.ErrRuntimeFailure.F())
+	}
+}
+
+// check is astNode have children with some key as shortcut and with additional properties
+func hasKeyShortcutChild(astNode schema.ASTNode) bool {
+	for _, an := range astNode.Children {
+		if an.IsKeyShortcut {
+			return true
+		}
+	}
+	return false
+}
+
+func newKeyShortcutAdditionalProperties(astNode schema.ASTNode) *AdditionalProperties {
+	ap, hasAdditionalPropertiesRule := astNode.Rules.Get(internal.StringAdditionalProperties)
+
+	for _, an := range astNode.Children {
+		if an.IsKeyShortcut {
+			if hasAdditionalPropertiesRule {
+				if (ap.TokenType == schema.TokenTypeBoolean && ap.Value == internal.StringTrue) ||
+					(ap.TokenType == schema.TokenTypeString && ap.Value == internal.StringAny) {
+					return nil
+				}
+			}
+			return newAnyOfAdditionalProperties(astNode)
+		}
+	}
+
+	return nil
+}
+
+func newAnyOfAdditionalProperties(node schema.ASTNode) *AdditionalProperties {
+	t := OADTypeObject
+	return &AdditionalProperties{
+		mode:    additionalPropertiesAnyOf,
+		oadType: &t,
+		node:    node,
+	}
+}
+
 func newStringAdditionalProperties(r schema.RuleASTNode) *AdditionalProperties {
-	if r.Value == stringNull {
+	if r.Value == internal.StringNull {
 		return &AdditionalProperties{mode: additionalPropertiesNull}
 	}
 
-	if r.Value == stringArray {
+	if r.Value == internal.StringArray {
 		return &AdditionalProperties{mode: additionalPropertiesArray}
 	}
 
-	if r.Value == stringAny {
+	if r.Value == internal.StringObject {
+		return &AdditionalProperties{mode: additionalPropertiesObject}
+	}
+
+	if r.Value == internal.StringAny {
 		return nil
 	}
 
@@ -82,7 +134,7 @@ func newStringAdditionalProperties(r schema.RuleASTNode) *AdditionalProperties {
 }
 
 func newBooleanAdditionalProperties(r schema.RuleASTNode) *AdditionalProperties {
-	if r.Value == stringFalse {
+	if r.Value == internal.StringFalse {
 		return newFalseAdditionalProperties()
 	}
 	return nil // JSight additionalProperties: true
@@ -102,18 +154,46 @@ func (a AdditionalProperties) MarshalJSON() ([]byte, error) {
 		return a.nullJSON()
 	case additionalPropertiesArray:
 		return a.arrayJSON()
+	case additionalPropertiesObject:
+		return a.objectJSON()
 	case additionalPropertiesFormat:
 		return a.formatJSON()
 	case additionalPropertiesPrimitive:
 		return a.primitiveJSON()
 	case additionalPropertiesUserType:
 		return a.userTypeJSON()
+	case additionalPropertiesAnyOf:
+		return a.anyOfJSON(a.node)
 	default:
 		panic(errs.ErrRuntimeFailure.F())
 	}
 }
 
-func (a AdditionalProperties) arrayJSON() ([]byte, error) {
+func (a *AdditionalProperties) anyOfJSON(node schema.ASTNode) ([]byte, error) {
+	var items []any
+
+	if ap, ok := node.Rules.Get(internal.StringAdditionalProperties); ok {
+		if ap.TokenType == schema.TokenTypeString {
+			items = append(items, makeAdditionalAnyJSONObjects(ap))
+		}
+	}
+
+	for _, astNode := range node.Children {
+		if astNode.Key != "" && astNode.Key[0] == '@' {
+			items = append(items, newNode(astNode))
+		}
+	}
+
+	data := struct {
+		Items []any `json:"anyOf"`
+	}{
+		Items: items,
+	}
+	m, err := json.Marshal(data)
+	return m, err
+}
+
+func (a *AdditionalProperties) arrayJSON() ([]byte, error) {
 	data := struct {
 		OADType OADType        `json:"type"`
 		Items   map[string]any `json:"items"`
@@ -124,8 +204,21 @@ func (a AdditionalProperties) arrayJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (a AdditionalProperties) booleanJSON() ([]byte, error) {
-	return []byte(stringFalse), nil
+func (a *AdditionalProperties) objectJSON() ([]byte, error) {
+	data := struct {
+		OADType              OADType        `json:"type"`
+		Properties           map[string]any `json:"properties"`
+		AdditionalProperties bool           `json:"additionalProperties"`
+	}{
+		OADType:              OADTypeObject,
+		Properties:           map[string]any{},
+		AdditionalProperties: false,
+	}
+	return json.Marshal(data)
+}
+
+func (a *AdditionalProperties) booleanJSON() ([]byte, error) {
+	return []byte(internal.StringFalse), nil
 }
 
 func (a AdditionalProperties) nullJSON() ([]byte, error) {

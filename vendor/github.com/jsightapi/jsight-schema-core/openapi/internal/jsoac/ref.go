@@ -3,6 +3,8 @@ package jsoac
 import (
 	"encoding/json"
 
+	"github.com/jsightapi/jsight-schema-core/openapi/internal"
+
 	schema "github.com/jsightapi/jsight-schema-core"
 )
 
@@ -22,7 +24,7 @@ func newRef(astNode schema.ASTNode) Node {
 
 	return &Ref{
 		UserType:    UserTypeArray{UserType{name: astNode.SchemaType}},
-		Nullable:    newNullableFromBool(isNullable(astNode)),
+		Nullable:    newNullableFromBool(internal.IsNullable(astNode)),
 		Example:     refExample(astNode),
 		Description: newDescription(astNode),
 	}
@@ -39,7 +41,7 @@ func refExample(astNode schema.ASTNode) *Example {
 	if astNode.TokenType == schema.TokenTypeShortcut {
 		return nil
 	}
-	return newExample(astNode.Value, isString(astNode))
+	return newExample(astNode.Value, internal.IsString(astNode))
 }
 
 func (r *Ref) SetNodeDescription(s string) {

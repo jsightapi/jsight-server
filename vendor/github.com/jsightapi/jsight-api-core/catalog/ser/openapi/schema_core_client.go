@@ -31,7 +31,7 @@ func getParamInfo(s *jschema.JSchema) []parameterInfo {
 	} else {
 		si := schemaInfos[0]
 		switch si.Type() {
-		case sc.SchemaInfoTypeObject: // TODO: get rid of sc. import?
+		case sc.SchemaInfoTypeObject:
 			properties := si.(sc.ObjectInformer).PropertiesInfos()
 			for _, pi := range properties {
 				r = append(r, paramInfo{
