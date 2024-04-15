@@ -15,7 +15,7 @@ func openapiJSON(jAPI kit.JApi) ([]byte, error) {
 		return nil, err
 	}
 
-	resp, err := json.Marshal(oa)
+	resp, err := json.MarshalIndent(oa, "", "  ")
 	if err != nil {
 		return nil, err
 	}
