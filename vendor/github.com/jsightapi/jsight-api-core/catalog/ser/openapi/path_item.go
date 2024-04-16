@@ -28,7 +28,7 @@ func getPathParams(i *catalog.HTTPInteraction) ([]*ParameterObject, Error) {
 		params, err := paramsFromJSchema(i.PathVariables.Schema, ParameterLocationPath)
 		if err != nil {
 			return r, err.wrapWithf(
-				"error converting path parameters to OpenaAPI parameters for interaction: %s %s",
+				"error converting path parameters to OpenaAPI parameters for interaction: ( %s %s )",
 				i.HttpMethod.String(), i.Path())
 		}
 		for _, par := range params {

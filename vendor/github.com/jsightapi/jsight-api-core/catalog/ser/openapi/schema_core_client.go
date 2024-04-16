@@ -47,13 +47,13 @@ func schemaObjectInfoToParams(si schemaObjectInfo) []parameterInfo {
 func getSchemaAsSingleObjectInfo(s *jschema.JSchema) (schemaObjectInfo, Error) {
 	sd := dereferenceJSchema(s)
 	if len(sd) > 1 {
-		return nil, newErr("schema dereferences to multiple schemas (or)")
+		return nil, newErr("schema dereferences to multiple schemas (or-notation)")
 	} else {
 		i := sd[0]
 		if i.Type() == sc.SchemaInfoTypeObject {
 			return i.(sc.ObjectInformer), nil
 		} else {
-			return nil, newErr("schmema is neither a single object, nor a reference to a single object")
+			return nil, newErr("schema is neither a single object, nor a reference to a single object")
 		}
 	}
 }

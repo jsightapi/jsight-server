@@ -65,7 +65,7 @@ func getOperationParams(i *catalog.HTTPInteraction) ([]*ParameterObject, Error) 
 		qp, err := paramsFromJSchema(i.Query.Schema, ParameterLocationQuery)
 		if err != nil {
 			return op, err.wrapWithf(
-				"error converting query schema to OpenAPI parameters for interaction (%s %s)",
+				"error converting query schema to OpenAPI parameters for interaction ( %s %s )",
 				i.HttpMethod.String(), i.Path())
 		}
 		for _, par := range qp {
@@ -78,7 +78,7 @@ func getOperationParams(i *catalog.HTTPInteraction) ([]*ParameterObject, Error) 
 	if headerSchemaDefined(i) {
 		hp, err := paramsFromJSchema(i.Request.HTTPRequestHeaders.Schema, ParameterLocationHeader)
 		if err != nil {
-			return op, err.wrapWithf("error converting headers for interaction (%s %s)", i.HttpMethod.String(), i.Path())
+			return op, err.wrapWithf("error converting headers for interaction ( %s %s )", i.HttpMethod.String(), i.Path())
 		} else {
 			op = append(op, hp...)
 		}
