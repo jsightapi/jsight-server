@@ -10,31 +10,45 @@ func defaultPaths() Paths {
 	return Paths{}
 }
 
-func newPaths(c *catalog.Catalog) Paths {
+func newPaths(c *catalog.Catalog) (Paths, Error) {
 	if c.Interactions.Len() == 0 {
-		return defaultPaths()
+		return defaultPaths(), nil
 	}
 
 	p := make(Paths, c.Interactions.Len())
-	fillPaths(p, c.Interactions)
-	return p
+	if err := fillPaths(p, c); err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
-func fillPaths(p Paths, ii *catalog.Interactions) {
-	_ = ii.Each(func(k catalog.InteractionID, v catalog.Interaction) error {
+func fillPaths(p Paths, c *catalog.Catalog) Error {
+	err := c.Interactions.Each(func(k catalog.InteractionID, v catalog.Interaction) error {
 		if k.Protocol() == catalog.HTTP {
 			i := v.(*catalog.HTTPInteraction)
-			addOperation(p, i)
+
+			path := i.Path().String()
+			if _, exists := p[path]; !exists {
+				pi, err := newPathItem(i)
+				if err != nil {
+					return err
+				}
+				p[path] = pi
+			}
+			op, err := httpInteractionToOperation(i, c)
+			if err != nil {
+				return err
+			}
+			p[path].assignOperation(i.HttpMethod, op)
 		}
 		return nil
 	})
+
+	return castErr(err)
 }
 
-func addOperation(p Paths, i *catalog.HTTPInteraction) {
-	path := i.Path().String()
-	if _, exists := p[path]; exists {
-		p[path].assignOperation(i.HttpMethod, newOperation(i))
-	} else {
-		p[path] = newPathItem(i)
-	}
+func httpInteractionToOperation(i *catalog.HTTPInteraction, c *catalog.Catalog) (*Operation, Error) {
+	tags := gatherTags(c, i.Tags)
+	tagTitles := getTagTitles(tags)
+	return newOperation(i, tagTitles)
 }

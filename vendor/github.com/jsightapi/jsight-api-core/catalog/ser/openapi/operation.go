@@ -10,16 +10,35 @@ type Operation struct {
 	Parameters  []*ParameterObject `json:"parameters,omitempty"`
 	RequestBody *RequestBody       `json:"requestBody,omitempty"`
 	Responses   *Responses         `json:"responses"`
+	Tags        []string           `json:"tags,omitempty"`
 }
 
-func newOperation(i *catalog.HTTPInteraction) *Operation {
+func newOperation(i *catalog.HTTPInteraction, tags []string) (*Operation, Error) {
+	var requestBody *RequestBody
+	if i.HttpMethod == catalog.GET || i.HttpMethod == catalog.DELETE {
+		requestBody = nil
+	} else {
+		requestBody = newRequestBody(i.Request)
+	}
+
+	params, err := getOperationParams(i)
+	if err != nil {
+		return nil, err
+	}
+
+	responses, err := newResponses(i)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Operation{
 		Summary:     processMethodSummary(i.Annotation),
 		Description: processMethodDescription(i.Description),
-		Parameters:  fillOperationParams(i),
-		RequestBody: newRequestBody(i.Request),
-		Responses:   newResponses(i),
-	}
+		Parameters:  params,
+		RequestBody: requestBody,
+		Responses:   responses,
+		Tags:        tags,
+	}, nil
 }
 
 func processMethodDescription(s *string) string {
@@ -39,30 +58,33 @@ func processMethodSummary(s *string) string {
 	return r
 }
 
-func fillOperationParams(i *catalog.HTTPInteraction) []*ParameterObject {
-	r := make([]*ParameterObject, 0)
-	r = appendQueryParams(r, i)
-	r = appendHeaderParams(r, i)
-	return r
-}
+func getOperationParams(i *catalog.HTTPInteraction) ([]*ParameterObject, Error) {
+	op := make([]*ParameterObject, 0)
 
-func appendQueryParams(p []*ParameterObject, i *catalog.HTTPInteraction) []*ParameterObject {
 	if querySchemaDefined(i) {
-		params := paramsFromJSchema(i.Query.Schema, ParameterLocationQuery)
-		for _, par := range params {
+		qp, err := paramsFromJSchema(i.Query.Schema, ParameterLocationQuery)
+		if err != nil {
+			return op, err.wrapWithf(
+				"error converting query schema to OpenAPI parameters for interaction (%s %s)",
+				i.HttpMethod.String(), i.Path())
+		}
+		for _, par := range qp {
 			par.Style = ParameterStyleDeepObject
 			par.Explode = true
+			op = append(op, par)
 		}
-		return append(p, params...)
 	}
-	return p
-}
 
-func appendHeaderParams(p []*ParameterObject, i *catalog.HTTPInteraction) []*ParameterObject {
 	if headerSchemaDefined(i) {
-		return append(p, paramsFromJSchema(i.Request.HTTPRequestHeaders.Schema, ParameterLocationHeader)...)
+		hp, err := paramsFromJSchema(i.Request.HTTPRequestHeaders.Schema, ParameterLocationHeader)
+		if err != nil {
+			return op, err.wrapWithf("error converting headers for interaction (%s %s)", i.HttpMethod.String(), i.Path())
+		} else {
+			op = append(op, hp...)
+		}
 	}
-	return p
+
+	return op, nil
 }
 
 func querySchemaDefined(i *catalog.HTTPInteraction) bool {

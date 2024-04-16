@@ -25,7 +25,7 @@ func schemaObjectFromSchema(es catalog.ExchangeSchema) schemaObject {
 	case *catalog.ExchangeRegexSchema:
 		return getRSchemaInfo(s.RSchema).SchemaObject()
 	default:
-		panic("unsupported ExchangeSchema type for this method")
+		panic("unsupported ExchangeSchema type")
 	}
 }
 

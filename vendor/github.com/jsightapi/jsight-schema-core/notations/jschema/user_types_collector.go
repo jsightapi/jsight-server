@@ -46,36 +46,13 @@ func (c *userTypesCollector) collect(node ischema.Node) {
 }
 
 func (c *userTypesCollector) collectUserTypesFromTypesListConstraint(node ischema.Node) {
-	cnstr := node.Constraint(constraint.TypesListConstraintType)
-	if cnstr == nil {
-		return
-	}
-
-	list, ok := cnstr.(*constraint.TypesList)
-	if !ok {
-		return
-	}
-
-	for _, name := range list.Names() {
-		if name[0] == '@' {
-			c.addType(name)
-		}
+	for _, name := range UserTypeNamesFromTypesListConstraint(node) {
+		c.addType(name)
 	}
 }
 
 func (c *userTypesCollector) collectUserTypesFromTypeConstraint(node ischema.Node) {
-	cnstr := node.Constraint(constraint.TypeConstraintType)
-	if cnstr == nil {
-		return
-	}
-
-	typ, ok := cnstr.(*constraint.TypeConstraint)
-	if !ok {
-		return
-	}
-
-	name := typ.Bytes().Unquote().String()
-	if name[0] == '@' {
+	for _, name := range UserTypeNamesFromTypeConstraint(node) {
 		c.addType(name)
 	}
 }

@@ -10,14 +10,14 @@ import (
 )
 
 func openapiJSON(jAPI kit.JApi) ([]byte, error) {
-	oa, err := openapi.NewOpenAPI(jAPI.Catalog())
-	if err != nil {
-		return nil, err
+	oa, oaErr := openapi.NewOpenAPI(jAPI.Catalog())
+	if oaErr != nil {
+		return nil, oaErr
 	}
 
-	resp, err := json.MarshalIndent(oa, "", "  ")
-	if err != nil {
-		return nil, err
+	resp, jsonErr := json.MarshalIndent(oa, "", "  ")
+	if jsonErr != nil {
+		return nil, jsonErr
 	}
 
 	return resp, nil

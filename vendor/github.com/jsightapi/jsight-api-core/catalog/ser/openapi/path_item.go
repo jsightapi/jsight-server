@@ -11,18 +11,32 @@ type PathItem struct {
 	Delete     *Operation         `json:"delete,omitempty"`
 }
 
-func newPathItem(i *catalog.HTTPInteraction) *PathItem {
-	pi := PathItem{
-		Parameters: fillPathParams(i),
+func newPathItem(i *catalog.HTTPInteraction) (*PathItem, Error) {
+	pp, err := getPathParams(i)
+	if err != nil {
+		return nil, err
 	}
-	pi.assignOperation(i.HttpMethod, newOperation(i))
-	return &pi
+	pi := PathItem{
+		Parameters: pp,
+	}
+	return &pi, nil
 }
 
-func fillPathParams(i *catalog.HTTPInteraction) []*ParameterObject {
+func getPathParams(i *catalog.HTTPInteraction) ([]*ParameterObject, Error) {
 	r := make([]*ParameterObject, 0)
-	r = appendPathParams(r, i)
-	return r
+	if pathSchemaDefined(i) {
+		params, err := paramsFromJSchema(i.PathVariables.Schema, ParameterLocationPath)
+		if err != nil {
+			return r, err.wrapWithf(
+				"error converting path parameters to OpenaAPI parameters for interaction: %s %s",
+				i.HttpMethod.String(), i.Path())
+		}
+		for _, par := range params {
+			par.Required = true
+			r = append(r, par)
+		}
+	}
+	return r, nil
 }
 
 func pathSchemaDefined(i *catalog.HTTPInteraction) bool {
@@ -30,18 +44,6 @@ func pathSchemaDefined(i *catalog.HTTPInteraction) bool {
 		i.PathVariables.Schema != nil
 }
 
-func appendPathParams(p []*ParameterObject, i *catalog.HTTPInteraction) []*ParameterObject {
-	if pathSchemaDefined(i) {
-		params := paramsFromJSchema(i.PathVariables.Schema, ParameterLocationPath)
-		for _, par := range params {
-			par.Required = true
-		}
-		return append(p, params...)
-	}
-	return p
-}
-
-// TODO: deal with possible overwriting of method (improbable)
 func (pi *PathItem) assignOperation(method catalog.HTTPMethod, o *Operation) {
 	switch method {
 	case catalog.GET:

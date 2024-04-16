@@ -12,7 +12,7 @@ type headerInfo struct {
 	contextAnnotation string
 }
 
-func makeResponseHeaders(headersArr ...*catalog.HTTPResponseHeaders) ResponseHeaders {
+func makeResponseHeaders(headersArr ...*catalog.HTTPResponseHeaders) (ResponseHeaders, Error) {
 	r := make(ResponseHeaders, 0)
 
 	sortedHeaders := make(map[string][]headerInfo)
@@ -21,14 +21,17 @@ func makeResponseHeaders(headersArr ...*catalog.HTTPResponseHeaders) ResponseHea
 			continue
 		}
 
-		headersRootAnnotation := getSchemaObjectInfo(headers.Schema.JSchema).Annotation()
-		headersInfos := getParamInfo(headers.Schema.JSchema)
-		for _, hi := range headersInfos {
+		headersInfo, err := getSchemaAsSingleObjectInfo(headers.Schema.JSchema)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, hi := range schemaObjectInfoToParams(headersInfo) {
 			hName := hi.name()
 			sortedHeaders[hName] = append(sortedHeaders[hName],
 				headerInfo{
 					hi,
-					headersRootAnnotation,
+					headersInfo.Annotation(),
 				})
 		}
 	}
@@ -45,7 +48,7 @@ func makeResponseHeaders(headersArr ...*catalog.HTTPResponseHeaders) ResponseHea
 			r[name] = headerObjectForAnyOf(headerInfos)
 		}
 	}
-	return r
+	return r, nil
 }
 
 func headerObjectForAnyOf(headersInfos []headerInfo) *HeaderObject {

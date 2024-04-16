@@ -18,15 +18,19 @@ func defaultResponse() *ResponseObject {
 	}
 }
 
-func newResponse(r *catalog.HTTPResponse) *ResponseObject {
+func newResponse(r *catalog.HTTPResponse) (*ResponseObject, Error) {
+	rh, err := makeResponseHeaders(r.Headers)
+	if err != nil {
+		return nil, err
+	}
 	return &ResponseObject{
 		Description: r.Annotation,
 		Content:     contentForSchema(r.Body.Format, r.Body.Schema),
-		Headers:     makeResponseHeaders(r.Headers),
-	}
+		Headers:     rh,
+	}, nil
 }
 
-func newResponseAnyOf(responses []*catalog.HTTPResponse) *ResponseObject {
+func newResponseAnyOf(responses []*catalog.HTTPResponse) (*ResponseObject, Error) {
 	hh := make([]*catalog.HTTPResponseHeaders, 0)
 	sos := make(map[mediaType][]schemaObject, 0)
 
@@ -56,8 +60,7 @@ func newResponseAnyOf(responses []*catalog.HTTPResponse) *ResponseObject {
 				so = schemaObjectForAny()
 				desc = respAnnotation
 			case notation.SchemaNotationEmpty:
-				// TODO: ???
-				panic("TODO: empty response body in same-code responses: not decided")
+				return nil, newErr("TODO: empty response body in same-code responses: not decided")
 			}
 			mt = formatToMediaType(response.Body.Format)
 		}
@@ -65,8 +68,13 @@ func newResponseAnyOf(responses []*catalog.HTTPResponse) *ResponseObject {
 		sos[mt] = append(sos[mt], so)
 	}
 
-	return &ResponseObject{
-		Headers: makeResponseHeaders(hh...),
-		Content: contentForVariousMediaTypes(sos),
+	rh, err := makeResponseHeaders(hh...)
+	if err != nil {
+		return nil, err
 	}
+
+	return &ResponseObject{
+		Headers: rh,
+		Content: contentForVariousMediaTypes(sos),
+	}, nil
 }

@@ -23,42 +23,37 @@ type schemaInfo interface {
 	sc.SchemaInformer
 }
 
-func getParamInfo(s *jschema.JSchema) []parameterInfo {
-	r := make([]parameterInfo, 0)
-	schemaInfos := dereferenceJSchema(s)
-	if len(schemaInfos) > 1 {
-		panic("or-references conversion not supported for parameter directives")
-	} else {
-		si := schemaInfos[0]
-		switch si.Type() {
-		case sc.SchemaInfoTypeObject:
-			properties := si.(sc.ObjectInformer).PropertiesInfos()
-			for _, pi := range properties {
-				r = append(r, paramInfo{
-					pi.Key(),
-					pi.Optional(),
-					pi.SchemaObject(),
-					pi.Annotation(),
-				})
-			}
-		default:
-			panic("parameters directive's schema is not an object")
-		}
+func getParamInfos(s *jschema.JSchema) ([]parameterInfo, Error) {
+	si, err := getSchemaAsSingleObjectInfo(s)
+	if err != nil {
+		return nil, err
 	}
+	return schemaObjectInfoToParams(si), nil
+}
 
+func schemaObjectInfoToParams(si schemaObjectInfo) []parameterInfo {
+	r := make([]parameterInfo, 0)
+	for _, pi := range si.PropertiesInfos() {
+		r = append(r, paramInfo{
+			pi.Key(),
+			pi.Optional(),
+			pi.SchemaObject(),
+			pi.Annotation(),
+		})
+	}
 	return r
 }
 
-func getSchemaObjectInfo(s *jschema.JSchema) schemaObjectInfo {
+func getSchemaAsSingleObjectInfo(s *jschema.JSchema) (schemaObjectInfo, Error) {
 	sd := dereferenceJSchema(s)
 	if len(sd) > 1 {
-		panic("or-references not supported")
+		return nil, newErr("schema dereferences to multiple schemas (or)")
 	} else {
-		ei := sd[0]
-		if ei.Type() == sc.SchemaInfoTypeObject {
-			return ei.(sc.ObjectInformer)
+		i := sd[0]
+		if i.Type() == sc.SchemaInfoTypeObject {
+			return i.(sc.ObjectInformer), nil
 		} else {
-			panic("schema is not an object")
+			return nil, newErr("schmema is neither a single object, nor a reference to a single object")
 		}
 	}
 }
