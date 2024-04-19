@@ -83,8 +83,7 @@ func Test_openapi(t *testing.T) {
 info:
   title: ""
   version: ""
-paths: {}
-`
+paths: {}`
 
 	cc := map[string]testCase{
 		http.MethodOptions: {
