@@ -36,7 +36,7 @@ func (core *JApiCore) addMacro(d *directive.Directive) *jerr.JApiError {
 	}
 
 	if _, ok := core.macro[name]; ok {
-		return d.KeywordError(fmt.Sprintf("%s %q", jerr.DuplicateNames, name))
+		return d.KeywordError(fmt.Sprintf(jerr.DuplicateNames, name))
 	}
 
 	core.macro[name] = d

@@ -53,7 +53,7 @@ func PathParameters(path string) ([]PathParameter, error) {
 	}
 
 	if s := duplicatedPathParameters(pp); s != "" {
-		return pp, fmt.Errorf(`%s %q`, jerr.PathParameterIsDuplicatedInThePath, s)
+		return pp, fmt.Errorf(`%s: %q`, jerr.PathParameterIsDuplicatedInThePath, s)
 	}
 
 	return pp, nil

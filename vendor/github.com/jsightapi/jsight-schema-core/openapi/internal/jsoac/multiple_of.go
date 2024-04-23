@@ -16,7 +16,7 @@ func newMultipleOf(astNode schema.ASTNode) *float64 {
 			return nil
 		}
 
-		// from api schema validation, precision can't be zero
+		// from api schema validation, precision can not be zero
 		multipleOf := 1 / math.Pow(10, precision)
 		if multipleOf == 0 {
 			return nil

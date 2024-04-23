@@ -16,7 +16,7 @@ type exampleBuilder struct {
 
 	// processedTypes an unordered set of processed types required for handling
 	// recursion.
-	// Infinity recursion can't happen here 'cause we check it before building
+	// Infinite recursion can't happen here 'cause we check it before building
 	// example, but optional recursion can be there.
 	processedTypes map[string]int
 }

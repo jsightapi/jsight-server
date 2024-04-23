@@ -318,7 +318,7 @@ func (s *scanner) stateBeginValue(c byte) (state, error) {
 		s.step = s.state1
 		return scanBeginLiteral, nil
 	}
-	return scanSkip, s.newJSchemaErrorAtCharacter("looking for beginning of value")
+	return scanSkip, s.newJSchemaErrorAtCharacter("— scalar value expected (number, string, boolean, or null)")
 }
 
 // After reading `[`.

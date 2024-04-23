@@ -683,7 +683,7 @@ func stateBeginValue(s *Scanner, c byte) state {
 		s.step = state1
 		return scanBeginLiteral
 	}
-	panic(s.newJSchemaErrorAtCharacter("looking for beginning of value"))
+	panic(s.newJSchemaErrorAtCharacter("— JSON value expected (number, string, boolean, object, array, or null)"))
 }
 
 // after reading `[`
@@ -712,7 +712,7 @@ func stateBeginKeyOrEmpty(s *Scanner, c byte) state {
 // after reading `{"key": value,`
 func stateBeginString(s *Scanner, c byte) state {
 	if c != '"' {
-		panic(s.newJSchemaErrorAtCharacter("looking for beginning of string"))
+		panic(s.newJSchemaErrorAtCharacter("— string literal expected (starting with the quotation mark `\"`)"))
 	}
 	s.step = stateInString
 	return scanBeginLiteral
@@ -834,7 +834,7 @@ func stateAfterObjectValue(s *Scanner, c byte) state {
 	if c == '}' {
 		return stateFoundObjectEnd(s)
 	}
-	panic(s.newJSchemaErrorAtCharacter("after object key:value pair"))
+	panic(s.newJSchemaErrorAtCharacter("after the object property, \",\" or \"}\" might be forgotten"))
 }
 
 func stateAfterArrayItem(s *Scanner, c byte) state {
