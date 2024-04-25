@@ -17,7 +17,7 @@ import (
 
 func (c *Catalog) AddTag(name, title string) error {
 	if c.Tags.Has(TagName(name)) {
-		return fmt.Errorf("%s %q", jerr.DuplicateNames, name)
+		return fmt.Errorf(jerr.DuplicateNames, name)
 	}
 
 	if title == "" {
@@ -367,7 +367,7 @@ func (c *Catalog) AddResponseHeaders(s *ExchangeJSightSchema, d directive.Direct
 
 func (c *Catalog) AddServer(name, annotation string) error {
 	if c.Servers.Has(name) {
-		return fmt.Errorf("%s %q", jerr.DuplicateNames, name)
+		return fmt.Errorf(jerr.DuplicateNames, name)
 	}
 
 	server := new(Server)
@@ -401,7 +401,7 @@ func (c *Catalog) AddType(
 	name := d.NamedParameter("Name")
 
 	if c.UserTypes.Has(name) {
-		return d.KeywordError(fmt.Sprintf("%s %q", jerr.DuplicateNames, name))
+		return d.KeywordError(fmt.Sprintf(jerr.DuplicateNames, name))
 	}
 
 	userType := &UserType{
@@ -583,7 +583,7 @@ func (c *Catalog) AddJsonRpcResult(s *ExchangeJSightSchema, d directive.Directiv
 func (c *Catalog) AddEnum(d *directive.Directive, e *enum.Enum) *jerr.JApiError {
 	name := d.NamedParameter("Name")
 	if c.UserEnums.Has(name) {
-		return d.KeywordError(fmt.Sprintf("%s %q", jerr.DuplicateNames, name))
+		return d.KeywordError(fmt.Sprintf(jerr.DuplicateNames, name))
 	}
 
 	r, err := c.enumDirectiveToUserRule(d, e)

@@ -90,7 +90,7 @@ func stateExpectKeyword(s *Scanner, c byte) *jerr.JApiError { //nolint:funlen
 		s.step = stateResponseKeywordStarted
 		return nil
 	}
-	return s.japiErrorUnexpectedChar("at directive beginning", "")
+	return s.japiErrorUnexpectedChar("at the directive beginning", "")
 }
 
 func stateB(s *Scanner, c byte) *jerr.JApiError {

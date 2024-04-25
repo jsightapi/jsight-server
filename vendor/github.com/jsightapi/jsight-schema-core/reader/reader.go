@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/jsightapi/jsight-schema-core/fs"
@@ -16,7 +17,7 @@ func ReadWithName(filename, name string) *fs.File {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		docErr := kit.JSchemaError{}
-		docErr.SetMessage(err.Error())
+		docErr.SetMessage(fmt.Sprintf(`The system cannot open the file %q.`, name))
 		panic(docErr)
 	}
 	return fs.NewFile(name, data)

@@ -29,5 +29,10 @@ func (core *JApiCore) compileCore() *jerr.JApiError {
 		return je
 	}
 
-	return core.collectPaths(core.directivesWithPastes)
+	if je := core.collectPaths(core.directivesWithPastes); je != nil {
+		return je
+	}
+
+	// workaround to add path params not specified in any Path directive schema
+	return core.addMissedUndefindedPathVariables(core.directivesWithPastes)
 }

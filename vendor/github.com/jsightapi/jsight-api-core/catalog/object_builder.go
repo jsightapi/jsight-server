@@ -49,7 +49,7 @@ func (b ObjectBuilder) Len() int {
 
 func (b ObjectBuilder) UserTypeNames() []string {
 	b.schema.CollectUserTypes()
-	return b.schema.UsedUserTypes_.Data()
+	return b.schema.UserTypesNamesUsed.Data()
 }
 
 func (b ObjectBuilder) AddType(name string, sc schema.Schema) {

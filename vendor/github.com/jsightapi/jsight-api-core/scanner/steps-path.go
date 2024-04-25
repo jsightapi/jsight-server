@@ -28,6 +28,6 @@ func statePathBody(s *Scanner, c byte) *jerr.JApiError {
 	case ObjectOpen, LinkSymbol:
 		return stateJSchema(s, c)
 	default:
-		return s.japiErrorUnexpectedChar("in Path body", "")
+		return s.japiErrorUnexpectedChar("in the Path body", "")
 	}
 }

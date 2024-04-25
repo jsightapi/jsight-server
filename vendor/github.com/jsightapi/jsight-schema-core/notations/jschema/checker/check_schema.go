@@ -305,7 +305,7 @@ func getType(n string, rootSchema *ischema.ISchema, ss map[string]ischema.Type) 
 	getFromMap := func() *ischema.ISchema {
 		s, ok := ss[n]
 		if !ok {
-			panic(errs.ErrTypeNotFound.F(n))
+			panic(errs.ErrUserTypeNotFound.F(n))
 		}
 		return s.Schema
 	}

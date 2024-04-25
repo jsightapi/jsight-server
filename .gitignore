@@ -3,3 +3,4 @@
 .env
 /jsight-server
 /local
+.tool-versions

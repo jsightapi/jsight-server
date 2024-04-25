@@ -48,6 +48,8 @@ linters-settings:
       - whyNoLint
     settings:
       hugeParam:
+        sizeThreshold: 190
+      rangeValCopy:
         sizeThreshold: 150
   gocyclo:
     min-complexity: 15

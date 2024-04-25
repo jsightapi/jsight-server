@@ -68,6 +68,10 @@ func NewExchangeJSightSchema[T bytes.ByteKeeper](
 	return es, nil
 }
 
+func (e *ExchangeJSightSchema) Notation() notation.SchemaNotation {
+	return notation.SchemaNotationJSight
+}
+
 func (e *ExchangeJSightSchema) Compile() (err error) {
 	e.onceCompile.Do(func() {
 		err = e.buildContent()

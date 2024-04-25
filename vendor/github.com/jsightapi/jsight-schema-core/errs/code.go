@@ -1,3 +1,4 @@
+//nolint:lll
 package errs
 
 import (
@@ -17,7 +18,7 @@ const (
 	ErrUserTypeFound                       Code = 101
 	ErrUnknownValueOfTheTypeRule           Code = 102
 	ErrUnknownJSchemaType                  Code = 103
-	ErrInfinityRecursionDetected           Code = 104
+	ErrInfiniteRecursionDetected           Code = 104
 	ErrNodeTypeCantBeGuessed               Code = 105
 	ErrUnableToDetermineTheTypeOfJsonValue Code = 106
 
@@ -141,7 +142,7 @@ const (
 	// Link checker
 
 	ErrIncorrectUserType                              Code = 1301
-	ErrTypeNotFound                                   Code = 1302
+	ErrUserTypeNotFound                               Code = 1302
 	ErrImpossibleToDetermineTheJsonTypeDueToRecursion Code = 1303
 	ErrInvalidKeyShortcutType                         Code = 1304
 
@@ -193,17 +194,17 @@ var errorFormat = map[Code]string{
 
 	// main & common
 	ErrUserTypeFound:                       "Found an invalid reference to the type",
-	ErrUnknownValueOfTheTypeRule:           "Unknown value of the type rule %q",
-	ErrUnknownJSchemaType:                  "Unknown JSchema type %q",
-	ErrInfinityRecursionDetected:           "Infinity recursion detected %s",
-	ErrNodeTypeCantBeGuessed:               "Node type can't be guessed by value (%s)",
-	ErrUnableToDetermineTheTypeOfJsonValue: "Unable to determine the type of JSON value",
+	ErrUnknownValueOfTheTypeRule:           `Type %q does not exist. See the list of possible types here: https://jsight.io/docs/jsight-schema-0-3#rule-type`,
+	ErrUnknownJSchemaType:                  `Type %q does not exist. See the list of possible types here: https://jsight.io/docs/jsight-schema-0-3#rule-type`,
+	ErrInfiniteRecursionDetected:           "The infinite type recursion has been detected: %s. Use rules `optional: false` or `nullable: true` to stop the recursion.",
+	ErrNodeTypeCantBeGuessed:               `Cannot determine the node type of the value "%s"`,
+	ErrUnableToDetermineTheTypeOfJsonValue: "Unable to determine the type of the JSON value",
 
 	// validator
 	ErrValidator:                       "Validator error",
 	ErrEmptySchema:                     "Empty schema",
 	ErrEmptyJson:                       "Empty JSON",
-	ErrOrRuleSetValidation:             `None of the rules in the "OR" set has been validated`,
+	ErrOrRuleSetValidation:             "The example value does not match any of the options in the `or` rule. Change the example value. Learn more about the `or` rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or",
 	ErrRequiredKeyNotFound:             `Required key(s) %q not found`,
 	ErrSchemaDoesNotSupportKey:         `Schema does not support key %q`,
 	ErrUnexpectedLexInLiteralValidator: `Invalid value, scalar expected`,
@@ -217,120 +218,120 @@ var errorFormat = map[Code]string{
 
 	// scanner
 	ErrInvalidCharacter:                      "Invalid character %q %s",
-	ErrInvalidCharacterInAnnotationObjectKey: "Invalid character %s in object key (inside comment)",
+	ErrInvalidCharacterInAnnotationObjectKey: "Invalid character %s in the object key. See the rules for annotations here: https://jsight.io/docs/jsight-schema-0-3#rules",
 	ErrUnexpectedEOF:                         "Unexpected end of file",
-	ErrAnnotationNotAllowed:                  "Annotation not allowed here",
+	ErrAnnotationNotAllowed:                  "The annotation is not allowed here. The ANNOTATION cannot be placed on lines containing more than one EXAMPLE element to which the ANNOTATION may apply. For more information, please refer to: https://jsight.io/docs/jsight-schema-0-3#rules",
 	ErrEmptySetOfLexicalEvents:               "Empty set of found lexical events",
 	ErrIncorrectEndingOfTheLexicalEvent:      "Incorrect ending of the lexical event",
 
 	// schema
 	ErrNodeGrow:                 "Node grow error",
-	ErrDuplicateKeysInSchema:    "Duplicate keys (%s) in the schema",
+	ErrDuplicateKeysInSchema:    "Duplicate key \"%s\"",
 	ErrDuplicationOfNameOfTypes: "Duplication of the name of the types (%s)",
 
 	// node
-	ErrDuplicateRule:          "Duplicate %q rule",
+	ErrDuplicateRule:          "Duplicate rule %q",
 	ErrUnexpectedLexicalEvent: "Unexpected lexical event %q %s",
 
 	// constraint
-	ErrUnknownRule:                                 `Unknown rule "%s"`,
-	ErrConstraintValidation:                        "Invalid value for %q = %s constraint %s",
-	ErrConstraintStringLengthValidation:            "Invalid string length for %q = %q constraint",
-	ErrInvalidValueOfConstraint:                    "Invalid value of %q constraint",
-	ErrZeroPrecision:                               "Precision can't be zero",
+	ErrUnknownRule:                                 `Unknown rule "%s". See the list of all possible rules here: https://jsight.io/docs/jsight-schema-0-3#rules`,
+	ErrConstraintValidation:                        "The value in the example violates the rule `%q: %s` %s",
+	ErrConstraintStringLengthValidation:            "The length of the string in the example violates the rule `%q: %q`",
+	ErrInvalidValueOfConstraint:                    "Invalid value in the %q rule. Learn about the rules here: https://jsight.io/docs/jsight-schema-0-3#rules",
+	ErrZeroPrecision:                               "Precision can not be zero",
 	ErrEmptyEmail:                                  "Empty email",
 	ErrInvalidEmail:                                "Invalid email (%s)",
-	ErrConstraintMinItemsValidation:                `The number of array elements does not match the "minItems" rule`,
-	ErrConstraintMaxItemsValidation:                `The number of array elements does not match the "maxItems" rule`,
-	ErrDoesNotMatchAnyOfTheEnumValues:              "Does not match any of the enumeration values",
-	ErrDoesNotMatchRegularExpression:               "Does not match regular expression",
+	ErrConstraintMinItemsValidation:                `The number of the array elements does not match the "minItems" rule`,
+	ErrConstraintMaxItemsValidation:                `The number of the array elements does not match the "maxItems" rule`,
+	ErrDoesNotMatchAnyOfTheEnumValues:              "The value in the example does not match any of the enumeration values.",
+	ErrDoesNotMatchRegularExpression:               "The value in the example does not match the regular expression.",
 	ErrInvalidURI:                                  "Invalid URI (%s)",
 	ErrInvalidDateTime:                             "Date/Time parsing error",
 	ErrInvalidUUID:                                 "UUID parsing error: %s",
 	ErrInvalidConst:                                "Does not match expected value (%s)",
 	ErrInvalidDate:                                 "Date parsing error (%s)",
-	ErrValueOfOneConstraintGreaterThanAnother:      "Value of constraint %q should be less or equal to value of %q constraint", //nolint:lll
-	ErrValueOfOneConstraintGreaterOrEqualToAnother: "Value of constraint %q should be less than value of %q constraint",
+	ErrValueOfOneConstraintGreaterThanAnother:      "The value of the rule %q should be less or equal to the value of the rule %q", //nolint:lll
+	ErrValueOfOneConstraintGreaterOrEqualToAnother: "The value of the rule %q should be less than the value of the rule %q",
 
 	// loader
-	ErrInvalidSchemaName:                "Invalid schema name (%s)",
-	ErrInvalidSchemaNameInAllOfRule:     `Invalid schema name (%s) in "allOf" rule`,
-	ErrUnacceptableRecursionInAllOfRule: `Unacceptable recursion in "allOf" rule`,
+	ErrInvalidSchemaName:                `The type name "%s" is not valid. Learn more about the user types here: https://jsight.io/docs/jsight-schema-0-3#user-types`,
+	ErrInvalidSchemaNameInAllOfRule:     "The type name \"%s\" is not valid. Learn more about the `allOf` rule here: https://jsight.io/docs/jsight-schema-0-3#rule-allof",
+	ErrUnacceptableRecursionInAllOfRule: "The unacceptable recursion in the `allOf` rule",
 	ErrUnacceptableUserTypeInAllOfRule:  `Unacceptable type. The "%s" type in the "allOf" rule must be an object`,
-	ErrConflictAdditionalProperties:     `Conflicting value in AdditionalProperties rules when inheriting from allOf`,
+	ErrConflictAdditionalProperties:     `Conflicting value in additionalProperties rules when inheriting from allOf`,
 	ErrLoadError:                        "load error: %w",
 
 	// rule loader
 	ErrLoader:                           "Loader error", // error somewhere in the loader code
-	ErrIncorrectRuleValueType:           "Incorrect rule value type",
-	ErrIncorrectRuleWithoutExample:      "You cannot place a RULE on line without EXAMPLE",
-	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on lines that contain more than one EXAMPLE node to which any RULES can apply. The only exception is when an object key and its value are found in one line.", //nolint:lll
-	ErrLiteralValueExpected:             "Literal value expected",
+	ErrIncorrectRuleValueType:           "Invalid rule value. Learn more about rules here: https://jsight.io/docs/jsight-schema-0-3#rules",
+	ErrIncorrectRuleWithoutExample:      "You cannot place a RULE on a line without an EXAMPLE",
+	ErrIncorrectRuleForSeveralNode:      "You cannot place a RULE on a line that contain more than one EXAMPLE value. The only exception is when an object key and its value are found in one line. Learn more about rules here: https://jsight.io/docs/jsight-schema-0-3#rules", //nolint:lll
+	ErrLiteralValueExpected:             "Scalar value expected",
 	ErrInvalidValueInEnumRule:           `An array or rule name was expected as a value for the "enum"`,
-	ErrIncorrectArrayItemTypeInEnumRule: `Incorrect array item type in "enum". Only literals are allowed.`,
-	ErrUnacceptableValueInAllOfRule:     `Incorrect value in "allOf" rule. A type name, or list of type names, is expected.`, //nolint:lll
-	ErrTypeNameNotFoundInAllOfRule:      `Type name not found in "allOf" rule`,
-	ErrDuplicationInEnumRule:            `%s value duplicates in "enum"`,
-	ErrRuleIsAlreadyCompiled:            "Rule is already compiled",
-	ErrRuleIsNil:                        "Rule is nil",
+	ErrIncorrectArrayItemTypeInEnumRule: `Enums cannot contain arrays.`,
+	ErrUnacceptableValueInAllOfRule:     "Incorrect value in the `allOf` rule. A type name or a list of type names are expected. Learn more about the `allOf` rule here: https://jsight.io/docs/jsight-schema-0-3#rule-allof", //nolint:lll
+	ErrTypeNameNotFoundInAllOfRule:      "The `allOf` rule must contain a type name or an array of type names. Learn more about the `allOf` rule here: https://jsight.io/docs/jsight-schema-0-3#rule-allof",
+	ErrDuplicationInEnumRule:            `The value %s is repeated in the "enum" rule!`,
+	ErrRuleIsAlreadyCompiled:            "The rule is already compiled",
+	ErrRuleIsNil:                        "The rule is nil",
 
 	// "or" rule loader
-	ErrArrayWasExpectedInOrRule:       `An array was expected as a value for the "or" rule`,
-	ErrEmptyArrayInOrRule:             `Empty array in "or" rule`,
-	ErrOneElementInArrayInOrRule:      `Array rule "or" must have at least two elements`,
-	ErrIncorrectArrayItemTypeInOrRule: `Incorrect array item type in "or" rule`,
-	ErrEmptyRuleSet:                   `Empty rule set`,
-	ErrTypIsRequiredInsideOr:          `Type is required inside the "or" rule `,
+	ErrArrayWasExpectedInOrRule:       `The "or" rule must contain an array. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrEmptyArrayInOrRule:             `The empty array in the "or" rule! The "or" rule must contain a non-empty array. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrOneElementInArrayInOrRule:      `The rule "or" must have at least two elements in the array. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrIncorrectArrayItemTypeInOrRule: `Incorrect value in the "or" rule. The "or" array must contain strings (names of types) or objects with other rules. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrEmptyRuleSet:                   `The object with the rules is empty! The "or" array must contain strings (names of types) or non-empty objects with other rules. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrTypIsRequiredInsideOr:          `The "type" rule is missed inside the "or" rule. Specify the "type" rule inside. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
 
 	// compiler
-	ErrRuleOptionalAppliesOnlyToObjectProperties: `The rule "optional" applies only to object properties`,
-	ErrCannotSpecifyOtherRulesWithTypeReference:  `Invalid rule set shared with a type reference`,
-	ErrShouldBeNoOtherRulesInSetWithOr:           `Invalid rule set shared with "or"`,
-	ErrShouldBeNoOtherRulesInSetWithEnum:         `Invalid rule set shared with "enum"`,
-	ErrShouldBeNoOtherRulesInSetWithAny:          `Invalid rule set shared with "any"`,
-	ErrInvalidNestedElementsFoundForTypeAny:      `Invalid nested elements found for an element of type "any"`,
-	ErrInvalidChildNodeTogetherWithTypeReference: `You cannot specify child node if you use a type reference`,
-	ErrInvalidChildNodeTogetherWithOrRule:        `You cannot specify child node if you use a "or" rule`,
-	ErrConstraintMinNotFound:                     `Constraint "min" not found`,
-	ErrConstraintMaxNotFound:                     `Constraint "max" not found`,
-	ErrInvalidValueInTheTypeRule:                 `Invalid value in the "type" rule (%s)`,
-	ErrNotFoundRulePrecision:                     `Not found the rule "precision" for the "decimal" type`,
-	ErrNotFoundRuleEnum:                          `Not found the rule "enum" for the "enum" type`,
-	ErrNotFoundRuleOr:                            `Not found the rule "or" for the "mixed" type`,
-	ErrIncompatibleTypes:                         `Incompatible value of example and "type" rule (%s)`,
+	ErrRuleOptionalAppliesOnlyToObjectProperties: `The rule "optional" can be applied only to object properties!`,
+	ErrCannotSpecifyOtherRulesWithTypeReference:  `Some of the rules can not be applied to the user type reference. Learn more about type referencing here: https://jsight.io/docs/jsight-schema-0-3#reference-to-the-user-type-in-the-example-value`,
+	ErrShouldBeNoOtherRulesInSetWithOr:           `Some of the rules are not compatible with the "or" rule. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
+	ErrShouldBeNoOtherRulesInSetWithEnum:         `Some of the rules are not compatible with the "enum" rule. Learn more about the "enum" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-enum`,
+	ErrShouldBeNoOtherRulesInSetWithAny:          `Some of the rules are not compatible with the "any" type. Learn more about types and rules compatibility here: https://jsight.io/docs/jsight-schema-0-3#appendix-1-a-table-of-all-built-in-types-and-rules`,
+	ErrInvalidNestedElementsFoundForTypeAny:      `Example value for the type "any" can not have nested elements! Learn more about the type "any" here: https://jsight.io/docs/jsight-schema-0-3#type-any`,
+	ErrInvalidChildNodeTogetherWithTypeReference: `Only scalar types can be referenced in the "type" rule. Use type references right in the example for referencing objects or arrays. See the examples here: https://jsight.io/docs/jsight-schema-0-3#reference-to-the-user-type-in-the-example-value`,
+	ErrInvalidChildNodeTogetherWithOrRule:        `Only scalar values can be in an example when using the "or" rule. Use type references right in the example for referencing objects or arrays. See the examples here: https://jsight.io/docs/jsight-schema-0-3#reference-to-several-user-types-in-the-value-of-the-example`,
+	ErrConstraintMinNotFound:                     `The rule "min" seems to be forgotten.`,
+	ErrConstraintMaxNotFound:                     `The rule "max" seems to be forgotten.`,
+	ErrInvalidValueInTheTypeRule:                 `The value of the "type" rule (%s) is not compatible with the other rules. Try to just remove the "type" rule.`,
+	ErrNotFoundRulePrecision:                     `The rule "precision" is not found (required for the "decimal" type)`,
+	ErrNotFoundRuleEnum:                          `The rule "enum" is not found (required for the "enum" type)`,
+	ErrNotFoundRuleOr:                            `The rule "or" is not found (required for the "mixed" type)`,
+	ErrIncompatibleTypes:                         `The value in the example does not match the specified type in the "type" rule (%s)`,
 	// ErrUnknownAdditionalPropertiesTypes:          "Unknown type of additionalProperties (%s)",
-	ErrUnexpectedConstraint: "The %q constraint can't be used for the %q type",
+	ErrUnexpectedConstraint: "The rule %q is not compatible with the %q type. Learn more about the rules and types compatibility here: https://jsight.io/docs/jsight-schema-0-3#appendix-1-a-table-of-all-built-in-types-and-rules",
 
 	// checker
 	ErrChecker:                               `Checker error`,
 	ErrElementNotFoundInArray:                `Element not found in schema array node`,
-	ErrIncorrectConstraintValueForEmptyArray: `Incorrect constraint value for empty array`,
+	ErrIncorrectConstraintValueForEmptyArray: `The empty array in the example is not compatible with some of the rules. Learn more about the errors here: https://jsight.io/docs/jsight-schema-0-3#type-array`,
 
 	// link checker
-	ErrIncorrectUserType: "Incorrect type of user type",
-	ErrTypeNotFound:      "Type %q not found",
-	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the json type due to recursion of type %q`, //nolint:lll
-	ErrInvalidKeyShortcutType:                         "Key shortcut %q should be string but %q given",
+	ErrIncorrectUserType: "The value in the example does not match the rules!",
+	ErrUserTypeNotFound:  "Type %q not found",
+	ErrImpossibleToDetermineTheJsonTypeDueToRecursion: `It is impossible to determine the type due to the recursion of the type %q`, //nolint:lll
+	ErrInvalidKeyShortcutType:                         "Reference in the object key %q must be string, not %q. Learn more about referencing user types in object properties here: https://jsight.io/docs/jsight-schema-0-3#reference-to-the-user-type-in-the-property-key",
 
 	// sdk
 	ErrEmptyType:                          `Type "%s" must not be empty`,
 	ErrUnnecessaryLexemeAfterTheEndOfEnum: `An unnecessary non-space character after the end of the enum`,
-	ErrRegexUnexpectedStart:               "Regex should starts with '/' character, but found %s",
-	ErrRegexUnexpectedEnd:                 "Regex should ends with '/' character, but found %s",
-	ErrRegexInvalid:                       "Invalid regex %s",
+	ErrRegexUnexpectedStart:               "Regular expression should start with the '/' character, not with %s",
+	ErrRegexUnexpectedEnd:                 "Regular expression should end with the '/' character, not with %s",
+	ErrRegexInvalid:                       "The regular expression is invalid: %s",
 
 	// enum
 	ErrEnumArrayExpected:  `An array was expected as a value for the "enum"`,
 	ErrEnumIsHoldRuleName: "Can't append specific value to enum initialized with rule name",
-	ErrEnumRuleNotFound:   "Enum rule %q not found",
-	ErrNotAnEnumRule:      "Rule %q not an Enum",
+	ErrEnumRuleNotFound:   "Enum %q is not found",
+	ErrNotAnEnumRule:      "Rule %q is not an Enum",
 	ErrInvalidEnumValues:  "Invalid enum values %q: %s",
 
 	// value
-	ErrInvalidBoolValue:         "Invalid bool value",
+	ErrInvalidBoolValue:         "Invalid boolean value",
 	ErrNotEnoughDataInParseUint: "Not enough data in ParseUint",
 	ErrInvalidByteInParseUint:   "Invalid byte %q in ParseUint %q",
-	ErrTooMuchDataForInt:        "Too much data for int",
+	ErrTooMuchDataForInt:        "The value exceeds the maximum integer value",
 	ErrIncorrectNumberValue:     "Incorrect number value %q",
 	ErrURNPrefix:                "Invalid URN prefix: %q",
 	ErrUUIDLength:               "Invalid UUID length: %d",
@@ -340,7 +341,7 @@ var errorFormat = map[Code]string{
 
 	// example & ast
 	ErrRegexExample:          "generate example for Regex type: %w",
-	ErrCantCollectRulesTypes: `Can't collect rules: "types" constraint is required with "or" constraint`,
+	ErrCantCollectRulesTypes: `Can't collect rules: "types" constraint is required with "or" constraint. Learn more about the "or" rule here: https://jsight.io/docs/jsight-schema-0-3#rule-or`,
 
 	// tests
 	ErrInTheTest: "Error in the test: %s",

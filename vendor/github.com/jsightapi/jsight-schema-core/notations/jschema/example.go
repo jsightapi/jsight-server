@@ -16,7 +16,7 @@ type exampleBuilder struct {
 
 	// processedTypes an unordered set of processed types required for handling
 	// recursion.
-	// Infinity recursion can't happen here 'cause we check it before building
+	// Infinite recursion can't happen here 'cause we check it before building
 	// example, but optional recursion can be there.
 	processedTypes map[string]int
 }
@@ -92,7 +92,7 @@ func (b *exampleBuilder) buildObjectKey(k ischema.ObjectNodeKey) ([]byte, error)
 
 	typ, ok := b.types[k.Key]
 	if !ok {
-		return nil, errs.ErrTypeNotFound.F(k.Key)
+		return nil, errs.ErrUserTypeNotFound.F(k.Key)
 	}
 
 	ex, err := b.Build(typ.Schema.RootNode())
@@ -156,7 +156,7 @@ func (b *exampleBuilder) buildExampleForMixedValueNode(node *ischema.MixedValueN
 
 	t, ok := b.types[typeName]
 	if !ok {
-		return nil, errs.ErrTypeNotFound.F(typeName)
+		return nil, errs.ErrUserTypeNotFound.F(typeName)
 	}
 	return b.Build(t.Schema.RootNode())
 }
@@ -260,7 +260,7 @@ func buildExampleForMixedValueNode(
 
 	t, ok := types[typeName]
 	if !ok {
-		return nil, errs.ErrTypeNotFound.F(typeName)
+		return nil, errs.ErrUserTypeNotFound.F(typeName)
 	}
 	return buildExample(t.Schema.RootNode(), types)
 }

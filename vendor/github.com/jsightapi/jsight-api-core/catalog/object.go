@@ -4,7 +4,6 @@ import (
 	"github.com/jsightapi/jsight-schema-core/json"
 	"github.com/jsightapi/jsight-schema-core/notations/jschema"
 	"github.com/jsightapi/jsight-schema-core/notations/jschema/ischema"
-	"github.com/jsightapi/jsight-schema-core/notations/jschema/ischema/constraint"
 )
 
 type JSchemaObject struct {
@@ -45,19 +44,13 @@ func (s *JSchemaObject) objectFirstLevelProperties(m map[string]ischema.Node, ut
 }
 
 func (s *JSchemaObject) appendPropertiesFromShortcut(m map[string]ischema.Node, ut map[string]*jschema.JSchema) {
-	c := s.Inner.RootNode().Constraint(constraint.TypeConstraintType)
-	if c == nil {
-		return
-	}
+	names := jschema.UserTypeNamesFromEachTypeConstraint(s.Inner.RootNode())
 
-	t, ok := c.(*constraint.TypeConstraint)
-	if !ok {
-		return
-	}
-
-	if ss, ok := ut[t.Bytes().String()]; ok {
-		obj := JSchemaObject{JSchema: ss}
-		obj.objectFirstLevelProperties(m, ut)
+	for _, name := range names {
+		if ss, ok := ut[name]; ok {
+			obj := JSchemaObject{JSchema: ss}
+			obj.objectFirstLevelProperties(m, ut)
+		}
 	}
 }
 

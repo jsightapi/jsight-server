@@ -74,7 +74,7 @@ func (c *recursionChecker) check(node ischema.Node, types map[string]ischema.Typ
 	//
 	// So, we will visit all required types and skip optional and mark all passed
 	// types until we pass all types. Or we try to mark already marked type. In
-	// that case we have infinity recursion.
+	// that case we have infinite recursion.
 	//
 	// Example:
 	//
@@ -100,8 +100,8 @@ func (c *recursionChecker) check(node ischema.Node, types map[string]ischema.Typ
 	//
 	// @foo -> @bar -> @fizz -> @foo -> @bar -> @fizz -> @foo ...
 	//
-	// Obviously, this is an infinity recursion. And no mater which type we will
-	// take to check we will get an infinity recursion here.
+	// Obviously, this is an infinite recursion. And no mater which type we will
+	// take to check we will get an infinite recursion here.
 
 	// Ignore optional node.
 	if ischema.IsOptionalNode(node) {
@@ -142,7 +142,7 @@ func (c *recursionChecker) checkMixedValueNode(
 	tt := node.GetTypes()
 
 	// We should check all types and return an error only if all paths leads
-	// to infinity recursion.
+	// to infinite recursion.
 	ee := make([]error, 0, len(tt))
 	for _, t := range tt {
 		if err := c.checkType(t, types); err != nil {
@@ -190,5 +190,5 @@ func (c *recursionChecker) leave(typeName string) {
 }
 
 func (c *recursionChecker) createError() error {
-	return errs.ErrInfinityRecursionDetected.F(strings.Join(c.path, " -> "))
+	return errs.ErrInfiniteRecursionDetected.F(strings.Join(c.path, " -> "))
 }

@@ -15,7 +15,7 @@ func (core *JApiCore) checkSimilarPaths(pp []PathParameter) error {
 
 		if v, ok := core.similarPaths[path]; ok {
 			if v != p.parameter {
-				return fmt.Errorf("%s: \"/%s/{%s}\", \"/%s\"", jerr.PathsAreSimilar, path, v, p.path)
+				return fmt.Errorf(jerr.PathsAreSimilar, path, v, p.path)
 			}
 		}
 

@@ -23,7 +23,13 @@ type JSchema struct {
 
 	Rules map[string]schema.Rule
 
-	UsedUserTypes_ *StringSet
+	// UserTypesNamesUsed the names of the USER TYPES mentioned in the schema.
+	// They are collected from the schema when it is loaded.
+	UserTypesNamesUsed *StringSet
+
+	// UserTypeCollection is a list of added USER TYPES. Not all of them can actually be used in the schema.
+	// Required for the OpenAPI converter.
+	UserTypeCollection map[string]schema.Schema
 
 	LenOnce     sync.ErrOnceWithValue[uint]
 	LoadOnce    sync.ErrOnce
@@ -43,9 +49,10 @@ func New[T bytes.ByteKeeper](name string, content T, oo ...Option) *JSchema {
 // FromFile creates a Jsight schema from file.
 func FromFile(f *fs.File, oo ...Option) *JSchema {
 	s := &JSchema{
-		File:           f,
-		Rules:          map[string]schema.Rule{},
-		UsedUserTypes_: &StringSet{},
+		File:               f,
+		Rules:              map[string]schema.Rule{},
+		UserTypesNamesUsed: &StringSet{},
+		UserTypeCollection: map[string]schema.Schema{},
 	}
 
 	for _, o := range oo {
@@ -124,6 +131,7 @@ func (s *JSchema) AddType(name string, sc schema.Schema) (err error) {
 		}
 
 		s.Inner.AddNamedType(name, typ.Inner, s.File, 0)
+		s.UserTypeCollection[name] = typ
 	case *regex.RSchema:
 		typSc, err := FromRSchema(typ)
 		if err != nil {
@@ -131,7 +139,7 @@ func (s *JSchema) AddType(name string, sc schema.Schema) (err error) {
 		}
 
 		s.Inner.AddNamedType(name, typSc.Inner, s.File, 0)
-
+		s.UserTypeCollection[name] = typ
 	default:
 		return errs.ErrRuntimeFailure.F()
 	}
@@ -174,11 +182,7 @@ func (s *JSchema) UsedUserTypes() ([]string, error) {
 	if err := s.load(); err != nil {
 		return nil, err
 	}
-	return s.UsedUserTypes_.Data(), nil
-}
-
-func (s *JSchema) AddUserTypeName(name string) {
-	s.UsedUserTypes_.Add(name)
+	return s.UserTypesNamesUsed.Data(), nil
 }
 
 func (s *JSchema) load() error {
@@ -207,7 +211,7 @@ func (s *JSchema) CollectUserTypes() {
 	}
 
 	for _, str := range collectUserTypes(node) {
-		s.UsedUserTypes_.Add(str)
+		s.UserTypesNamesUsed.Add(str)
 	}
 }
 

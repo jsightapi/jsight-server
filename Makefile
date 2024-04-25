@@ -16,3 +16,7 @@ test:
 .PHONY: build
 build:
 	go build -o jsight-server .
+
+.PHONY: run
+run:
+	go run .
