@@ -8,16 +8,21 @@ import (
 	"github.com/jsightapi/jsight-schema-core/openapi/internal"
 )
 
+var empty struct{}
+
 type dereference struct {
-	userTypes map[string]schema.Schema
-	result    *schemaInfoList
+	userTypes    map[string]schema.Schema
+	visitedTypes map[string]struct{}
+	result       *schemaInfoList
 }
 
 func Dereference(s schema.Schema) []SchemaInformer {
-	d := newDereference()
+	var d dereference
 
 	if st, ok := s.(*jschema.JSchema); ok {
-		d.userTypes = st.UserTypeCollection
+		d = newDereference(st.UserTypeCollection)
+	} else {
+		d = newDereference(nil)
 	}
 
 	d.schema(s)
@@ -25,10 +30,11 @@ func Dereference(s schema.Schema) []SchemaInformer {
 	return d.result.list()
 }
 
-func newDereference() dereference {
+func newDereference(userTypes map[string]schema.Schema) dereference {
 	return dereference{
-		userTypes: nil,
-		result:    newSchemaInfoList(),
+		userTypes:    userTypes,
+		visitedTypes: make(map[string]struct{}, len(userTypes)),
+		result:       newSchemaInfoList(),
 	}
 }
 
@@ -48,7 +54,7 @@ func (d dereference) rSchema(rs *regex.RSchema) {
 	d.result.append(info)
 }
 
-func (d dereference) jSchema(astNode schema.ASTNode) {
+func (d *dereference) jSchema(astNode schema.ASTNode) {
 	if rule, ok := astNode.Rules.Get("or"); ok {
 		for _, item := range rule.Items {
 			d.orItem(item)
@@ -66,7 +72,10 @@ func (d dereference) jSchema(astNode schema.ASTNode) {
 		d.result.append(info)
 	case schema.TokenTypeShortcut:
 		name := astNode.Value
-		d.userType(name)
+		if _, ok := d.visitedTypes[name]; !ok {
+			d.visitedTypes[name] = empty
+			d.userType(name)
+		}
 	default:
 		panic(errs.ErrRuntimeFailure.F())
 	}
