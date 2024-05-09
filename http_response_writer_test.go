@@ -49,7 +49,7 @@ func Test_httpResponseJDoc200(t *testing.T) {
 	})
 }
 
-func Test_httpResponseJSON200(t *testing.T) { //nolint:dupl
+func Test_httpResponseJSON200(t *testing.T) {
 	t.Run("positive", func(t *testing.T) {
 		t.Run("with content", func(t *testing.T) {
 			const content = "foobar"
@@ -85,7 +85,7 @@ func Test_httpResponseJSON200(t *testing.T) { //nolint:dupl
 	})
 }
 
-func Test_httpResponseYAML200(t *testing.T) { //nolint:dupl
+func Test_httpResponseYAML200(t *testing.T) {
 	t.Run("positive", func(t *testing.T) {
 		t.Run("with content", func(t *testing.T) {
 			const content = "foobar"

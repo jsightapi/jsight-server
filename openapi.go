@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/itchyny/json2yaml"
+
 	"github.com/jsightapi/jsight-api-core/catalog/ser/openapi"
 	"github.com/jsightapi/jsight-api-core/kit"
 )

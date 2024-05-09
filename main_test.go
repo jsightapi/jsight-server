@@ -56,7 +56,7 @@ TYPE @cat
 			},
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, r.Code)
-				assert.Equal(t, `{"tags":{},"userTypes":{"@cat":{"schema":{"content":{"tokenType":"object","type":"object","children":[{"key":"id","tokenType":"number","type":"integer","scalarValue":"1","optional":false}],"optional":false},"example":"{\"id\":1}","notation":"jsight"}}},"interactions":{},"jsight":"0.3","jdocExchangeVersion":"2.0.0"}`, r.Body.String()) //nolint:lll
+				assert.Equal(t, `{"tags":{},"userTypes":{"@cat":{"schema":{"content":{"tokenType":"object","type":"object","children":[{"key":"id","tokenType":"number","type":"integer","scalarValue":"1","optional":false}],"optional":false},"example":"{\"id\":1}","notation":"jsight"}}},"interactions":{},"jsight":"0.3","jdocExchangeVersion":"2.0.0"}`, r.Body.String())
 			},
 		},
 
@@ -68,7 +68,7 @@ TYPE @cat
 			},
 			func(t *testing.T, r *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusConflict, r.Code)
-				assert.Equal(t, `{"Status":"Error","Message":"invalid character 'i' at directive beginning","Line":1,"Index":0}`, r.Body.String()) //nolint:lll
+				assert.Equal(t, `{"Status":"Error","Message":"invalid character 'i' at the directive beginning","Line":1,"Index":0}`, r.Body.String())
 			},
 		},
 	}
@@ -190,7 +190,7 @@ func assertAll(t *testing.T, cc map[string]testCase) {
 			c.asserter(t, r)
 			assert.Equal(t, "*", r.Header().Get("Access-Control-Allow-Origin"))
 			assert.Equal(t, "POST, GET, OPTIONS, PUT, DELETE", r.Header().Get("Access-Control-Allow-Methods"))
-			assert.Equal(t, "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Browser-UUID", r.Header().Get("Access-Control-Allow-Headers")) //nolint:lll
+			assert.Equal(t, "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Browser-UUID", r.Header().Get("Access-Control-Allow-Headers"))
 		})
 	}
 }

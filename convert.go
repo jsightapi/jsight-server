@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jsightapi/jsight-api-core/kit"
 	"github.com/jsightapi/jsight-schema-core/fs"
+
+	"github.com/jsightapi/jsight-api-core/kit"
 )
 
 func convertJSight(w http.ResponseWriter, r *http.Request) {
