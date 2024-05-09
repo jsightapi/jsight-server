@@ -42,7 +42,8 @@ The **JSight Server API** allows you to perform the following tasks:
 
 1. Parsing code in the JSight API language, checking JSight API syntax.
 2. Generating a JSON structure containing all information about this API in the *JDoc Exchange
-   Format* (required for [JSight Online Editor frontend](/jsightapi/online-editor-frontend)).
+   Format* (required for [JSight Online Editor
+   frontend](https://github.com/jsightapi/online-editor-frontend)).
 3. Converting JSight API to OpenAPI (YAML or JSON).
 
 The following features are also planned in the near future:
