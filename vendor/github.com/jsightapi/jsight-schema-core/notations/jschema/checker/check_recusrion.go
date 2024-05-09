@@ -103,8 +103,8 @@ func (c *recursionChecker) check(node ischema.Node, types map[string]ischema.Typ
 	// Obviously, this is an infinite recursion. And no mater which type we will
 	// take to check we will get an infinite recursion here.
 
-	// Ignore optional node.
-	if ischema.IsOptionalNode(node) {
+	// Ignore optional or nullable node.
+	if ischema.IsOptionalNode(node) || ischema.IsNullableNode(node) {
 		return nil
 	}
 

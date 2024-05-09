@@ -51,7 +51,7 @@ func (core *JApiCore) getIncludedFilePath(keyword *scanner.Lexeme) (string, *jer
 		return "", requiredParameterNotSpecified(keyword)
 	}
 
-	path := parameter.Value().String()
+	path := parameter.Value().Unquote().String()
 
 	if err := validateIncludeFileName(path); err != nil {
 		return "", incorrectParameter(keyword, path, err.Error())

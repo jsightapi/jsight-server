@@ -115,3 +115,18 @@ func IsOptionalNode(n Node) bool {
 
 	return bk.Bool()
 }
+
+// IsNullableNode returns true is node is nullable.
+func IsNullableNode(n Node) bool {
+	c := n.Constraint(constraint.NullableConstraintType)
+	if c == nil {
+		return false
+	}
+
+	bk, ok := c.(constraint.BoolKeeper)
+	if !ok {
+		return false
+	}
+
+	return bk.Bool()
+}

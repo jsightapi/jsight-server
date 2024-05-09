@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/itchyny/json2yaml v0.1.4
 	github.com/jsightapi/datagram v0.0.0-20220623160954-98dd8ec27707
-	github.com/jsightapi/jsight-api-core v0.1.2-0.20240423113206-0c0c42e27be2
-	github.com/jsightapi/jsight-schema-core v0.1.2-0.20240423075246-00134095f703
+	github.com/jsightapi/jsight-api-core v0.2.0
+	github.com/jsightapi/jsight-schema-core v0.2.0
 	github.com/stretchr/testify v1.9.0
 )
 

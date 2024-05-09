@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jsightapi/jsight-api-core/catalog"
 	"github.com/jsightapi/jsight-api-core/jerr"
+
+	"github.com/jsightapi/jsight-api-core/catalog"
 )
 
 // checkSimilarPaths Returns an error if similar paths are found. For example: "/cats/{id}" and "/cats/{name}".
@@ -15,7 +16,13 @@ func (core *JApiCore) checkSimilarPaths(pp []PathParameter) error {
 
 		if v, ok := core.similarPaths[path]; ok {
 			if v != p.parameter {
-				return fmt.Errorf(jerr.PathsAreSimilar, path, v, p.path)
+				var similarPath string
+				if path == "" {
+					similarPath = fmt.Sprintf("{%s}", v)
+				} else {
+					similarPath = fmt.Sprintf("%s/{%s}", path, v)
+				}
+				return fmt.Errorf(jerr.PathsAreSimilar, similarPath, p.path)
 			}
 		}
 

@@ -305,7 +305,7 @@ var errorFormat = map[Code]string{
 	// checker
 	ErrChecker:                               `Checker error`,
 	ErrElementNotFoundInArray:                `Element not found in schema array node`,
-	ErrIncorrectConstraintValueForEmptyArray: `The empty array in the example is not compatible with some of the rules. Learn more about the errors here: https://jsight.io/docs/jsight-schema-0-3#type-array`,
+	ErrIncorrectConstraintValueForEmptyArray: `The empty array in the example is not compatible with some of the rules. Learn more about the arrays here: https://jsight.io/docs/jsight-schema-0-3#type-array`,
 
 	// link checker
 	ErrIncorrectUserType: "The value in the example does not match the rules!",

@@ -55,8 +55,7 @@ func (o ObjectInfo) allOf(ruleAllOf schema.RuleASTNode) []PropertyInformer {
 func (o ObjectInfo) dereferenceUserTypeProperties(userTypeName string) []PropertyInformer {
 	result := make([]PropertyInformer, 0, 5)
 
-	d := newDereference()
-	d.userTypes = o.userTypes
+	d := newDereference(o.userTypes)
 	d.userType(userTypeName)
 	si := d.result.list()
 

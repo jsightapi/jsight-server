@@ -1,7 +1,6 @@
 package directive
 
 import (
-	stdBytes "bytes"
 	"fmt"
 
 	"github.com/jsightapi/jsight-schema-core/bytes"
@@ -9,17 +8,6 @@ import (
 	"github.com/jsightapi/jsight-api-core/jerr"
 	"github.com/jsightapi/jsight-api-core/notation"
 )
-
-func unescapeParameter(b bytes.Bytes) bytes.Bytes {
-	c := b.Unquote()
-	if c.Len() != 0 && c.Len() != b.Len() {
-		cc := c.Data()
-		cc = stdBytes.ReplaceAll(cc, []byte(`\"`), []byte(`"`))
-		cc = stdBytes.ReplaceAll(cc, []byte(`\\`), []byte(`\`))
-		c = bytes.NewBytes(cc)
-	}
-	return c
-}
 
 func IsArrayOfTypes(b bytes.Bytes) bool {
 	l := b.Len()
@@ -33,7 +21,7 @@ func IsArrayOfTypes(b bytes.Bytes) bool {
 }
 
 func (d *Directive) AppendParameter(b bytes.Bytes) error {
-	b = unescapeParameter(b)
+	b = b.Unquote()
 	s := b.String()
 
 	switch d.Type() { //nolint:exhaustive // We catch all uncovered enumeration.

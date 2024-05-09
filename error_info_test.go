@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jsightapi/jsight-api-core/jerr"
 	"github.com/jsightapi/jsight-schema-core/fs"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/jsightapi/jsight-api-core/jerr"
 )
 
 func Test_newErrorInfo(t *testing.T) {
