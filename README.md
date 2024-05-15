@@ -38,23 +38,25 @@ API](#scroll--jsight-api-language).
 
 Supported standards: [HTTP REST](#scroll--jsight-api-language), [JSON-RPC 2.0](#json-rpc-20-new-feature).
 
-Currently, the **JSight Server API** allows you to perform only one task:
+The **JSight Server API** allows you to perform the following tasks:
 
-1. Parsing code in the JSight API language, which results in a JSON structure  containing all
-   information about this API in the *JDoc Exchange Format*.
+1. Parsing code in the JSight API language, checking JSight API syntax.
+2. Generating a JSON structure containing all information about this API in the *JDoc Exchange
+   Format* (required for [JSight Online Editor
+   frontend](https://github.com/jsightapi/online-editor-frontend)).
+3. Converting JSight API to OpenAPI (YAML or JSON).
 
 The following features are also planned in the near future:
 
 1. Support for other types of API: gRPC, Kafka, RabbitMQ, WebSocket. 
-2. Converting from JSight API to OpenAPI.
-3. Converting from OpenAPI to JSight API.
-4. API documentation generation in MarkDown format.
-5. API documentation generation in PDF format.
-6. Generation of API server code stubs for different programming languages ​​(Java, PHP, Go,
+2. Converting from OpenAPI to JSight API.
+3. API documentation generation in MarkDown format.
+4. API documentation generation in PDF format.
+5. Generation of API server code stubs for different programming languages ​​(Java, PHP, Go,
    Node.js, Python, C++ etc.). 
-7. Generation of API clients for different programming languages ​​(JavaScript, Java, PHP, Go,
+6. Generation of API clients for different programming languages ​​(JavaScript, Java, PHP, Go,
    Python, C++ etc.).
-8. And many other features.
+7. And many other features.
 
 > :fire: If you have any ideas or suggestions, please share with us:
 > 
@@ -1426,7 +1428,7 @@ TYPE @pet // A pet.
 TYPE @cat // A cat.
 { // {allOf: "@pet"}
   "status": "relaxing",
-  "bestFriend": @cat,
+  "bestFriend": @cat, // {optional: true}
   "topFriends": { // {additionalProperties: true}
     @petName: @cat | @pig
   },
@@ -1767,8 +1769,8 @@ https://github.com/jsightapi/jsight-server/releases.
 
 JSight Server depends on the following components:
 
-- [JSight Schema Go Library](https://github.com/jsightapi/jsight-schema-go-library),
-- [JSight API Go Library](https://github.com/jsightapi/jsight-api-go-library).
+- [JSight Schema Go Library](https://github.com/jsightapi/jsight-schema-core),
+- [JSight API Go Library](https://github.com/jsightapi/jsight-api-core).
 
 These dependencies are described in the file [go.mod](./go.mod).
 
@@ -1804,6 +1806,8 @@ document.
 <a href="https://github.com/constantine-malyshev"><img src="https://avatars.githubusercontent.com/u/101567029?v=4" width="100" height="100" alt=""/></a>
 <a href="https://github.com/dshemin"><img src="https://avatars.githubusercontent.com/u/11780307?v=4" width="100" height="100" alt=""/></a>
 <a href="https://github.com/bakhtinphil"><img src="https://avatars.githubusercontent.com/u/104030166?v=4" width="100" height="100" alt=""/></a>
+<a href="https://github.com/tobiashochguertel"><img src="https://avatars.githubusercontent.com/u/3332669?v=4" width="100" height="100" alt=""/></a>
+<a href="https://github.com/chepil"><img src="https://avatars.githubusercontent.com/u/1425370?v=4" width="100" height="100" alt=""/></a>
 
 <div>  
   &nbsp; 
@@ -1891,7 +1895,12 @@ We sincerely thank all those without whom this project would not have been possi
 
 - [Alchemist Accelerator](https://www.alchemistaccelerator.com/),
 - [Lucas Jones](https://github.com/lucasjones) for his
-  [reggen](https://github.com/lucasjones/reggen) library.
+  [reggen](https://github.com/lucasjones/reggen) library,
+- [itchyny](https://github.com/itchyny) for his
+  [json2yaml](https://github.com/itchyny/json2yaml) library,
+- [Stretchr](https://github.com/stretchr) company for
+  [testify](https://github.com/stretchr/testify) library,
+
 
 <div align="center">
 

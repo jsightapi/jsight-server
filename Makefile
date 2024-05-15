@@ -1,5 +1,5 @@
-.PHONY: all
-all: fmt lint test
+.PHONY: dev
+dev: fmt lint test
 
 .PHONY: fmt
 fmt:
@@ -16,3 +16,7 @@ test:
 .PHONY: build
 build:
 	go build -o jsight-server .
+
+.PHONY: run
+run:
+	go run .
