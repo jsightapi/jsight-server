@@ -11,6 +11,7 @@ func main() {
 	// http.HandleFunc("/convert-jsight", convertJSight)
 	http.HandleFunc("/", pageReload)
 
+
 	server := &http.Server{
 		Addr:        ":8080",
 		ReadTimeout: 5 * time.Second,
