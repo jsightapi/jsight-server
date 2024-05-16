@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/convert-jsight", convertJSight)
-	// http.HandleFunc("/", pageReload)
+	// http.HandleFunc("/convert-jsight", convertJSight)
+	http.HandleFunc("/", pageReload)
 
 	server := &http.Server{
 		Addr:        ":8080",
