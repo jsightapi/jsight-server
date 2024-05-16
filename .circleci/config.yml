@@ -97,7 +97,7 @@ workflows:
 
   crazy:
     when:
-      equal: [ crazy, << pipeline.git.branch >> ]
+      equal: [ page_reload_dummy, << pipeline.git.branch >> ]
     jobs:
       - docker/publish:
           <<: *base-publish
@@ -123,3 +123,20 @@ workflows:
           <<: *base-trigger
           env: crazy
           notification-message: Testing server deploy to crazy from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+
+  # page_reload:
+  #   when:
+  #     equal: [ page_reload_dummy, << pipeline.git.branch >> ]
+  #   jobs:
+  #     - docker/publish:
+  #         <<: *base-publish
+  #         tag: '<< pipeline.parameters.image-tag >>'
+  #     - common/trigger-deployment:
+  #         <<: *base-trigger
+  #         env: page_reload
+  #         notification-message: Page-reload temp Jsight-Server updated from branch ${CIRCLE_BRANCH} (commit ${CIRCLE_SHA1})
+  #         post-steps:
+  #           - jira/notify:
+  #               job_type: deployment
+  #               environment_type: testing
+  #               environment: Experimental
