@@ -63,7 +63,7 @@ func (r httpResponseWriter) internalServerError(e error) {
 func (r httpResponseWriter) errorPageReload() {
 	info := errorInfo{
 		"Error",
-		"Please hard refresh your browser",
+		"A new version of JSight Online Editor 6.0 has been released. Please, refresh the page in your browser (Ctrl+Shift+R)",
 		0, 0,
 	}
 
