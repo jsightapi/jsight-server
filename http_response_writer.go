@@ -59,3 +59,23 @@ func (r httpResponseWriter) internalServerError(e error) {
 
 	log.Print("... " + e.Error())
 }
+
+func (r httpResponseWriter) errorPageReload() {
+	info := errorInfo{
+		"Error",
+		"Please hard refresh your browser",
+		0, 0,
+	}
+
+	b, err := json.Marshal(info)
+	if err != nil {
+		r.internalServerError(err)
+		return
+	}
+
+	r.writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+	r.writer.WriteHeader(http.StatusConflict)
+	_, _ = r.writer.Write(b)
+
+	log.Print("... " + "returned error message for page reloading")
+}
