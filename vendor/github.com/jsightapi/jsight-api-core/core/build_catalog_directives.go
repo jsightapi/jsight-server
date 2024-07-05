@@ -94,6 +94,27 @@ func (core *JApiCore) addTitle(d *directive.Directive) *jerr.JApiError {
 	return nil
 }
 
+func (core *JApiCore) addOperationID(d *directive.Directive) *jerr.JApiError {
+	id := d.NamedParameter("OperationId")
+	if id == "" {
+		return d.KeywordError(fmt.Sprintf("%s (%s)", jerr.RequiredParameterNotSpecified, "OperationId"))
+	}
+	if d.Annotation != "" {
+		return d.KeywordError(jerr.AnnotationIsForbiddenForTheDirective)
+	}
+
+	if _, ok := core.uniqOperationID[id]; ok {
+		return d.KeywordError(fmt.Sprintf(jerr.NotUniqueOperationID, id))
+	}
+
+	core.uniqOperationID[id] = struct{}{}
+
+	if err := core.catalog.AddOperationID(*d, id); err != nil {
+		return d.KeywordError(err.Error())
+	}
+	return nil
+}
+
 func (core *JApiCore) addVersion(d *directive.Directive) *jerr.JApiError {
 	version := d.NamedParameter("Version")
 	if version == "" {

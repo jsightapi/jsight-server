@@ -619,3 +619,27 @@ func (*Catalog) enumDirectiveToUserRule(d *directive.Directive, e *enum.Enum) (*
 		Directive:  d,
 	}, nil
 }
+
+func (c *Catalog) AddOperationID(d directive.Directive, id string) error {
+	httpID, err := newHTTPInteractionID(d)
+	if err != nil {
+		return err
+	}
+
+	if !c.Interactions.Has(httpID) {
+		return fmt.Errorf("%s %q", jerr.HTTPResourceNotFound, httpID.String())
+	}
+
+	v := c.Interactions.GetValue(httpID).(*HTTPInteraction)
+
+	if v.OperationId != nil {
+		return errors.New(jerr.NotUniqueDirective)
+	}
+
+	c.Interactions.Update(httpID, func(v Interaction) Interaction {
+		v.(*HTTPInteraction).OperationId = &id
+		return v
+	})
+
+	return nil
+}

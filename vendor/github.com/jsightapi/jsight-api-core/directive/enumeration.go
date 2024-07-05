@@ -48,6 +48,7 @@ const (
 	Result
 	TAG
 	Tags
+	OperationID
 )
 
 var (
@@ -82,6 +83,7 @@ var (
 		"Result",
 		"TAG",
 		"Tags",
+		"OperationId",
 	}
 	eeOnce sync.Once
 	ee     map[string]Enumeration
@@ -116,8 +118,9 @@ func (de Enumeration) IsHTTPRequestMethod() bool {
 	switch de { //nolint:exhaustive // False-positive.
 	case Get, Post, Put, Patch, Delete:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (de Enumeration) IsAllowedForRootContext() bool {
@@ -125,8 +128,9 @@ func (de Enumeration) IsAllowedForRootContext() bool {
 	case Jsight, Info, Server, URL, Get, Post, Put, Patch, Delete, Type, Enum,
 		Macro, Paste, TAG:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (de Enumeration) IsAllowedForDirectiveContext(child Enumeration) bool {
@@ -143,11 +147,11 @@ func (de Enumeration) IsAllowedForDirectiveContext(child Enumeration) bool {
 // types which can be placed into this directive context.
 var directiveAllowedToDirectiveContext = map[Enumeration]map[Enumeration]struct{}{
 	URL:              createEnumerationSet(Get, Post, Put, Patch, Delete, Path, Paste, Protocol, Method, Tags),
-	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
-	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
-	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
-	Patch:            createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
-	Delete:           createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags),
+	Get:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags, OperationID),
+	Post:             createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags, OperationID),
+	Put:              createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags, OperationID),
+	Patch:            createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags, OperationID),
+	Delete:           createEnumerationSet(Description, Request, HTTPResponseCode, Path, Query, Paste, Tags, OperationID),
 	HTTPResponseCode: createEnumerationSet(Body, Headers, Paste),
 	Request:          createEnumerationSet(Body, Headers, Paste),
 	Info:             createEnumerationSet(Title, Version, Description, Paste),

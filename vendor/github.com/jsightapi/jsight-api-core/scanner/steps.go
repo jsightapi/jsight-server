@@ -57,6 +57,10 @@ func stateExpectKeyword(s *Scanner, c byte) *jerr.JApiError { //nolint:funlen
 		s.found(KeywordBegin)
 		s.step = stateM
 		return nil
+	case 'O': // OperationId
+		s.found(KeywordBegin)
+		s.step = stateO
+		return nil
 	case 'P': // POST, PUT, PATCH, Path, PASTE, Protocol, Params
 		s.found(KeywordBegin)
 		s.step = stateP
