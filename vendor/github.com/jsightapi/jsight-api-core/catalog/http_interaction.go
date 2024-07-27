@@ -12,6 +12,7 @@ type HTTPInteraction struct {
 	Query         *Query         `json:"query,omitempty"`
 	Request       *HTTPRequest   `json:"request,omitempty"`
 	Responses     []HTTPResponse `json:"responses,omitempty"`
+	OperationId   *string        `json:"-"`
 }
 
 func (h HTTPInteraction) Path() Path {

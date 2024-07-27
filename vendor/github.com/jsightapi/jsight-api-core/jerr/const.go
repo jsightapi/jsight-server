@@ -62,6 +62,7 @@ const (
 	AnnotationIsForbiddenForTheDirective                = "the annotation is not allowed for this directive"
 	NotUniqueDirective                                  = "the directive has already been defined"
 	NotUniquePath                                       = "the path %q has already been defined"
+	NotUniqueOperationID                                = "the OperationId %q has already been defined"
 	BodyMustBeObject                                    = "there must be an object or a reference to an object in the directive body"                                                                                                              //nolint:lll
 	CannotUseTheTypeAndSchemaNotationParametersTogether = "directive parameters `Type` and `SchemaNotation` cannot be declared simultaneously"                                                                                                     //nolint:lll
 	ThereIsNoExplicitContextForClosure                  = "nothing to close with this closing parenthesis, learn more about the explicit direcitve boundaries here: https://jsight.io/docs/jsight-api-0-3#boundaries-of-the-body-of-the-directive" //nolint:lll
