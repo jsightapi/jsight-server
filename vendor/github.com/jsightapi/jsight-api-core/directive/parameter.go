@@ -86,6 +86,9 @@ func (d *Directive) AppendParameter(b bytes.Bytes) error {
 			d.AppendUnnamedParameter(s)
 			return nil
 		}
+
+	case OperationID:
+		return d.SetNamedParameter("OperationId", s)
 	}
 
 	return fmt.Errorf("%s %q", jerr.IncorrectParameter, s)

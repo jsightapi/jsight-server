@@ -11,6 +11,7 @@ type Operation struct {
 	RequestBody *RequestBody       `json:"requestBody,omitempty"`
 	Responses   *Responses         `json:"responses"`
 	Tags        []string           `json:"tags,omitempty"`
+	OperationId *string            `json:"operationId,omitempty"`
 }
 
 func newOperation(i *catalog.HTTPInteraction, tags []string) (*Operation, Error) {
@@ -38,6 +39,7 @@ func newOperation(i *catalog.HTTPInteraction, tags []string) (*Operation, Error)
 		RequestBody: requestBody,
 		Responses:   responses,
 		Tags:        tags,
+		OperationId: i.OperationId,
 	}, nil
 }
 
